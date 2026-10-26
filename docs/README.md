@@ -1,6 +1,6 @@
 # Documentation
 
-Updated: 2026-10-26. This is a working draft for discussion, not a fully approved specification.
+Updated: 2026-10-26. The core direction is agreed. M1 is implemented for local review; remaining design details are tracked by milestone.
 
 ## Agreed with the user
 
@@ -47,4 +47,4 @@ The core direction is agreed; M0 is complete as a documentation milestone. Edito
 
 Before persistence: decide account provisioning/identity, expected scale, and initial limits. UUIDv4, normalized tables, SQLx migrations, and initial snapshot saves are agreed. Before deployment: choose production authentication, hosting details, and backup policy. Import format details are resolved before the portability milestone.
 
-The roadmap is proposed; implementation has not started and requires a follow-up request.
+M1 implementation was authorized and is ready for local review. It is session-only, with one disposable list; no backend or autosave is implemented. See the root README for commands and the [M1 implementation record](plans/m1-local-editor.md) for verification. Further milestones have not started.

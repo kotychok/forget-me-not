@@ -1,6 +1,6 @@
 # Milestones
 
-Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. Application implementation has not started. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
+Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 is implemented for local review; later implementation milestones have not started. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
 
 Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only for a detailed plan of a complex milestone when implementation begins. Mark a milestone complete only with actual verification evidence.
 
@@ -9,7 +9,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | Milestone | Outcome | Depends on | Status |
 | --- | --- | --- | --- |
 | M0 | Agree the initial scope and technical direction | — | Complete (decisions documented) |
-| M1 | Run a keyboard editor prototype locally | M0 | Not started |
+| M1 | Run a keyboard editor prototype locally | M0 | Implemented; awaiting user review |
 | M2 | Persist user-owned lists with reliable autosave | M1 | Not started |
 | M3 | Import and export JSON and Markdown | M2 | Not started |
 | M4 | Restore drafts and handle concurrent edits | M2 | Not started |
@@ -34,7 +34,7 @@ Completed through the user's explicit agreements:
 - Normalized users/lists/items, UUIDv4 identifiers, and mandatory SQLx migrations.
 - Whole-list snapshots with revision checks as the initial save approach; reduced transfer is deferred.
 
-Evidence: user confirmations recorded as D005, D006, D018–D024 in [Decisions](decisions.md). This completes the documentation milestone, not application implementation. Remaining behavior and operational details are assigned to M1–M5. Starting implementation still requires the user's request under the current working agreement.
+Evidence: user confirmations recorded as D005, D006, D018–D024 in [Decisions](decisions.md). This completes the documentation milestone, not application implementation. Remaining behavior and operational details are assigned to M1–M5. The user has since authorized M1 implementation; later milestones remain outside the current implementation scope.
 
 ## M1 — Local keyboard editor
 
@@ -49,7 +49,7 @@ Acceptance:
 - Task conversion and completion follow the agreed rules.
 - Empty lists and keyboard focus always provide a way to continue editing.
 
-Verification: tree-command checks and browser interaction scenarios from [Editor behavior](editor-behavior.md); user review of the editing feel. Do not claim persistence or draft recovery at this milestone.
+Verification: tree-command checks and browser interaction scenarios from [Editor behavior](editor-behavior.md); evidence is recorded in [M1 implementation](plans/m1-local-editor.md). User review of the editing feel is still pending. No persistence or draft recovery is provided at this milestone.
 
 ## M2 — Database, ownership, and autosave
 
@@ -59,7 +59,7 @@ Decide first: account provisioning and identity source for this phase; expected 
 
 Acceptance:
 
-- A user can create, rename, reopen, and delete multiple lists using the agreed deletion behavior.
+- A user can create, rename, reopen, and delete multiple lists using the agreed deletion behavior. Rename is initiated directly from the list heading; update the sidebar and breadcrumb consistently, and save through the revision-checked API.
 - The database can be created from migrations and preserves data across server restarts.
 - API access cannot read or mutate another user's lists, including through submitted item IDs.
 - Indent/outdent commits the row diff, sibling ordering, and revision atomically without copying descendants.

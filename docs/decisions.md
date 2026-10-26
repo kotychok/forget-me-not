@@ -30,4 +30,8 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 | D023 | 2026-10-26 | Agreed | Use whole-list snapshot saves with revision checks as the initial approach; revisit if measurements justify a change |
 | D024 | 2026-10-26 | Agreed | Reducing transfer size and optimizing the exchange protocol is a later milestone, not a prerequisite for the core editor |
 
+| D025 | 2026-10-26 | Agreed | Begin M1 local editor implementation after the user committed the design documents; later milestones remain unstarted |
+
+| D026 | 2026-10-26 | Agreed | M1 feedback: Del deletes a branch in navigation mode; keyboard guide is modal; heading-based list renaming is planned for M2 |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

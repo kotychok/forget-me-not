@@ -27,9 +27,9 @@ In navigation mode, Tab/Shift+Tab retain standard page focus navigation. In a te
 | → in navigation | Expand the branch; if already expanded, focus its first child |
 | Space in navigation | Toggle task completion; leave plain items unchanged |
 | Mod+Z / Mod+Shift+Z | Undo / redo editor commands |
-| Delete branch through menu | Delete the item and its children, with undo available |
+| Del in navigation / Delete branch action | Delete the item and its children, with undo available |
 
-In a textarea, ordinary arrows, Space, and Backspace behave as text input. Ordinary Backspace does not delete a branch. Enter on an empty item currently creates a sibling; automatic outdent or deletion is a separate decision. During IME composition, Enter must not trigger a structural command.
+In a textarea, ordinary arrows, Space, and Backspace behave as text input. Ordinary Backspace does not delete a branch. Del deletes a branch only in navigation mode; in text editing it retains normal character deletion. Enter on an empty item currently creates a sibling; automatic outdent or deletion is a separate decision. During IME composition, Enter must not trigger a structural command.
 
 ## Tree operations and tasks
 
@@ -62,3 +62,7 @@ Keep history within the current session, separately for each open list; recovery
 4. Edit during a slow save: the indicator must not show “Saved” prematurely.
 5. Edit a list in two tabs: a conflict must preserve both versions.
 6. Reload with an unsaved draft and recover it as a copy.
+
+## Keyboard guide
+
+The guide opens as a modal dialog with a close button and Escape dismissal. Focus stays inside while open and returns to the trigger on close. It does not change the list or add a history step.

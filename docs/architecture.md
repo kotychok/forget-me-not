@@ -16,7 +16,7 @@ Rust / Axum → validation → SQLite
 
 The tree model and commands do not depend on Svelte, the DOM, HTTP, or the database. A command returns the new state and information needed to restore focus and undo. The UI renders visible nodes and routes keyboard input. The server validates invariants independently rather than trusting the browser.
 
-Initially, one repository with future `frontend/`, `backend/`, and `docs/` directories is sufficient. Do not introduce microservices, CRDTs, or event sourcing without a need. Items display Markdown; editing uses a plain textarea. Revisit a larger rich-text editor based on actual use cases.
+Use one repository: `frontend/` is implemented for M1, `docs/` contains design records, and `backend/` is planned for M2. Do not introduce microservices, CRDTs, or event sourcing without a need. Items display Markdown in the target design; M1 currently displays literal text and editing uses a plain textarea. Revisit a larger rich-text editor based on actual use cases.
 
 ## Local development and commands
 
@@ -35,7 +35,7 @@ Proposed contract for the future Makefile:
 | `make docker-build` | Build the image |
 | `make docker-up` / `make docker-down` | Start / stop the container environment while preserving data |
 
-Target names are proposed; Makefile has not been implemented. Commands should invoke the stack's standard tools rather than duplicate their logic. Configure the database path, address, and port explicitly through environment variables; local and container data must not accidentally overwrite each other. Normal shutdown does not delete SQLite data or volumes.
+Local frontend targets are implemented in the root Makefile, including `install`, `dev`, `build`, `run`, `check`, `format`, `test`, `browser-install`, and `test-browser`. Backend and Docker targets remain planned. Commands should invoke the stack's standard tools rather than duplicate their logic. Configure the database path, address, and port explicitly through environment variables; local and container data must not accidentally overwrite each other. Normal shutdown does not delete SQLite data or volumes.
 
 ## Persistence
 

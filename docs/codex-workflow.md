@@ -16,11 +16,11 @@ A separate `.codex/config.toml` is not needed yet: there are no project-specific
 
 For documentation tasks, update the relevant files and check links and decision consistency. For complex implementation, maintain a short plan in `docs/plans/` with scope, open questions, and actual verification; do not create a separate plan for every small edit.
 
-Expose run, build, and check commands through Makefile, supporting native execution without Docker. Proposed targets are listed in `architecture.md`; they have not been implemented yet.
+Expose run, build, and check commands through Makefile, supporting native execution without Docker. Local frontend targets are implemented in the root Makefile and documented in the root README; backend and Docker targets remain planned.
 
-Once code exists, add actual formatting, lint, typecheck, and test commands to AGENTS.md. Priority checks: tree invariants, commands and undo, format round-trips, revision conflicts, and draft recovery. Browser tests cover focus, cursor position, and keyboard interaction. Distinguish checks actually run from planned checks.
+Actual formatting, typecheck, and test commands are listed in AGENTS.md. Priority checks: tree invariants, commands and undo, format round-trips, revision conflicts, and draft recovery. Browser tests cover focus, cursor position, and keyboard interaction. Distinguish checks actually run from planned checks.
 
-The user handles commits and publication. Git has not been initialized; `git diff --check` will be available after repository initialization.
+The user handles commits and publication. Git was initialized and the documentation was committed by the user before M1. Use `git diff --check` when reviewing changes.
 
 ## Sources
 

@@ -74,7 +74,7 @@ Agreed: deploy with Docker; native local execution without Docker is also suppor
 
 Proposal: one container with the server and frontend assets; Docker Compose for startup and volume configuration; SQLite in a persistent volume; HTTPS through a reverse proxy. Do not place SQLite on a network filesystem without separate verification. Do not run multiple replicas with independent database files.
 
-Each list belongs to a user, and each user can have multiple lists. The schema can support multiple accounts, but registration and the authentication mechanism remain undecided. A single-account deployment is still possible. Before public deployment, choose application authentication or a verified auth proxy/VPN. Trust identity headers only from a restricted proxy. Cookie authentication needs CSRF protection and secure cookies.
+Each list belongs to a user, and each user can have multiple lists. The schema can support multiple accounts. M2 uses one server-resolved local user without login, restricted to local operation. Production authentication is assigned to M5; registration and the exact mechanism remain undecided. Before public deployment, choose application authentication or a verified auth proxy/VPN. Trust identity headers only from a restricted proxy. Cookie authentication needs CSRF protection and secure cookies.
 
 Markdown is untrusted text: disable or sanitize raw HTML, disallow unsafe URLs, and keep secrets and list content out of logs. Validate import and depth limits on the server as well.
 

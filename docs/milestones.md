@@ -55,7 +55,9 @@ Verification: tree-command checks and browser interaction scenarios from [Editor
 
 Scope: backend API, users/lists/items, migrations, list management, ownership authorization, revision-checked saves, and save indicators. Extend `make dev` to manage frontend and backend processes. Add native migration and verification targets.
 
-Decide first: account provisioning and identity source for this phase; expected list size and initial limits. Any temporary development identity must be limited to a clearly marked local-only mode; it is not production authentication.
+Agreed: M2 uses one provisioned local user without login. Resolve that identity on the server; do not accept a client-supplied owner as authentication. Keep owner-scoped queries and foreign keys so production authentication can be added without redesigning list ownership. Bind the development server to loopback and clearly identify this as local-only operation. Login and production access protection are deferred to M5.
+
+Decide first: expected list size and initial limits.
 
 Acceptance:
 
@@ -101,7 +103,9 @@ Verification: interrupted requests, reload, two-tab edits, and local-storage fai
 
 ## M5 — Deployment and recovery
 
-Scope: Docker image, proposed Compose setup if selected, Makefile deployment commands, chosen access protection, persistent storage, migrations, backups, and operating instructions.
+Scope: Docker image, proposed Compose setup if selected, Makefile deployment commands, authentication and access protection, persistent storage, migrations, backups, and operating instructions.
+
+Agreed: add production authentication here, after the local M2 implementation and before exposing the installation beyond localhost. The login mechanism remains undecided; the local development identity must not silently become a production authentication bypass.
 
 Decide first: deployment environment, production identity/authentication, HTTPS entry point, backup location/retention, and supported upgrade policy.
 

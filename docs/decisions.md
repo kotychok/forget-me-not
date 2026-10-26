@@ -34,4 +34,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D026 | 2026-10-26 | Agreed | M1 feedback: Del deletes a branch in navigation mode; keyboard guide is modal; heading-based list renaming is planned for M2 |
 
+| D027 | 2026-10-26 | Agreed | M2 uses one server-resolved local user without login; production authentication is deferred to M5 before deployment; ownership boundaries remain enforced |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

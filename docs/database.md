@@ -20,7 +20,7 @@ users 1 ─── N lists 1 ─── N items
                               └── parent_id → items in the same list
 ```
 
-Each list has one owner; shared lists and membership tables are outside the current proposal. This supports multiple accounts in the schema without deciding registration, login, or public multi-user access. A deployment can initially provision just one user.
+Each list has one owner; shared lists and membership tables are outside the current proposal. This supports multiple accounts in the schema without deciding registration, login, or public multi-user access. M2 provisions one local user resolved by the server without a login screen. All queries remain owner-scoped; a submitted owner ID is never treated as proof of identity. Production authentication is deferred to M5 before non-local deployment.
 
 Prefer normalized item rows over the earlier single-JSON-column proposal. This makes ownership, structural constraints, and future item queries more explicit. The trade-off is more persistence logic. Do not keep an independently authoritative JSON copy alongside the rows. Nested JSON remains the API/export representation.
 

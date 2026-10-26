@@ -29,11 +29,14 @@
     <dt>Shift + Enter</dt>
     <dd>Line break while editing</dd>
     <dt>Tab / Shift + Tab</dt>
-    <dd>Indent / outdent while editing</dd>
+    <dd>Indent / outdent in navigation or editing</dd>
     <dt>Alt + ↑ / ↓</dt>
     <dd>Move a branch</dd>
     <dt>Esc / F2</dt>
-    <dd>Navigate / edit</dd>
+    <dd>
+      Navigate / edit; Esc cancels an untouched new item. In navigation, Esc
+      focuses the toolbar for normal Tab navigation.
+    </dd>
     <dt>↑ ↓ ← →</dt>
     <dd>Navigate and collapse in navigation mode</dd>
     <dt>Space</dt>

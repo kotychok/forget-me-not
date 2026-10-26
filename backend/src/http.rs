@@ -82,6 +82,7 @@ pub fn app(store: Store, backend_port: u16, frontend_port: u16, assets: &FsPath)
             "/health",
             get(|| async { Json(serde_json::json!({"mode":"local-only"})) }),
         )
+        .route("/session", get(client_identity))
         .route("/export", get(export_json))
         .route(
             "/import",
@@ -160,4 +161,8 @@ async fn import_json(
         StatusCode::CREATED,
         Json(state.store.import_json(document).await?),
     ))
+}
+
+async fn client_identity(State(state): State<AppState>) -> Result<Json<ClientIdentity>> {
+    Ok(Json(state.store.identity().await?))
 }

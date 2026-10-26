@@ -42,4 +42,16 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D030 | 2026-10-26 | Agreed | M3 is JSON-only; supersedes the Markdown file-transfer portion of D001/D008. Defer Markdown rendering inside item text to M11, separate from file transfer |
 
+| D031 | 2026-10-26 | Agreed | Begin M4 after user review/commit of M3: local draft persistence, safe recovery/copy, and conflict actions; no full offline editing or automatic merge |
+
+| D032 | 2026-10-26 | Agreed | Escape cancels an untouched newly added item; existing items and items edited or structurally changed remain. Save notifications use an overlay without moving the editor; successful saves fade after a short notice, errors/conflicts remain visible |
+
+| D033 | 2026-10-26 | Agreed deferral | Track clickable links, compact navigation display of long URLs, and full content-sized editing in M12. A readable link label or accompanying comment remains a proposal to coordinate with M6/M11 |
+
+| D034 | 2026-10-26 | Agreed deferral | Keep cross-list search in M8; design contextual results and navigation to the matching item before implementation, including opening its list and revealing its ancestor path |
+
+| D035 | 2026-10-26 | Agreed deferral | Add M13 Telegram Inbox (account linking and text/link capture without AI) and M14 explicitly invoked AI commands on selected content with preview, undo, and spending controls. Defer implementation; provider/model and detailed integration design remain open |
+
+| D036 | 2026-10-26 | Agreed | Tab/Shift+Tab indent/outdent on item text in both navigation and editing, preserving the active item and mode. Supersedes navigation-mode page Tab behavior; Escape from navigation focuses the toolbar to retain a keyboard exit |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

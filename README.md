@@ -1,6 +1,6 @@
 # Forget Me Not
 
-A personal, keyboard-driven web outliner with local SQLite persistence. M3 adds JSON-only import/export with validation, preview, and atomic new-copy imports.
+A personal, keyboard-driven web outliner with local SQLite persistence. Includes JSON-only import/export, scoped local draft recovery, and explicit conflict handling.
 
 ## Run locally
 
@@ -26,11 +26,23 @@ The default SQLite file is `data/forget-me-not.sqlite`, excluded from Git. A loc
 - Text and tree edits autosave after about 500 ms. A list has only one write in flight; newer edits queue behind it.
 - **Saved** means the current snapshot was acknowledged by the server. Unsaved/saving/error/conflict states are explicit, with a sidebar marker for background changes.
 - On network failure, local changes remain in the tab. **Retry save** checks server state before repeating a potentially committed write.
-- A revision conflict pauses that list's autosave without replacing local text. Full conflict recovery and IndexedDB drafts arrive in M4. Keep a conflicted/unsaved tab open; browser reload can lose unacknowledged changes.
+- A revision conflict pauses autosave without replacing local text. M4 offers a separate saved copy, server reload with local-draft preservation, and JSON download.
 - Undo/redo is session-only and retained separately for each open list. List renames are separate from item history. Deleting a whole list requires confirmation and is permanent; deleting a branch supports undo.
 - New lists are empty. Item text currently displays literally; Markdown rendering is not implemented yet.
 
 The API initially sends a complete list snapshot; SQLite updates only changed item rows in one revision-checked transaction. Moving a branch preserves IDs and descendant references.
+
+## Draft recovery and conflicts
+
+Content changes are also written to IndexedDB. **Local draft saved in this browser** confirms the latest local write, separately from server **Saved** status. After reload, choose **Recover drafts** to preview, download, discard, or recover retained content as a new list. Nothing automatically replaces a newer server version. Drafts of a deleted source list can still be recovered.
+
+When autosave reports a conflict/error:
+
+- **Save local as new list** opens a confirmed copy with new IDs, leaving the original server list intact.
+- **Load server version** first preserves your local changes as a recoverable draft, then starts a fresh editor history from the server. It refuses to discard local text when draft storage fails.
+- **Download local JSON** keeps a portable local version.
+
+Each tab keeps a distinct writer. Drafts are scoped to installation/user inside the browser origin. Initial recovery requires the backend to confirm identity; full offline startup is not included. Browser storage can be cleared or evicted and is not a backup. Storage failures are visible with retry and JSON fallback. See [recovery behavior](docs/recovery.md).
 
 ## JSON import and export
 
@@ -50,7 +62,7 @@ Markdown file import/export is not planned. Markdown-looking text is preserved l
 
 - Click an item or use F2 to edit; Escape returns to navigation.
 - Enter creates a sibling after the whole branch; Shift+Enter adds a line break.
-- Tab / Shift+Tab indent / outdent while editing. In navigation, Tab moves page focus normally.
+- Tab / Shift+Tab indent / outdent on item text in navigation and editing. In navigation, Escape focuses the toolbar to resume normal page Tab navigation.
 - Alt+↑ / Alt+↓ move a branch among siblings.
 - In navigation, arrows move between visible items and expand/collapse branches; Space completes a task.
 - Cmd/Ctrl+Z undoes; Cmd/Ctrl+Shift+Z redoes, including text and structural edits.
@@ -98,4 +110,4 @@ Current limits: 1 MiB per normal save request (8 MiB for JSON import), 2,000 ite
 
 See the [code structure](docs/code-structure.md) for module responsibilities and extension points.
 
-See the [documentation](docs/README.md), [milestones](docs/milestones.md), and [M3 implementation record](docs/plans/m3-json-transfer.md). Working agreements for Codex: [AGENTS.md](AGENTS.md).
+See the [documentation](docs/README.md), [milestones](docs/milestones.md), and [M4 implementation record](docs/plans/m4-draft-recovery.md). Working agreements for Codex: [AGENTS.md](AGENTS.md).

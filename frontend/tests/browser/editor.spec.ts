@@ -404,7 +404,9 @@ test('editing during a slow save remains unsaved until the latest snapshot is ac
     .click();
   const text = page.getByRole('textbox', { name: 'Item text' });
   await text.fill('First edit');
-  await expect(page.getByRole('status')).toHaveText('Saving…');
+  await expect(page.getByRole('status', { name: 'Save status' })).toContainText(
+    'Saving…',
+  );
   await text.fill('Newest edit');
   await expect(page.getByRole('status')).not.toHaveText('Saved');
   release();
@@ -453,4 +455,134 @@ test('switching lists preserves independent editing history and pending saves', 
   await expect(page.getByRole('textbox', { name: 'Item text' })).toHaveValue(
     '',
   );
+});
+
+test('Escape cancels an untouched new item even after autosave, with stable layout', async ({
+  page,
+}) => {
+  const item = page.getByRole('button', {
+    name: 'Make something worth remembering',
+    exact: true,
+  });
+  await item.click();
+  const text = page.getByRole('textbox', { name: 'Item text' });
+  await text.press('Enter');
+  const before = await page.locator('.toolbar').boundingBox();
+  await expect(page.getByRole('status', { name: 'Save status' })).toContainText(
+    'Saved',
+  );
+  await expect(page.locator('.session-note')).toHaveCSS('opacity', '0');
+  expect((await page.locator('.toolbar').boundingBox())?.y).toBe(before?.y);
+  await text.press('Escape');
+  await expect(page.locator('.row')).toHaveCount(4);
+  await expect(item).toBeFocused();
+  await expect(page.getByRole('status', { name: 'Save status' })).toContainText(
+    'Saved',
+  );
+  await page.reload();
+  await expect(page.locator('.row')).toHaveCount(4);
+  await item.click();
+  await text.press('Enter');
+  await text.fill('x');
+  await text.fill('');
+  await text.press('Escape');
+  await expect(page.locator('.row')).toHaveCount(5);
+});
+
+test('Tab moves whole branches in navigation without entering edit mode and Escape exits', async ({
+  page,
+}) => {
+  const item = page.getByRole('button', {
+    name: 'Make something worth remembering',
+    exact: true,
+  });
+  await item.focus();
+  const id = await item.getAttribute('data-item');
+  await item.press('Tab');
+  await expect(item).toBeFocused();
+  await expect(page.locator('.row.active')).toHaveCSS('--depth', '1');
+  await expect(page.getByRole('textbox', { name: 'Item text' })).toHaveCount(0);
+  await item.press('Shift+Tab');
+  await expect(item).toBeFocused();
+  await expect(item).toHaveAttribute('data-item', id!);
+  await expect(page.locator('.row.active')).toHaveCSS('--depth', '0');
+  await item.press(undo);
+  await expect(item).toBeFocused();
+  await expect(page.locator('.row.active')).toHaveCSS('--depth', '1');
+  await item.press(redo);
+  await expect(page.locator('.row.active')).toHaveCSS('--depth', '0');
+  // Move a parent with descendants, then verify outdent is a no-op at the root.
+  const parent = page.getByRole('button', {
+    name: 'A little room for your thoughts',
+    exact: true,
+  });
+  await parent.focus();
+  await parent.press('Shift+Tab');
+  await expect(parent).toBeFocused();
+  await parent.press('Alt+ArrowDown');
+  await parent.press('Tab');
+  await expect(parent).toBeFocused();
+  await expect(page.locator('.row.active')).toHaveCSS('--depth', '1');
+  await expect(
+    page
+      .getByRole('button', {
+        name: 'Press Enter to add a new item',
+        exact: true,
+      })
+      .locator('..'),
+  ).toHaveCSS('--depth', '2');
+  await parent.press('Escape');
+  const add = page.getByRole('button', { name: '＋ Add item', exact: true });
+  await expect(add).toBeFocused();
+  await add.press('Tab');
+  await expect(
+    page.getByRole('button', { name: 'Undo', exact: true }),
+  ).toBeFocused();
+  await expect(page.locator('.row')).toHaveCount(4);
+});
+
+test('item toolbar stays reachable while scrolling a long list on desktop and mobile', async ({
+  page,
+  request,
+}) => {
+  const created = await request.post('/api/lists', {
+    data: { title: 'Long list' },
+  });
+  const list = await created.json();
+  const nodes = Array.from({ length: 70 }, (_, index) => ({
+    id: randomUUID(),
+    kind: 'item',
+    text: `Long item ${index}`,
+    completed: false,
+    children: [],
+  }));
+  const saved = await request.put(`/api/lists/${list.id}`, {
+    data: {
+      baseRevision: 0,
+      document: { id: list.id, title: list.title, nodes },
+    },
+  });
+  expect(saved.ok()).toBeTruthy();
+  for (const width of [1009, 390]) {
+    await page.setViewportSize({ width, height: 954 });
+    await page.goto(`/?list=${list.id}`);
+    const item = page.getByRole('button', {
+      name: 'Long item 50',
+      exact: true,
+    });
+    await item.focus();
+    await item.press('ArrowDown');
+    const toolbar = page.getByLabel('Item actions', { exact: true });
+    await expect.poll(async () => (await toolbar.boundingBox())?.y).toBe(0);
+    const focused = page.locator('.row.active .item-text');
+    const toolbarBox = (await toolbar.boundingBox())!;
+    expect((await focused.boundingBox())!.y).toBeGreaterThanOrEqual(
+      toolbarBox.height,
+    );
+    await page.getByRole('button', { name: 'Indent →', exact: true }).click();
+    await expect(page.locator('.row.active')).toHaveCSS('--depth', '1');
+    await expect(focused).toBeFocused();
+    await page.getByRole('button', { name: '← Outdent', exact: true }).click();
+    await expect(page.locator('.row.active')).toHaveCSS('--depth', '0');
+  }
 });

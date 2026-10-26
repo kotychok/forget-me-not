@@ -45,7 +45,7 @@ The agreed normalized storage approach replaces the earlier single-JSON-document
 
 ## Autosave and drafts
 
-M2 implements queued saves, revision checks, status indicators, and network-error retry/reconciliation. IndexedDB drafts and full conflict-recovery actions below are planned for M4 and are not yet implemented.
+M2 implements queued saves, revision checks, status indicators, and network-error retry/reconciliation. M4 adds scoped IndexedDB drafts, conditional cleanup, and explicit recovery/conflict actions; see [recovery behavior](recovery.md). Full offline startup and automatic merging remain excluded.
 
 - Changes appear locally immediately. After a short pause, initially proposed as 500 ms, send a snapshot; tune the interval after the prototype.
 - Allow one save request in flight per list. Accumulate subsequent changes; an older response must not mark a newer revision as saved.
@@ -67,6 +67,7 @@ Drafts protect against failures; they do not provide full offline support. Do no
 | `GET /api/lists/:id` | Document and revision |
 | `PUT /api/lists/:id` | Snapshot + baseRevision, atomic write |
 | `DELETE /api/lists/:id` | Delete with a revision check |
+| `GET /api/session` | Installation and server-resolved owner identity for local draft scope |
 | `GET /api/export` | Consistent JSON export of owned saved lists; optional listId filter |
 | `POST /api/import` | Validate a schema-v1 envelope; create new copies atomically |
 

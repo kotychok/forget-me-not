@@ -169,3 +169,48 @@ test('repeated structural changes preserve unique IDs and valid content through 
   assert.deepEqual(fresh.state.nodes, original);
   while (fresh.redo()) assertTree(fresh.state.nodes);
 });
+
+test('Escape cancellation restores history and focus without a redoable empty item', () => {
+  const { editor, b } = fixture();
+  editor.edit('Updated', 7, 7);
+  editor.undo();
+  const future = structuredClone(editor.future);
+  const past = structuredClone(editor.past);
+  editor.execute('add');
+  assert.equal(editor.cancelNewItem(), true);
+  assert.equal(editor.state.nodes.length, 3);
+  assert.deepEqual(editor.state.focus, {
+    id: b.id,
+    mode: 'navigate',
+    start: 1,
+    end: 1,
+  });
+  assert.deepEqual(editor.past, past);
+  assert.deepEqual(editor.future, future);
+  assert.equal(editor.cancelNewItem(), false);
+});
+
+test('only untouched additions can be cancelled, including in an empty list', () => {
+  const empty = new Editor([]);
+  empty.execute('add');
+  assert.equal(empty.cancelNewItem(), true);
+  assert.equal(empty.state.focus.id, null);
+  assert.deepEqual(empty.state.nodes, []);
+  for (const change of ['typing', 'indent', 'focus', 'undo'] as const) {
+    const { editor } = fixture();
+    editor.execute('add');
+    if (change === 'typing') {
+      editor.edit('x', 1, 1);
+      editor.edit('', 0, 0);
+    } else if (change === 'indent') editor.execute('indent');
+    else if (change === 'focus')
+      editor.setFocus({ ...editor.state.focus, mode: 'navigate' });
+    else {
+      editor.undo();
+      editor.redo();
+    }
+    assert.equal(editor.cancelNewItem(), false, change);
+  }
+  const existing = new Editor([createItem()]);
+  assert.equal(existing.cancelNewItem(), false);
+});

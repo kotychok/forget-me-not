@@ -140,3 +140,38 @@ test('retry refuses to overwrite a different newer server snapshot', async () =>
   assert.equal(document.title, 'Local');
   queue.dispose();
 });
+
+test('pausing during a write waits for acknowledgement without sending queued newer content', async () => {
+  const first = deferred<{ revision: number }>();
+  const document: Document = { id: 'list', title: 'First', nodes: [] };
+  let calls = 0;
+  const queue = new Autosave(
+    0,
+    () => document,
+    {
+      save: async (_doc, revision) => {
+        calls++;
+        return calls === 1 ? first.promise : { revision: revision + 1 };
+      },
+      get: async () => ({ ...document, revision: 1 }),
+    },
+    () => {},
+    10000,
+  );
+  queue.markDirty();
+  const saving = queue.flush();
+  const paused = queue.pause();
+  document.title = 'Newer';
+  queue.markDirty();
+  first.resolve({ revision: 1 });
+  await paused;
+  await saving;
+  assert.equal(calls, 1);
+  assert.equal(queue.dirty, true);
+  assert.equal(await queue.retry(), false);
+  queue.resume();
+  assert.equal(await queue.flush(), true);
+  assert.equal(calls, 2);
+  assert.equal(queue.revision, 2);
+  queue.dispose();
+});

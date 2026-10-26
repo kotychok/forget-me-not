@@ -70,6 +70,12 @@ export class Editor {
   past: Snapshot[] = [];
   future: Snapshot[] = [];
   private group: { id: string; time: number } | null = null;
+  private pendingAdd: {
+    id: string | null;
+    state: Snapshot;
+    past: Snapshot[];
+    future: Snapshot[];
+  } | null = null;
 
   constructor(nodes: Item[]) {
     this.state = {
@@ -86,8 +92,10 @@ export class Editor {
     if (
       focus.id !== this.state.focus.id ||
       focus.mode !== this.state.focus.mode
-    )
+    ) {
       this.breakGroup();
+      this.pendingAdd = null;
+    }
     this.state = { ...this.state, focus: { ...focus } };
   }
 
@@ -103,6 +111,7 @@ export class Editor {
     const id = this.state.focus.id;
     const current = locate(this.state.nodes, id);
     if (!current || current.item.text === text) return false;
+    this.pendingAdd = null;
     const next = structuredClone(this.state);
     locate(next.nodes, id)!.item.text = text;
     next.focus = { id, mode: 'edit', start, end };
@@ -163,11 +172,34 @@ export class Editor {
         next.focus = { id, mode: 'navigate', start: 0, end: 0 };
       }
     }
+    const pendingAdd =
+      command === 'add'
+        ? {
+            id: next.focus.id,
+            state: structuredClone(this.state),
+            past: [...this.past],
+            future: [...this.future],
+          }
+        : null;
     this.commit(next);
+    this.pendingAdd = pendingAdd;
+    return true;
+  }
+
+  cancelNewItem() {
+    const pending = this.pendingAdd;
+    if (!pending || this.state.focus.id !== pending.id) return false;
+    this.state = pending.state;
+    this.state.focus.mode = 'navigate';
+    this.past = pending.past;
+    this.future = pending.future;
+    this.pendingAdd = null;
+    this.breakGroup();
     return true;
   }
 
   undo() {
+    this.pendingAdd = null;
     this.breakGroup();
     const previous = this.past.pop();
     if (!previous) return false;
@@ -177,6 +209,7 @@ export class Editor {
   }
 
   redo() {
+    this.pendingAdd = null;
     this.breakGroup();
     const next = this.future.pop();
     if (!next) return false;

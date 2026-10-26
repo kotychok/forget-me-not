@@ -26,7 +26,7 @@ Prefer normalized item rows over the earlier single-JSON-column proposal. This m
 
 ## Implemented schema
 
-The authoritative definition is [the initial migration](../backend/migrations/20261026000100_initial_schema.sql). It creates users, lists, items, their indexes and constraints, and a `local_identity` singleton referencing the provisioned local user. IDs and timestamps are supplied by the backend. Authentication tables remain deferred to M5.
+The authoritative definition is [the initial migration](../backend/migrations/20261026000100_initial_schema.sql). It creates users, lists, items, their indexes and constraints, and a `local_identity` singleton referencing the provisioned local user. [M4 installation identity](../backend/migrations/20261026000200_installation_identity.sql) adds a separate installation UUID; original migrations are unchanged. IDs and timestamps are supplied by the backend. Authentication tables remain deferred to M5.
 
 The composite parent foreign key prevents parenting an item under another list. `parent_id = NULL` means a root item. The deferred constraint permits transactional inserts/reparenting in any order, but requires a valid tree at commit. Self-parenting is rejected by SQL; longer cycles, depth limits, and ownership authorization require application validation. SQLite foreign keys must be enabled on every connection before transactions.
 
@@ -40,7 +40,7 @@ The agreed initial whole-list snapshot API works as follows: normalize the submi
 
 List ordering is currently creation order: insertion allocates MAX(position)+1 atomically; deletion may leave harmless gaps. User-driven list reorder and its concurrent-update contract remain deferred. Moving branches between lists is not included in the current command set and would need an atomic operation covering both list revisions.
 
-Configure foreign keys on every pooled connection, a finite busy timeout, and WAL for a single-host deployment after verifying backup behavior. Keep transactions short. Collapse state remains browser UI state; sessions and identity tables are added only when authentication is chosen.
+Configure foreign keys on every pooled connection, a finite busy timeout, and WAL for a single-host deployment after verifying backup behavior. Keep transactions short. Collapse state remains browser UI state. M4 adds an installation singleton with a generated UUID via a new additive migration for draft scoping. Authentication/session tables remain deferred to M5.
 
 ## Example: indent and outdent over the API
 

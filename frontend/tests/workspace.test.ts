@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Workspace } from '../src/lib/workspace.ts';
+import type { Portable } from '../src/lib/portable.ts';
+import type { Draft, DraftStorage } from '../src/lib/draft-storage.ts';
+import type { Item } from '../src/lib/editor.ts';
 import { createItem } from '../src/lib/editor.ts';
 import { ApiError } from '../src/lib/api.ts';
 import type { ListDocument, Document } from '../src/lib/api.ts';
@@ -23,6 +26,7 @@ function fakeApi() {
   );
   const gets: string[] = [];
   const transport = {
+    session: async () => ({ serverId: 'server', ownerId: 'owner' }),
     exportJson: async () => ({
       schemaVersion: 1 as const,
       lists: [...documents.values()].map(({ id, title, nodes }) => ({
@@ -31,7 +35,30 @@ function fakeApi() {
         nodes,
       })),
     }),
-    importJson: async () => [],
+    importJson: async (source: Portable) =>
+      source.lists.map((list) => {
+        function copy(item: Item): Item {
+          return {
+            ...item,
+            id: crypto.randomUUID(),
+            children: item.children.map(copy),
+          };
+        }
+        const document = {
+          id: crypto.randomUUID(),
+          title: list.title,
+          nodes: list.nodes.map(copy),
+          revision: 0,
+        };
+        documents.set(document.id, document);
+        return {
+          id: document.id,
+          title: document.title,
+          revision: 0,
+          position: documents.size - 1,
+          itemCount: document.nodes.length,
+        };
+      }),
     lists: async () =>
       [...documents.values()].map((doc, position) => ({
         id: doc.id,
@@ -113,6 +140,91 @@ test('creating, renaming, and deleting flushes pending content through the API',
     assert.equal(await workspace.removeCurrent(), true);
     assert.equal(fixture.documents.has(id), false);
     assert.notEqual(workspace.selectedId, id);
+  } finally {
+    workspace.dispose();
+  }
+});
+
+class MemoryStorage implements DraftStorage {
+  rows = new Map<string, Draft>();
+  fail = false;
+  async list(scope: string) {
+    return [...this.rows.values()].filter((row) => row.scope === scope);
+  }
+  async put(row: Draft) {
+    if (this.fail) throw new Error('Storage failed');
+    this.rows.set(row.id, structuredClone(row));
+  }
+  async remove(scope: string, id: string, token: string) {
+    const row = this.rows.get(id);
+    if (row?.scope !== scope || row.token !== token) return false;
+    this.rows.delete(id);
+    return true;
+  }
+}
+test('loading the server preserves local edits as a draft; recovery creates a separate list', async () => {
+  const fixture = fakeApi();
+  const storage = new MemoryStorage();
+  const workspace = new Workspace(() => {}, fixture.transport, storage);
+  try {
+    await workspace.load(fixture.first.id);
+    const original = workspace.current!;
+    original.editor.setFocus({
+      id: original.editor.state.nodes[0].id,
+      mode: 'edit',
+      start: 0,
+      end: 0,
+    });
+    original.editor.edit('Local change', 12, 12);
+    original.sync.markDirty();
+    await fixture.transport.save(
+      {
+        ...fixture.first,
+        nodes: [{ ...fixture.first.nodes[0], text: 'Server change' }],
+      },
+      0,
+    );
+    await workspace.loadServerVersion();
+    assert.equal(
+      workspace.current!.editor.state.nodes[0].text,
+      'Server change',
+    );
+    assert.equal(workspace.drafts!.records.length, 1);
+    assert.equal(
+      workspace.drafts!.records[0].document.nodes[0].text,
+      'Local change',
+    );
+    await workspace.recoverDraft(workspace.drafts!.records[0]);
+    assert.notEqual(workspace.selectedId, fixture.first.id);
+    assert.equal(workspace.current!.editor.state.nodes[0].text, 'Local change');
+    assert.equal(
+      fixture.documents.get(fixture.first.id)!.nodes[0].text,
+      'Server change',
+    );
+    assert.equal(workspace.drafts!.records.length, 0);
+  } finally {
+    workspace.dispose();
+  }
+});
+test('a storage failure blocks loading another version without discarding local content', async () => {
+  const fixture = fakeApi();
+  const storage = new MemoryStorage();
+  const workspace = new Workspace(() => {}, fixture.transport, storage);
+  try {
+    await workspace.load(fixture.first.id);
+    const original = workspace.current!;
+    original.editor.setFocus({
+      id: original.editor.state.nodes[0].id,
+      mode: 'edit',
+      start: 0,
+      end: 0,
+    });
+    original.editor.edit('Keep me', 7, 7);
+    storage.fail = true;
+    original.sync.markDirty();
+    await assert.rejects(() => workspace.loadServerVersion(), /Storage failed/);
+    assert.equal(workspace.current, original);
+    assert.equal(workspace.current!.editor.state.nodes[0].text, 'Keep me');
   } finally {
     workspace.dispose();
   }

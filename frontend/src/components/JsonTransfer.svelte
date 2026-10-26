@@ -1,11 +1,7 @@
 <script lang="ts">
+  import { downloadJson } from '../lib/download';
   import { ApiError } from '../lib/api';
-  import {
-    parsePortable,
-    serializePortable,
-    countItems,
-    MAX_FILE_BYTES,
-  } from '../lib/portable';
+  import { parsePortable, countItems, MAX_FILE_BYTES } from '../lib/portable';
   import type { Portable } from '../lib/portable';
   let {
     currentTitle,
@@ -69,22 +65,10 @@
     message = '';
     try {
       const document = await onexport(scope);
-      const blob = new Blob([serializePortable(document)], {
-        type: 'application/json',
-      });
-      const url = URL.createObjectURL(blob);
-      const link = window.document.createElement('a');
-      link.href = url;
-      const name =
-        scope === 'current' ? (currentTitle ?? 'list') : 'forget-me-not-lists';
-      link.download = `${
-        name
-          .replace(/[^a-zA-Z0-9_-]+/g, '-')
-          .replace(/^-|-$/g, '')
-          .slice(0, 60) || 'list'
-      }.json`;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      downloadJson(
+        document,
+        scope === 'current' ? (currentTitle ?? 'list') : 'forget-me-not-lists',
+      );
       message = 'JSON export downloaded.';
     } catch (reason) {
       error = reason instanceof Error ? reason.message : 'Export failed';

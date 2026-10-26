@@ -1,6 +1,6 @@
 # Milestones
 
-Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer is implemented and verified for local review. Later implementation milestones have not started. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
+Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery is implemented and verified for local review; M5 and later implementation milestones have not started. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
 
 Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only for a detailed plan of a complex milestone when implementation begins. Mark a milestone complete only with actual verification evidence.
 
@@ -11,8 +11,8 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M0 | Agree the initial scope and technical direction | — | Complete (decisions documented) |
 | M1 | Run a keyboard editor prototype locally | M0 | Complete (reviewed and committed by user) |
 | M2 | Persist user-owned lists with reliable autosave | M1 | Complete (user proceeded to M3) |
-| M3 | Import and export JSON | M2 | Implemented and verified; awaiting user review |
-| M4 | Restore drafts and handle concurrent edits | M2 | Not started |
+| M3 | Import and export JSON | M2 | Complete (reviewed and committed by user) |
+| M4 | Restore drafts and handle concurrent edits | M2 | Implemented and verified; awaiting user review |
 | M5 | Deploy and recover a protected installation | M3, M4 | Not started |
 | M6 | Item notes | M5 | Deferred |
 | M7 | Tags and filtering | M5 | Deferred |
@@ -20,6 +20,9 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M9 | Task dates | M5 | Deferred |
 | M10 | Reduce data transfer and optimize the save protocol | M5 | Deferred |
 | M11 | Render Markdown inside item text | M5 | Deferred |
+| M12 | Open links and improve long-text editing | M5 | Deferred |
+| M13 | Capture items through Telegram Inbox | M5 | Deferred |
+| M14 | Optional, budget-controlled AI commands | M5 | Deferred |
 
 M3 and M4 have no dependency on each other; the table does not require parallel implementation. Import/export fixtures can be designed before M2, but complete import persistence depends on it.
 
@@ -99,7 +102,7 @@ Acceptance:
 - IndexedDB/quota errors are visible, and users can export their local version.
 - Drafts are scoped by server and owner and are not exposed to another signed-in user.
 
-Verification: interrupted requests, reload, two-tab edits, and local-storage failures using disposable data.
+Verification: interrupted requests, reload, two-tab edits, local-storage failures, scope isolation, and M3 schema upgrade using disposable data. See [recovery behavior](recovery.md) and the [M4 implementation record](plans/m4-draft-recovery.md).
 
 ## M5 — Deployment and recovery
 
@@ -134,7 +137,17 @@ Outcome: attach tags and filter items without rewriting the tree. Define per-use
 
 ### M8 — Search
 
-Outcome: search across the current user's lists and navigate to a result. Define searched fields and expected scale first. Acceptance: results respect ownership, reflect edits, and reveal the matching item within its ancestors without changing content. Choose indexing based on measured needs.
+Outcome: search across the current user's lists and navigate to the matching item. Deferred at the user's request; result presentation and navigation need a separate design before implementation.
+
+Acceptance:
+
+- Search results respect ownership and identify the list, matching item, and enough ancestor context to distinguish similar matches.
+- Selecting a result opens its list, expands the ancestor path, scrolls the item into view, and gives it keyboard focus with a visible match indication, without changing stored content.
+- Switching to a result preserves pending edits and the existing per-list autosave/history behavior.
+- Define keyboard navigation of results, loading/empty/error states, and behavior when a result changes or is deleted before activation.
+- Decide searched fields, matching/highlighting rules, handling of current unsaved edits, and expected scale before implementation. Choose indexing based on measured needs.
+
+Open design: where results appear, how users return to the results after opening a match, and how highlighting coexists with editing. Do not assume that filtering the visible tree alone satisfies cross-list search.
 
 ### M9 — Task dates
 
@@ -149,6 +162,51 @@ Acceptance: representative indent/outdent and text edits exchange measurably few
 ### M11 — Markdown inside item text
 
 Outcome: optionally render Markdown in item text while preserving the original string for editing and JSON portability. Decide the supported inline/block subset and editing behavior first. Acceptance: unsafe HTML/URLs cannot execute; editing, focus, and undo remain reliable; literal source survives save/reload and JSON round-trip. This does not include Markdown file import/export.
+
+### M12 — Links and long-text editing
+
+Outcome: open links from item text, keep long URLs compact in navigation mode, and make the full original text comfortable to edit. Requested during M4 review; implementation is deferred. This can ship independently of Markdown rendering in M11.
+
+Acceptance:
+
+- Recognize HTTP/HTTPS links and provide an accessible way to open them without accidentally entering edit mode or triggering tree commands.
+- Show long URLs compactly in navigation mode; truncation affects presentation only, never stored text or the target URL.
+- Editing reveals the complete original URL and surrounding text. The textarea wraps and grows with its content so editing a long item is not restricted to a single visible line.
+- Preserve keyboard navigation, caret/selection, IME input, undo/redo, autosave, and literal JSON round-trip.
+- Define safe URL handling and how link activation coexists with click-to-edit before implementation. Do not fetch remote page metadata implicitly.
+
+Open design: allow a readable link label and/or an accompanying comment. The user suggested this as a possibility; decide whether ordinary item text, future Markdown links (M11), or separate item notes (M6) provide it before adding fields or changing the JSON schema.
+
+### M13 — Telegram Inbox
+
+Outcome: link a Telegram account to the authenticated application user and capture text or links into a chosen Inbox list. No LLM is needed. Implement before considering AI-assisted Telegram capture; implementation is deferred.
+
+Acceptance:
+
+- Link accounts through a short-lived, single-use token initiated by the authenticated user; support disconnecting. Never trust a submitted application owner ID.
+- Capture private messages as plain items in the configured owned list and reply with confirmation and a link to the captured item. Preserve literal text and URLs.
+- Deduplicate delivered updates using durable processing state; retries and restarts must not create duplicate items or acknowledge an uncommitted write.
+- Route captures through shared application validation and transaction boundaries. Coordinate revision changes with open web sessions without silently overwriting pending edits.
+- Keep the bot token server-side, respect ownership and existing limits, and provide actionable failure handling for deleted/unavailable Inbox lists.
+- Support long polling for native development without a public inbound endpoint. Decide polling versus HTTPS webhook for deployment before implementation.
+
+Open design: bot ownership/configuration, Inbox selection and creation, capture behavior for multiline text, item-level web links, and inbound rate limits. Full tree editing, voice transcription, reminders, group-chat capture, and AI interpretation are separate later proposals, not included in this milestone.
+
+### M14 — Optional AI commands
+
+Outcome: explicitly invoked assistance for a selected item or branch, independent of ordinary editing and Telegram capture. Initial commands: turn pasted text into a tree, break an item into subtasks, shorten/rephrase text, and summarize a branch. Tag suggestions depend on M7. Implementation is deferred; provider/model selection remains open.
+
+Acceptance:
+
+- Invoke AI only through an explicit action; do not send content while typing or automatically scan all lists.
+- Send only the selected content and bounded context. Preview the proposed result before applying it; cancellation leaves content unchanged, and application is one undoable editor operation.
+- Validate structured results through existing content/depth/size limits and generate item IDs locally. Reject malformed responses without partial application.
+- Detect changes to the target while a request is running; never apply a stale response over newer edits or another list.
+- Use a configurable economical model, input/output limits, request/concurrency limits, and a server-enforced monthly spending cap with usage visibility. Define conservative accounting for in-flight, failed, or uncertain requests before implementation; a provider dashboard budget alone is insufficient.
+- Store provider credentials server-side. Make the external transmission of selected content clear before use; ordinary editing, search, JSON transfer, and Telegram Inbox work without AI configuration.
+- Handle timeout/provider/budget failures without losing editor content or automatically duplicating chargeable requests.
+
+Open design: provider and model, pricing/accounting policy, command UI and preview, and provider data handling. Do not assume a specific monthly cost until representative requests are measured. Whole-workspace chat, retrieval/vector search, autonomous background agents, and voice processing are outside this milestone.
 
 ## Remaining product details
 

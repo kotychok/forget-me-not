@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import type { SaveStatus } from './lib/autosave';
+  import { IndexedDbDrafts } from './lib/draft-storage';
+  import type { Draft } from './lib/draft-storage';
+  import RecoveryPanel from './components/RecoveryPanel.svelte';
   import { Workspace } from './lib/workspace';
   import type { Session, SidebarList } from './lib/workspace';
   import EditorPane from './components/EditorPane.svelte';
@@ -16,21 +19,42 @@
   let loadError = $state('');
   let saveStatus = $state<SaveStatus>('saved');
   let saveError = $state('');
+  let savedNoticeVisible = $state(true);
+  $effect(() => {
+    // Restart only for status/list transitions, not every draft update.
+    const status = saveStatus;
+    const list = selectedId;
+    savedNoticeVisible = true;
+    if (status !== 'saved' || !list) return;
+    const timer = setTimeout(() => (savedNoticeVisible = false), 1200);
+    return () => clearTimeout(timer);
+  });
+  let draftRecords = $state.raw<Draft[]>([]);
+  let draftError = $state('');
+  let draftDurable = $state(false);
   let titleEditing = $state(false);
   let titleDraft = $state('');
   let titleInput = $state<HTMLInputElement>();
   let titleButton = $state<HTMLButtonElement>();
-  const workspace = new Workspace(() => {
-    current = workspace.current;
-    selectedId = workspace.selectedId;
-    lists = workspace.lists;
-    title = workspace.title;
-    loading = workspace.loading;
-    busy = workspace.busy;
-    loadError = workspace.error;
-    saveStatus = current?.sync.status ?? 'saved';
-    saveError = current?.sync.error ?? '';
-  });
+  const workspace = new Workspace(
+    () => {
+      current = workspace.current;
+      selectedId = workspace.selectedId;
+      lists = workspace.lists;
+      title = workspace.title;
+      loading = workspace.loading;
+      busy = workspace.busy;
+      loadError = workspace.error;
+      saveStatus = current?.sync.status ?? 'saved';
+      saveError = current?.sync.error ?? '';
+      draftRecords = workspace.drafts?.records ?? [];
+      draftError = workspace.drafts?.error ?? '';
+      draftDurable =
+        !!selectedId && (workspace.drafts?.isDurable(selectedId) ?? false);
+    },
+    undefined,
+    new IndexedDbDrafts(),
+  );
 
   function updateUrl() {
     const url = new URL(location.href);
@@ -160,7 +184,7 @@
     />
     <div class="sidebar-bottom">
       <span class="local-dot"></span> Local only · no login
-      <span class="version">M3</span>
+      <span class="version">M4</span>
     </div>
   </aside>
 
@@ -206,7 +230,16 @@
         </h1>
       {/if}
       <p class="subtitle">One thought at a time. Give it a little structure.</p>
-      <div class="session-note" aria-live="polite" role="status">
+      <div
+        class="session-note"
+        class:notice-hidden={!loading &&
+          !!selectedId &&
+          saveStatus === 'saved' &&
+          !savedNoticeVisible}
+        aria-live="polite"
+        role="status"
+        aria-label="Save status"
+      >
         {#if loading}Loading lists…{:else if selectedId}
           {saveStatus === 'saved'
             ? 'Saved'
@@ -218,15 +251,40 @@
                   ? 'Conflict — local changes kept in this tab.'
                   : 'Save failed — local changes kept in this tab.'}
         {:else}Create a list to get started.{/if}
+        {#if draftDurable}<span>Local draft saved in this browser.</span>{/if}
       </div>
       {#if saveStatus === 'error' && selectedId}<p class="error-message">
           {saveError}
-          <button onclick={() => current?.sync.retry()}>Retry save</button>
+          <button disabled={busy} onclick={() => current?.sync.retry()}
+            >Retry save</button
+          >
         </p>{/if}
-      {#if saveStatus === 'conflict' && selectedId}<p class="error-message">
-          Another tab changed this list. Your local version has not been
-          replaced. Keep this tab open; recovery tools are planned in M4.
-        </p>{/if}
+      <RecoveryPanel
+        records={draftRecords}
+        storageError={draftError}
+        conflict={saveStatus === 'conflict' || saveStatus === 'error'}
+        disabled={busy || loading}
+        onrefresh={() => workspace.refreshDrafts()}
+        onretry={() => workspace.retryDraftStorage()}
+        ondiscard={(record) => workspace.discardDraft(record)}
+        onrecover={async (record) => {
+          finishRename();
+          await workspace.recoverDraft(record);
+          updateUrl();
+        }}
+        oncopy={async () => {
+          finishRename();
+          await workspace.saveLocalCopy();
+          updateUrl();
+        }}
+        onload={async () => {
+          finishRename();
+          await workspace.loadServerVersion();
+          updateUrl();
+        }}
+        onexport={() => workspace.exportCurrent()}
+        onindex={() => workspace.refreshIndex()}
+      />
       {#if loadError}<p class="error-message" role="alert">
           {loadError}
           {#if !selectedId}<button onclick={loadLists}>Retry</button>{/if}
@@ -238,7 +296,7 @@
           >
         </div>
         {#if current}
-          {#key selectedId}
+          {#key current}
             {@const session = current}
             <EditorPane
               {session}

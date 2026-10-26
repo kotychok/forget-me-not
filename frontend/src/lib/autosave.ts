@@ -1,3 +1,4 @@
+import { sameDocument } from './documents.ts';
 import { ApiError } from './api.ts';
 import type { Document, ListDocument } from './api.ts';
 
@@ -10,11 +11,6 @@ export type Transport = {
   get: (id: string) => Promise<ListDocument>;
 };
 type Attempt = { document: Document; generation: number; revision: number };
-const equalDocument = (left: Document, right: Document) =>
-  left.id === right.id &&
-  left.title === right.title &&
-  JSON.stringify(left.nodes) === JSON.stringify(right.nodes);
-
 /** One queue per list; acknowledgements never replace locally edited content. */
 export class Autosave {
   revision: number;
@@ -26,6 +22,7 @@ export class Autosave {
   private flight: Promise<boolean> | undefined;
   private attempt: Attempt | undefined;
   private disposed = false;
+  private paused = false;
 
   private read: () => Document;
   private transport: Transport;
@@ -52,7 +49,7 @@ export class Autosave {
 
   markDirty() {
     this.generation++;
-    if (this.status !== 'conflict' && this.status !== 'error') {
+    if (!this.paused && this.status !== 'conflict' && this.status !== 'error') {
       if (!this.flight) this.status = 'unsaved';
       clearTimeout(this.timer);
       this.timer = setTimeout(() => void this.flush(), this.delay);
@@ -62,7 +59,12 @@ export class Autosave {
 
   async flush(): Promise<boolean> {
     clearTimeout(this.timer);
-    if (this.disposed || this.status === 'conflict' || this.status === 'error')
+    if (
+      this.disposed ||
+      this.paused ||
+      this.status === 'conflict' ||
+      this.status === 'error'
+    )
       return false;
     if (this.flight) {
       await this.flight;
@@ -103,11 +105,16 @@ export class Autosave {
 
   /** Reconcile a potentially committed write before resending after a lost response. */
   async retry(): Promise<boolean> {
-    if (this.flight || this.status === 'conflict' || this.disposed)
+    if (
+      this.flight ||
+      this.paused ||
+      this.status === 'conflict' ||
+      this.disposed
+    )
       return false;
     try {
       const current = await this.transport.get(this.read().id);
-      if (this.attempt && equalDocument(current, this.attempt.document)) {
+      if (this.attempt && sameDocument(current, this.attempt.document)) {
         this.revision = current.revision;
         this.acknowledged = this.attempt.generation;
         this.attempt = undefined;
@@ -129,6 +136,16 @@ export class Autosave {
     }
   }
 
+  async pause(): Promise<void> {
+    this.paused = true;
+    clearTimeout(this.timer);
+    await this.flight;
+  }
+  resume() {
+    this.paused = false;
+    if (this.dirty && this.status !== 'error' && this.status !== 'conflict')
+      this.timer = setTimeout(() => void this.flush(), this.delay);
+  }
   dispose() {
     this.disposed = true;
     clearTimeout(this.timer);

@@ -50,3 +50,10 @@ pub struct SaveList {
 pub struct DeleteList {
     pub base_revision: i64,
 }
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ClientIdentity {
+    pub server_id: String,
+    pub owner_id: String,
+}

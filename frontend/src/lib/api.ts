@@ -33,6 +33,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? (undefined as T) : response.json();
 }
 export const api = {
+  session: () => request<{ serverId: string; ownerId: string }>('/session'),
   exportJson: () => request<Portable>('/export'),
   importJson: (document: Portable) =>
     request<ListSummary[]>('/import', {

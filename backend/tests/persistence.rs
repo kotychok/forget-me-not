@@ -84,7 +84,7 @@ async fn migrations_and_identity_are_repeatable_and_data_survives_reopening() {
             .fetch_one(&store.pool)
             .await
             .unwrap(),
-        1
+        MIGRATOR.iter().count() as i64
     );
     store.pool.close().await;
     let reopened = Store::open(&dir.path().join("test.sqlite")).await.unwrap();
@@ -431,13 +431,12 @@ async fn deferred_constraint_commit_failure_is_rolled_back() {
 async fn failed_sql_migration_is_atomic_and_unknown_versions_are_rejected() {
     let (_dir, store) = setup().await;
     let migrations = tempfile::tempdir().unwrap();
+    for entry in std::fs::read_dir(concat!(env!("CARGO_MANIFEST_DIR"), "/migrations")).unwrap() {
+        let entry = entry.unwrap();
+        std::fs::copy(entry.path(), migrations.path().join(entry.file_name())).unwrap();
+    }
     std::fs::write(
-        migrations.path().join("20261026000100_initial_schema.sql"),
-        include_str!("../migrations/20261026000100_initial_schema.sql"),
-    )
-    .unwrap();
-    std::fs::write(
-        migrations.path().join("20261026000200_broken.sql"),
+        migrations.path().join("20261026000300_broken.sql"),
         "CREATE TABLE partial_upgrade(id INTEGER); INSERT INTO missing_table VALUES(1);",
     )
     .unwrap();
@@ -452,7 +451,7 @@ async fn failed_sql_migration_is_atomic_and_unknown_versions_are_rejected() {
             .unwrap();
     assert_eq!(count, 0);
     std::fs::write(
-        migrations.path().join("20261026000200_broken.sql"),
+        migrations.path().join("20261026000300_broken.sql"),
         "CREATE TABLE future_schema(id INTEGER);",
     )
     .unwrap();
@@ -504,4 +503,99 @@ async fn body_limit_and_invalid_host_reject_requests_before_mutation() {
     .unwrap();
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
     assert!(store.lists().await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn installation_identity_is_stable_and_separate_from_the_owner() {
+    let (dir, store) = setup().await;
+    let identity = store.identity().await.unwrap();
+    assert_eq!(
+        Uuid::parse_str(&identity.server_id)
+            .unwrap()
+            .get_version_num(),
+        4
+    );
+    assert_eq!(identity.owner_id, store.owner_id);
+    let reopened = Store::open(&dir.path().join("test.sqlite")).await.unwrap();
+    assert_eq!(identity, reopened.identity().await.unwrap());
+    let other_id = Uuid::new_v4().to_string();
+    sqlx::query("INSERT INTO users VALUES (?,'Other',0)")
+        .bind(&other_id)
+        .execute(&store.pool)
+        .await
+        .unwrap();
+    let other = Store {
+        pool: store.pool.clone(),
+        owner_id: other_id.clone(),
+    };
+    assert_eq!(
+        identity.server_id,
+        other.identity().await.unwrap().server_id
+    );
+    assert_eq!(other_id, other.identity().await.unwrap().owner_id);
+    let (status, body) = call(&store, "GET", "/api/session", Value::Null, None).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["ownerId"], identity.owner_id);
+    assert_eq!(body["serverId"], identity.server_id);
+}
+
+#[tokio::test]
+async fn upgrade_from_m3_preserves_user_lists_items_and_revisions() {
+    let dir = tempfile::tempdir().unwrap();
+    let schema = tempfile::tempdir().unwrap();
+    std::fs::write(
+        schema.path().join("20261026000100_initial_schema.sql"),
+        include_str!("../migrations/20261026000100_initial_schema.sql"),
+    )
+    .unwrap();
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect_with(
+            sqlx::sqlite::SqliteConnectOptions::new()
+                .filename(dir.path().join("old.sqlite"))
+                .create_if_missing(true)
+                .foreign_keys(true),
+        )
+        .await
+        .unwrap();
+    sqlx::migrate::Migrator::new(schema.path())
+        .await
+        .unwrap()
+        .run(&pool)
+        .await
+        .unwrap();
+    let owner = Uuid::new_v4().to_string();
+    let list = Uuid::new_v4().to_string();
+    let node = Uuid::new_v4().to_string();
+    sqlx::query("INSERT INTO users VALUES (?,'Existing owner',1)")
+        .bind(&owner)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO local_identity VALUES (1,?)")
+        .bind(&owner)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO lists VALUES (?,?,'Existing list',0,7,1,2)")
+        .bind(&list)
+        .bind(&owner)
+        .execute(&pool)
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO items VALUES (?,?,NULL,0,'task','Existing content',1,1,2)")
+        .bind(&node)
+        .bind(&list)
+        .execute(&pool)
+        .await
+        .unwrap();
+    pool.close().await;
+    let store = Store::open(&dir.path().join("old.sqlite")).await.unwrap();
+    assert_eq!(store.owner_id, owner);
+    let document = store.get(&list).await.unwrap();
+    assert_eq!(document.revision, 7);
+    assert_eq!(document.nodes[0].id, node);
+    assert_eq!(document.nodes[0].text, "Existing content");
+    assert!(document.nodes[0].completed);
+    assert_eq!(store.identity().await.unwrap().owner_id, owner);
 }

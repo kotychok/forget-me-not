@@ -4,11 +4,11 @@ Agreed: nested lists, our own convenient shortcuts, plain items, and tasks with 
 
 ## Focus and modes
 
-Agreed: there is an active item and two modes: navigation and text editing. Proposed entry/exit behavior: Clicking text or pressing F2 starts editing; Escape ends editing, keeps the input in the local model, and focuses the item. Escape does not discard typed text; use undo for that.
+Agreed: there is an active item and two modes: navigation and text editing. Proposed entry/exit behavior: Clicking text or pressing F2 starts editing; Escape ends editing, keeps the input in the local model, and focuses the item. Escape does not discard typed text; use undo for that. Exception: Escape cancels an untouched newly added item and returns to the previous item in navigation mode (or the empty-list add button). Cancellation restores history from before the addition, so redo does not recreate the cancelled item. Typing, a successful structural change, leaving the item, or undo/redo ends this cancellation window; existing empty items are preserved.
 
 After a structural operation, focus stays on the moved item. After deletion, focus moves to the next visible item, then the previous one, or the empty list. Focus and cursor position are tied to IDs rather than DOM indices. An empty list always offers an accessible add action.
 
-In navigation mode, Tab/Shift+Tab retain standard page focus navigation. In a textarea, they change indentation; Escape exits that mode. Commands also appear in an accessible menu; drag-and-drop is not required. Before implementation, check shortcut conflicts on macOS, Windows/Linux, and with screen readers.
+On item text in either navigation or editing mode, Tab/Shift+Tab indent/outdent the whole branch and preserve the current mode and active item. In editing, Escape returns to navigation. In navigation, Escape focuses the toolbar Add item button, allowing normal page Tab navigation without a keyboard trap. Outside item text controls, Tab/Shift+Tab retain standard page focus navigation. Commands also appear in an accessible menu; drag-and-drop is not required. Before implementation, check shortcut conflicts on macOS, Windows/Linux, and with screen readers.
 
 ## Commands
 
@@ -19,8 +19,8 @@ In navigation mode, Tab/Shift+Tab retain standard page focus navigation. In a te
 | Enter in navigation | Create a sibling after the current branch and start editing it |
 | Enter in text | Same behavior; do not split text or change structure based on cursor position |
 | Shift+Enter in text | Insert a line break within the item text |
-| Tab in text | Indent under the previous sibling; no change if none exists |
-| Shift+Tab in text | Outdent after the parent branch; no change at the root |
+| Tab on item text (navigation or editing) | Indent under the previous sibling; no change if none exists |
+| Shift+Tab on item text (navigation or editing) | Outdent after the parent branch; no change at the root |
 | Alt+↑ / Alt+↓ | Swap the branch with the previous/next sibling at the same level |
 | ↑ / ↓ in navigation | Focus the previous/next visible item |
 | ← in navigation | Collapse an expanded branch; otherwise focus the parent |
@@ -66,3 +66,13 @@ Keep history within the current session, separately for each open list; recovery
 ## Keyboard guide
 
 The guide opens as a modal dialog with a close button and Escape dismissal. Focus stays inside while open and returns to the trigger on close. It does not change the list or add a history step.
+
+Save status appears in a fixed, non-interactive overlay without shifting the editor. Saved notices disappear after 1.2 seconds; unsaved, saving, error, and conflict states remain visible until the state changes. The status remains available to assistive technology.
+
+## Deferred links and long-text editing (M12)
+
+Requested: clickable links and compact long-URL display in navigation mode, with the full original text shown in a wrapping, content-sized editor. Display shortening must never rewrite the URL or item text. Link activation and entering edit mode need distinct accessible interactions; choose their exact mouse/keyboard behavior before implementation. See [M12](milestones.md#m12--links-and-long-text-editing).
+
+A readable label or accompanying comment is an open proposal, not an agreed new data field. Coordinate its design with M6 notes and M11 Markdown rendering.
+
+The item action toolbar sticks to the viewport top while scrolling within the editor, including long lists. Its opaque background separates controls from scrolling content; focused item text reserves scroll space below it.

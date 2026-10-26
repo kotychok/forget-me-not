@@ -1,3 +1,5 @@
+import { Drafts } from './drafts.ts';
+import type { Draft, DraftStorage } from './draft-storage.ts';
 import { validatePortable } from './portable.ts';
 import type { Portable } from './portable.ts';
 import { api } from './api.ts';
@@ -24,10 +26,13 @@ export class Workspace {
   private sessions = new Map<string, Session>();
   private transport: typeof api;
   private notify: () => void;
+  readonly drafts: Drafts | undefined;
+  private draftIdentityReady = false;
 
-  constructor(notify: () => void, transport = api) {
+  constructor(notify: () => void, transport = api, storage?: DraftStorage) {
     this.notify = notify;
     this.transport = transport;
+    if (storage) this.drafts = new Drafts(storage, notify);
   }
   get current() {
     return this.selectedId ? this.sessions.get(this.selectedId) : undefined;
@@ -39,9 +44,64 @@ export class Workspace {
     return [...this.sessions.values()].some((session) => session.sync.dirty);
   }
 
+  private document(id: string, session: Session) {
+    return { id, title: session.title, nodes: session.editor.state.nodes };
+  }
+  private async initializeDrafts() {
+    if (!this.drafts || this.draftIdentityReady) return;
+    try {
+      const identity = await this.transport.session();
+      if (!identity.serverId || !identity.ownerId)
+        throw new Error('Missing server identity');
+      await this.drafts.initialize(identity.serverId, identity.ownerId);
+      this.draftIdentityReady = true;
+    } catch (error) {
+      this.drafts.fail(
+        error instanceof Error
+          ? error.message
+          : 'Draft identity could not be confirmed',
+      );
+    }
+  }
+  private async reconcileDrafts() {
+    if (!this.drafts || !this.draftIdentityReady) return;
+    for (const id of new Set(
+      this.drafts.records.map((record) => record.document.id),
+    )) {
+      if (!this.lists.some((list) => list.id === id)) continue;
+      try {
+        await this.drafts.prune(await this.transport.get(id));
+      } catch {
+        this.drafts.fail(
+          'Could not compare a draft with the server. Local versions were kept.',
+        );
+      }
+    }
+  }
+  async refreshDrafts() {
+    await this.initializeDrafts();
+    await this.drafts?.refresh();
+    await this.reconcileDrafts();
+  }
+  async retryDraftStorage() {
+    await this.initializeDrafts();
+    for (const [id, session] of this.sessions)
+      this.drafts?.update(
+        this.document(id, session),
+        session.sync.revision,
+        session.sync.dirty,
+        true,
+      );
+    await this.drafts?.retry();
+  }
   private sessionChanged(id: string) {
     const session = this.sessions.get(id);
     if (!session) return;
+    this.drafts?.update(
+      this.document(id, session),
+      session.sync.revision,
+      session.sync.dirty,
+    );
     this.lists = this.lists.map((list) =>
       list.id === id
         ? {
@@ -76,7 +136,12 @@ export class Workspace {
     return session;
   }
   private async activate(id: string) {
-    if (!this.sessions.has(id)) this.makeSession(await this.transport.get(id));
+    if (!this.sessions.has(id)) {
+      const document = await this.transport.get(id);
+      this.makeSession(document);
+      await this.drafts?.prune(document);
+      this.sessionChanged(id);
+    }
     this.selectedId = id;
   }
   async load(preferred: string | null) {
@@ -84,7 +149,9 @@ export class Workspace {
     this.error = '';
     this.notify();
     try {
+      await this.initializeDrafts();
       this.lists = await this.transport.lists();
+      await this.reconcileDrafts();
       const id =
         this.lists.find((list) => list.id === preferred)?.id ??
         this.lists[0]?.id;
@@ -188,6 +255,11 @@ export class Workspace {
       }
       await this.transport.delete(id, session.sync.revision);
       session.sync.dispose();
+      await this.drafts?.release(
+        this.document(id, session),
+        session.sync.revision,
+        false,
+      );
       this.sessions.delete(id);
       this.lists = this.lists.filter((list) => list.id !== id);
       this.selectedId = null;
@@ -254,6 +326,111 @@ export class Workspace {
       this.busy = false;
       this.notify();
     }
+  }
+  async loadServerVersion(): Promise<void> {
+    const session = this.current;
+    const id = this.selectedId;
+    if (!session || !id || this.busy) return;
+    this.busy = true;
+    this.error = '';
+    this.notify();
+    await session.sync.pause();
+    try {
+      const server = await this.transport.get(id);
+      if (session.sync.dirty) {
+        if (!this.drafts)
+          throw new Error(
+            'Local draft storage is unavailable. Save a local copy first.',
+          );
+        await this.drafts.preserve(
+          this.document(id, session),
+          session.sync.revision,
+        );
+      }
+      session.sync.dispose();
+      await this.drafts?.release(
+        this.document(id, session),
+        session.sync.revision,
+        session.sync.dirty,
+      );
+      this.makeSession(server);
+      this.sessionChanged(id);
+      await this.drafts?.prune(server);
+    } catch (error) {
+      session.sync.resume();
+      throw error;
+    } finally {
+      this.busy = false;
+      this.notify();
+    }
+  }
+  async saveLocalCopy(): Promise<void> {
+    const session = this.current;
+    const id = this.selectedId;
+    if (!session || !id || this.busy) return;
+    this.busy = true;
+    this.error = '';
+    this.notify();
+    await session.sync.pause();
+    try {
+      const source = this.exportCurrent();
+      source.lists[0].title =
+        [...source.lists[0].title].slice(0, 187).join('') + ' (local copy)';
+      const imported = await this.transport.importJson(source);
+      this.lists = [...this.lists, ...imported];
+      const copy = await this.transport.get(imported[0].id);
+      session.sync.dispose();
+      await this.drafts?.release(
+        this.document(id, session),
+        session.sync.revision,
+        false,
+      );
+      this.sessions.delete(id);
+      this.makeSession(copy);
+      this.selectedId = copy.id;
+    } catch (error) {
+      session.sync.resume();
+      throw error;
+    } finally {
+      this.busy = false;
+      this.notify();
+    }
+  }
+  async recoverDraft(record: Draft): Promise<void> {
+    if (
+      !this.drafts ||
+      !this.drafts.records.some(
+        (item) =>
+          item.scope === record.scope &&
+          item.id === record.id &&
+          item.token === record.token,
+      )
+    )
+      throw new Error('Refresh drafts before recovering this version.');
+    if (this.busy) return;
+    this.busy = true;
+    this.error = '';
+    this.notify();
+    try {
+      const source = validatePortable({
+        schemaVersion: 1,
+        lists: [record.document],
+      });
+      source.lists[0].title =
+        [...source.lists[0].title].slice(0, 188).join('') + ' (recovered)';
+      const imported = await this.transport.importJson(source);
+      this.lists = [...this.lists, ...imported];
+      const copy = await this.transport.get(imported[0].id);
+      this.makeSession(copy);
+      this.selectedId = copy.id;
+      await this.drafts.consume(record);
+    } finally {
+      this.busy = false;
+      this.notify();
+    }
+  }
+  async discardDraft(record: Draft) {
+    await this.drafts?.discard(record);
   }
   dispose() {
     this.sessions.forEach((session) => session.sync.dispose());

@@ -1,6 +1,6 @@
 # Documentation
 
-Updated: 2026-10-26. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 JSON transfer is ready for local review. Remaining design details are tracked by milestone.
+Updated: 2026-10-26. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 was reviewed and committed; M4 draft recovery is ready for local review. Remaining design details are tracked by milestone.
 
 ## Agreed with the user
 
@@ -31,6 +31,7 @@ Updated: 2026-10-26. The core direction is agreed. M1 was reviewed and committed
 - [Architecture](architecture.md): components, persistence, conflicts, deployment.
 - [Editor behavior](editor-behavior.md): focus, tree operations, commands, history.
 - [Database and migrations](database.md): identifiers, ownership, schema, ordering, and migration management.
+- [Draft recovery](recovery.md): local persistence, identity scopes, recovery, and conflict choices.
 - [Data formats](data-formats.md): model, versioned JSON, limits, import/export.
 - [Decisions](decisions.md): agreements and proposals.
 - [Codex workflow](codex-workflow.md): instructions, configuration, verification.
@@ -49,6 +50,10 @@ The core direction is agreed; M0 is complete as a documentation milestone. Edito
 
 Before persistence: decide expected scale and initial limits. The initial identity is one local user without login. UUIDv4, normalized tables, SQLx migrations, and initial snapshot saves are agreed. Before deployment: choose production authentication, hosting details, and backup policy. Import format details are resolved before the portability milestone.
 
-M2 is implemented with a loopback-only backend, embedded migrations, user-owned multiple lists, heading rename, deletion confirmation, and revision-checked autosave. See the root README for commands and the [M2 implementation record](plans/m2-persistence.md) for verification. M3 adds JSON import/export; authentication and persistent draft/conflict recovery remain later milestones.
+M2 is implemented with a loopback-only backend, embedded migrations, user-owned multiple lists, heading rename, deletion confirmation, and revision-checked autosave. See the root README for commands and the [M2 implementation record](plans/m2-persistence.md) for verification. M3 provides JSON import/export. M4 adds local drafts and conflict actions; authentication remains M5.
 
 M3 implementation and verification: [JSON portability record](plans/m3-json-transfer.md). Markdown file transfer is excluded; Markdown rendering in item text is M11.
+
+M12 tracks clickable links, compact URL display, and full, content-sized text editing. Link labels or accompanying comments remain an open design option; see the [milestone](milestones.md#m12--links-and-long-text-editing).
+
+M13 adds a future Telegram Inbox for capturing text and links; M14 adds optional AI commands on selected content with preview, undo, and spending controls. Both are deferred until after M5; detailed design and provider selection remain open. See [Milestones](milestones.md).

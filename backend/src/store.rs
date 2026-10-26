@@ -106,11 +106,24 @@ impl Store {
         sqlx::query("INSERT OR IGNORE INTO users(id, display_name, created_at) SELECT ?, 'Local user', ? WHERE NOT EXISTS (SELECT 1 FROM local_identity)")
             .bind(&candidate_id).bind(now()).execute(&mut *tx).await?;
         sqlx::query("INSERT OR IGNORE INTO local_identity(singleton, user_id) SELECT 1, id FROM users WHERE id=?").bind(&candidate_id).execute(&mut *tx).await?;
+        sqlx::query("INSERT OR IGNORE INTO installation(singleton,id) VALUES (1,?)")
+            .bind(Uuid::new_v4().to_string())
+            .execute(&mut *tx)
+            .await?;
         let owner_id = sqlx::query_scalar("SELECT user_id FROM local_identity WHERE singleton=1")
             .fetch_one(&mut *tx)
             .await?;
         tx.commit().await?;
         Ok(Self { pool, owner_id })
+    }
+    pub async fn identity(&self) -> Result<crate::model::ClientIdentity> {
+        let server_id = sqlx::query_scalar("SELECT id FROM installation WHERE singleton=1")
+            .fetch_one(&self.pool)
+            .await?;
+        Ok(crate::model::ClientIdentity {
+            server_id,
+            owner_id: self.owner_id.clone(),
+        })
     }
     pub async fn lists(&self) -> Result<Vec<ListSummary>> {
         Ok(sqlx::query_as("SELECT l.id,l.title,l.revision,l.position,(SELECT count(*) FROM items i WHERE i.list_id=l.id) AS item_count FROM lists l WHERE owner_id=? ORDER BY position,id").bind(&self.owner_id).fetch_all(&self.pool).await?)

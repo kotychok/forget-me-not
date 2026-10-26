@@ -23,6 +23,7 @@
   let composing = false;
   let outline = $state<HTMLDivElement>();
   let emptyButton = $state<HTMLButtonElement>();
+  let addButton = $state<HTMLButtonElement>();
   const rows = $derived(visibleItems(view.nodes, collapsed));
   const active = $derived(locate(view.nodes, view.focus.id));
   const total = $derived(visibleItems(view.nodes, new Set()).length);
@@ -183,14 +184,16 @@
       command('add');
       return;
     }
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      command(event.shiftKey ? 'outdent' : 'indent');
+      return;
+    }
     if (edit) {
-      if (event.key === 'Tab') {
-        event.preventDefault();
-        command(event.shiftKey ? 'outdent' : 'indent');
-      }
       if (event.key === 'Escape') {
         event.preventDefault();
         capture();
+        if (editor.cancelNewItem()) ondirty();
         editor.setFocus({ ...editor.state.focus, mode: 'navigate' });
         void render();
       }
@@ -212,6 +215,9 @@
       event.preventDefault();
       const item = rows[index + (event.key === 'ArrowUp' ? -1 : 1)]?.item;
       if (item) focusItem(item.id);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      addButton?.focus();
     } else if (event.key === 'Delete' && !event.shiftKey) {
       event.preventDefault();
       command('delete');
@@ -236,7 +242,9 @@
 
 <div inert={disabled}>
   <div class="toolbar" aria-label="Item actions">
-    <button onclick={() => command('add')}>＋ Add item</button>
+    <button bind:this={addButton} onclick={() => command('add')}
+      >＋ Add item</button
+    >
     <span class="divider"></span>
     <button onclick={() => history()} disabled={!canUndo} aria-label="Undo"
       >↶ Undo</button
@@ -378,7 +386,8 @@
   </div>
 
   <p class="hint">
-    <kbd>Enter</kbd> to add <span>·</span> <kbd>Tab</kbd> to nest while editing
+    <kbd>Enter</kbd> to add <span>·</span> <kbd>Tab</kbd> / <kbd>Shift+Tab</kbd>
+    to indent / outdent
     <span>·</span> <kbd>Esc</kbd> to navigate
   </p>
 </div>

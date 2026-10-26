@@ -9,10 +9,13 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
   ├── Workspace — list/session lifecycle and API coordination
   │     ├── Editor — tree commands and session undo/redo
   │     ├── Autosave — one ordered save queue per list, revisions, retry reconciliation
+  │     ├── Drafts — scope, serialized local writes, acknowledgement cleanup
+  │     │     └── IndexedDbDrafts — native storage adapter
   │     └── api — HTTP/JSON transport
   ├── EditorPane.svelte — tree UI, keyboard/composition events, DOM focus and selection
   ├── KeyboardGuide.svelte — accessible modal guide
-  └── JsonTransfer.svelte — file selection, preview, downloads, and confirmation
+  ├── JsonTransfer.svelte — file selection, preview, downloads, and confirmation
+  └── RecoveryPanel.svelte — draft preview and explicit recovery/conflict actions
 ```
 
 - `lib/editor.ts` knows only item data, commands, and history. It does not import Svelte, HTTP, or browser DOM APIs. ID generation uses platform crypto.
@@ -25,6 +28,8 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
 There is no second authoritative tree in the UI. The Editor owns content/history; the pane publishes a reactive display copy. Sidebar metadata is a projection of the corresponding session/API result, not another editable tree.
 
 `lib/portable.ts` owns pure JSON validation and serialization; it does not read files, fetch, or write data. Workspace coordinates exports/imports through the concrete API; JsonTransfer handles browser file/download APIs.
+
+`lib/documents.ts` compares document content independently of field insertion order. `lib/download.ts` is the shared browser JSON-download adapter. Recovery actions pause Autosave before replacing a session; `{#key current}` remounts the pane when a fresh server version replaces the editor.
 
 ## Backend
 
@@ -48,7 +53,7 @@ Do not add a separate service/repository abstraction until actual behavior needs
 - New tree command: add it to Editor, test its invariants/history, then connect a pane action/shortcut. Do not place tree mutation rules in an HTTP handler or template.
 - New portable item field: add a schema migration and backend model/validation/storage support, then frontend model, UI, and format-schema handling in M3. Existing applied migrations remain immutable.
 - New import/export format in M3: add pure conversion functions around the document model. Reuse normal server validation and atomic writes instead of a parallel persistence path.
-- Draft recovery in M4: attach draft storage to sessions/autosave; keep IndexedDB operations out of tree commands and DOM focus logic.
+- Draft recovery is attached through the dedicated Drafts manager. Keep native IndexedDB calls out of Editor, Autosave, Workspace, and DOM focus logic. Changes to authentication identity require a fresh Workspace/cache before another account is displayed.
 - Authentication in M5: replace server-resolved local identity at the HTTP boundary; preserve owner-scoped store operations. Never trust a client-supplied owner ID.
 
 ## Verification boundaries

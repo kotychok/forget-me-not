@@ -1,6 +1,6 @@
 # JSON data format — schema v1
 
-M3 supports JSON file import/export only. Markdown file import/export is out of scope. Markdown rendering inside item text is deferred to M11; all text is currently literal.
+M3 supports JSON file import/export only. Markdown file import/export is out of scope. Markdown rendering inside item text is deferred to M9; all text is currently literal.
 
 ## Portable model
 
@@ -47,4 +47,4 @@ The per-list save limit ensures imported data can still be edited through normal
 
 ## Markdown in item text — later
 
-Literal `**bold**`, links, backticks, or HTML-looking text survive JSON round-trip unchanged today. M11 may add safe Markdown display rendering while keeping the underlying text editable and portable. That is separate from importing Markdown documents or using Markdown as the storage format.
+Literal `**bold**`, links, backticks, or HTML-looking text survive JSON round-trip unchanged today. M9 may add safe Markdown display rendering while keeping the underlying text editable and portable. That is separate from importing Markdown documents or using Markdown as the storage format.

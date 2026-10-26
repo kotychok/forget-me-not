@@ -69,10 +69,10 @@ The guide opens as a modal dialog with a close button and Escape dismissal. Focu
 
 Save status appears in a fixed, non-interactive overlay without shifting the editor. Saved notices disappear after 1.2 seconds; unsaved, saving, error, and conflict states remain visible until the state changes. The status remains available to assistive technology.
 
-## Deferred links and long-text editing (M12)
+## Deferred links and long-text editing (M5)
 
-Requested: clickable links and compact long-URL display in navigation mode, with the full original text shown in a wrapping, content-sized editor. Display shortening must never rewrite the URL or item text. Link activation and entering edit mode need distinct accessible interactions; choose their exact mouse/keyboard behavior before implementation. See [M12](milestones.md#m12--links-and-long-text-editing).
+Requested: clickable links and compact long-URL display in navigation mode, with the full original text shown in a wrapping, content-sized editor. Display shortening must never rewrite the URL or item text. Link activation and entering edit mode need distinct accessible interactions; choose their exact mouse/keyboard behavior before implementation. See [M5](milestones.md#m5--links-and-long-text-editing).
 
-A readable label or accompanying comment is an open proposal, not an agreed new data field. Coordinate its design with M6 notes and M11 Markdown rendering.
+A readable label or accompanying comment is an open proposal, not an agreed new data field. Coordinate its design with M7 notes and M9 Markdown rendering.
 
 The item action toolbar sticks to the viewport top while scrolling within the editor, including long lists. Its opaque background separates controls from scrolling content; focused item text reserves scroll space below it.

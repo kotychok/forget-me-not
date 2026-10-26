@@ -16,7 +16,7 @@ IndexedDB is isolated by browser origin. Within an origin, records use installat
 
 On startup, the app confirms server identity before reading drafts. It compares retained records with fresh server documents. An identical already-acknowledged document can be removed conditionally; other versions remain available for review. Records for deleted source lists also remain recoverable. There is no automatic expiry or cross-owner cleanup.
 
-Authentication remains M5. Switching authenticated accounts must create a fresh Workspace and clear the old UI/session cache before showing another identity. The draft manager clears exposed records before a different scope is read and refuses reuse with active writers. Initial recovery needs a reachable backend to confirm identity; full offline startup is not implemented.
+Authentication remains M11. Switching authenticated accounts must create a fresh Workspace and clear the old UI/session cache before showing another identity. The draft manager clears exposed records before a different scope is read and refuses reuse with active writers. Initial recovery needs a reachable backend to confirm identity; full offline startup is not implemented.
 
 ## Recover drafts
 

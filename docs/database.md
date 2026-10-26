@@ -1,6 +1,6 @@
 # Database and migrations
 
-Updated: 2026-10-26. Agreed: multiple lists per user, normalized users/lists/items, UUIDv4 identifiers, and SQLx migrations. Whole-list snapshots with revision checks are the initial save approach. M2 implements the initial schema, stable creation-order list positions, item row diffs, and embedded migrations. Production operational procedures remain planned for M5.
+Updated: 2026-10-26. Agreed: multiple lists per user, normalized users/lists/items, UUIDv4 identifiers, and SQLx migrations. Whole-list snapshots with revision checks are the initial save approach. M2 implements the initial schema, stable creation-order list positions, item row diffs, and embedded migrations. Production operational procedures remain planned for M11.
 
 ## Identifiers
 
@@ -20,13 +20,13 @@ users 1 ─── N lists 1 ─── N items
                               └── parent_id → items in the same list
 ```
 
-Each list has one owner; shared lists and membership tables are outside the current proposal. This supports multiple accounts in the schema without deciding registration, login, or public multi-user access. M2 provisions one local user resolved by the server without a login screen. All queries remain owner-scoped; a submitted owner ID is never treated as proof of identity. Production authentication is deferred to M5 before non-local deployment.
+Each list has one owner; shared lists and membership tables are outside the current proposal. This supports multiple accounts in the schema without deciding registration, login, or public multi-user access. M2 provisions one local user resolved by the server without a login screen. All queries remain owner-scoped; a submitted owner ID is never treated as proof of identity. Production authentication is deferred to M11 before non-local deployment.
 
 Prefer normalized item rows over the earlier single-JSON-column proposal. This makes ownership, structural constraints, and future item queries more explicit. The trade-off is more persistence logic. Do not keep an independently authoritative JSON copy alongside the rows. Nested JSON remains the API/export representation.
 
 ## Implemented schema
 
-The authoritative definition is [the initial migration](../backend/migrations/20261026000100_initial_schema.sql). It creates users, lists, items, their indexes and constraints, and a `local_identity` singleton referencing the provisioned local user. [M4 installation identity](../backend/migrations/20261026000200_installation_identity.sql) adds a separate installation UUID; original migrations are unchanged. IDs and timestamps are supplied by the backend. Authentication tables remain deferred to M5.
+The authoritative definition is [the initial migration](../backend/migrations/20261026000100_initial_schema.sql). It creates users, lists, items, their indexes and constraints, and a `local_identity` singleton referencing the provisioned local user. [M4 installation identity](../backend/migrations/20261026000200_installation_identity.sql) adds a separate installation UUID; original migrations are unchanged. IDs and timestamps are supplied by the backend. Authentication tables remain deferred to M11.
 
 The composite parent foreign key prevents parenting an item under another list. `parent_id = NULL` means a root item. The deferred constraint permits transactional inserts/reparenting in any order, but requires a valid tree at commit. Self-parenting is rejected by SQL; longer cycles, depth limits, and ownership authorization require application validation. SQLite foreign keys must be enabled on every connection before transactions.
 
@@ -40,7 +40,7 @@ The agreed initial whole-list snapshot API works as follows: normalize the submi
 
 List ordering is currently creation order: insertion allocates MAX(position)+1 atomically; deletion may leave harmless gaps. User-driven list reorder and its concurrent-update contract remain deferred. Moving branches between lists is not included in the current command set and would need an atomic operation covering both list revisions.
 
-Configure foreign keys on every pooled connection, a finite busy timeout, and WAL for a single-host deployment after verifying backup behavior. Keep transactions short. Collapse state remains browser UI state. M4 adds an installation singleton with a generated UUID via a new additive migration for draft scoping. Authentication/session tables remain deferred to M5.
+Configure foreign keys on every pooled connection, a finite busy timeout, and WAL for a single-host deployment after verifying backup behavior. Keep transactions short. Collapse state remains browser UI state. M4 adds an installation singleton with a generated UUID via a new additive migration for draft scoping. Authentication/session tables remain deferred to M11.
 
 ## Example: indent and outdent over the API
 
@@ -85,7 +85,7 @@ Shift+Tab uses the same pipeline: the branch root becomes a sibling immediately 
 
 The response acknowledges the submitted snapshot only. If the user has edited again during the request, keep the newer local state and send it next using revision 13. A stale base revision returns a conflict rather than silently applying a move to a different tree.
 
-A future operation-based endpoint could accept `move_item` with `itemId`, `newParentId`, and `afterSiblingId`, plus a base revision and idempotency key. That reduces payload size, but adds command validation and retry semantics. Protocol and transfer-size optimization belongs to M10; snapshot transfer does not require replacing all database rows.
+A future operation-based endpoint could accept `move_item` with `itemId`, `newParentId`, and `afterSiblingId`, plus a base revision and idempotency key. That reduces payload size, but adds command validation and retry semantics. Protocol and transfer-size optimization belongs to M14; snapshot transfer does not require replacing all database rows.
 
 ## Migration files and database history
 
@@ -106,7 +106,7 @@ Once applied to a persistent/shared database, a migration is immutable: add a ne
 
 ## Applying and verifying migrations
 
-Implemented: `make db-migrate` runs the backend with `--migrate`; ordinary server startup applies the same embedded migrations and provisions the local identity. Use `FMN_DB_PATH` to choose the database. `make docker-migrate` remains planned with M5 deployment. No SQLx CLI is required.
+Implemented: `make db-migrate` runs the backend with `--migrate`; ordinary server startup applies the same embedded migrations and provisions the local identity. Use `FMN_DB_PATH` to choose the database. `make docker-migrate` remains planned with M11 deployment. No SQLx CLI is required.
 
 For deployment: stop writes, make and verify a consistent backup, run migrations through one process, then start the compatible server. On migration failure, do not serve requests against an uncertain schema. Keep pending/mismatched migration checks in startup; avoid independently maintained SQL between startup and manual commands. The server should refuse a database newer than its supported migration set.
 

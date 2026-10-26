@@ -1,6 +1,6 @@
 # M4 — Draft recovery and conflicts
 
-Status: implemented and verified; awaiting user review. Authorized after the user reviewed and committed M3.
+Status: complete; implemented, verified, and accepted by the user on 2026-10-26. Authorized after the user reviewed and committed M3.
 
 ## Scope and defaults
 
@@ -28,6 +28,6 @@ Draft write/clear ordering, conditional deletion tokens, scope isolation, acknow
 
 No new frontend dependencies were added. IndexedDB is native; tree commands and DOM focus code remain independent of recovery storage. Full offline startup, automatic merging, and persistent undo are not implemented. Browser tests cover Chromium on macOS, not every browser's quota/eviction behavior.
 
-The development server is left running at the existing localhost URL for review. Authentication remains M5. No commits were made.
+The user completed local review without reported issues and requested discussion of M11. Authentication remains M11. No commits were made.
 
 The recovery dialog and preview were visually inspected at 970 × 954 using an isolated browser-only draft. After the development migration, existing users, local identity, list rows, and item rows matched the pre-migration backup exactly. Local documentation links and `git diff --check` passed.

@@ -54,4 +54,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D036 | 2026-10-26 | Agreed | Tab/Shift+Tab indent/outdent on item text in both navigation and editing, preserving the active item and mode. Supersedes navigation-mode page Tab behavior; Escape from navigation focuses the toolbar to retain a keyboard exit |
 
+| D037 | 2026-10-26 | Agreed replan | Hosting remains undecided; move deployment later and remove it as a prerequisite for local product improvements. The current milestone numbering and mapping in milestones.md supersede earlier milestone references and blanket deployment dependencies; individual feature design remains open |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

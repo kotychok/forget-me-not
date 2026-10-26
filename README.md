@@ -17,7 +17,7 @@ Open http://127.0.0.1:5173. `make dev` starts the Rust API, applies embedded mig
 
 The default SQLite file is `data/forget-me-not.sqlite`, excluded from Git. A local user is provisioned once and reused across restarts. New installations start with no lists; choose **New list** to begin. Each list supports a plain-text heading rename, items, tasks, and autosave after a short pause.
 
-**Local use only:** the API binds to IPv4 loopback and checks request Host/Origin. There is no login. Production authentication and Docker deployment are planned for M5.
+**Local use only:** the API binds to IPv4 loopback and checks request Host/Origin. There is no login. Production authentication and Docker deployment are planned for M11.
 
 ## Persistence behavior
 
@@ -56,7 +56,7 @@ Open **Import / export** in the sidebar.
 
 Supported format: `schemaVersion: 1` with a `lists` array. Limits are 8 MiB/file, 100 lists, and 10,000 total items, plus existing per-list limits. Unknown fields, newer versions, duplicate IDs, and invalid structures are rejected with explicit errors. See [JSON format](docs/data-formats.md) and the [example file](fixtures/portable-v1.json).
 
-Markdown file import/export is not planned. Markdown-looking text is preserved literally in JSON; safe display rendering inside items is deferred to M11.
+Markdown file import/export is not planned. Markdown-looking text is preserved literally in JSON; safe display rendering inside items is deferred to M9.
 
 ## Keyboard editing
 

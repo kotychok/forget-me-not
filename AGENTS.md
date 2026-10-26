@@ -2,7 +2,7 @@
 
 - Use English for repository content, including documentation, comments, and code identifiers. Continue chatting with the user in Ukrainian unless requested otherwise.
 - The user makes commits. Do not commit, amend, push, or publish without a separate explicit request. Do not initialize Git on your own.
-- M4 implementation is authorized: scoped IndexedDB drafts, safe recovery/copy, and conflict actions. M3 was reviewed and committed by the user. Login remains M5 and Markdown rendering remains M11. Preserve the established module boundaries.
+- M4 is complete and accepted by the user. The roadmap was reordered: M5 links/long-text editing is next for design; hosting is undecided and local feature work does not depend on deployment. Do not treat roadmap reordering as authorization to implement later features. M3 was reviewed and committed by the user. Login remains M11 and Markdown rendering remains M9. Preserve the established module boundaries.
 - Distinguish agreed requirements, proposals, and open questions. Do not treat assumptions as approved decisions.
 - Use `docs/architecture.md` for component boundaries, `docs/editor-behavior.md` for editor commands, `docs/data-formats.md` for formats, and `docs/database.md` for schema and migrations. Read only the documents relevant to the task.
 - Record significant architecture decisions and changes to agreements in `docs/decisions.md`. Keep the current direction and questions in `docs/README.md`; use `docs/milestones.md` for roadmap status and acceptance criteria.

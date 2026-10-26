@@ -4,7 +4,7 @@ Status: implemented and verified; awaiting user review. Authorized by the user's
 
 ## Scope
 
-Versioned JSON, current-list export, all-saved-lists export, strict file validation, preview, and atomic import as new copies. Markdown file import/export is removed from scope. Markdown rendering in item text is deferred to M11; current text, including Markdown-looking characters, is preserved literally.
+Versioned JSON, current-list export, all-saved-lists export, strict file validation, preview, and atomic import as new copies. Markdown file import/export is removed from scope. Markdown rendering in item text is deferred to M9; current text, including Markdown-looking characters, is preserved literally.
 
 ## Defaults and boundaries
 
@@ -38,6 +38,6 @@ The runtime and verification approach remain the same as M2. Browser tests use d
 
 ## Limitations
 
-No overwrite, merge, ID-preserving restore, Markdown document transfer, or new Markdown rendering. JSON excludes server/account/session metadata. Import intentionally creates another copy if explicitly repeated; it is not automatically retried after an uncertain response. Refreshing the list index is read-only and preserves cached editor sessions. Authentication and durable draft recovery remain M5/M4.
+No overwrite, merge, ID-preserving restore, Markdown document transfer, or new Markdown rendering. JSON excludes server/account/session metadata. Import intentionally creates another copy if explicitly repeated; it is not automatically retried after an uncertain response. Refreshing the list index is read-only and preserves cached editor sessions. Authentication and durable draft recovery remain M11/M4.
 
 The import/export modal and a two-list preview were visually inspected at 970 × 954 without confirming an import. The running development server was restarted for M3 without schema changes. `git diff --check` and local documentation link checks passed. No commits were made.

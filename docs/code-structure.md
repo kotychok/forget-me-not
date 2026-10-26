@@ -54,7 +54,7 @@ Do not add a separate service/repository abstraction until actual behavior needs
 - New portable item field: add a schema migration and backend model/validation/storage support, then frontend model, UI, and format-schema handling in M3. Existing applied migrations remain immutable.
 - New import/export format in M3: add pure conversion functions around the document model. Reuse normal server validation and atomic writes instead of a parallel persistence path.
 - Draft recovery is attached through the dedicated Drafts manager. Keep native IndexedDB calls out of Editor, Autosave, Workspace, and DOM focus logic. Changes to authentication identity require a fresh Workspace/cache before another account is displayed.
-- Authentication in M5: replace server-resolved local identity at the HTTP boundary; preserve owner-scoped store operations. Never trust a client-supplied owner ID.
+- Authentication in M11: replace server-resolved local identity at the HTTP boundary; preserve owner-scoped store operations. Never trust a client-supplied owner ID.
 
 ## Verification boundaries
 

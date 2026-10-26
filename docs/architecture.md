@@ -16,7 +16,7 @@ Rust / Axum → validation → SQLite
 
 The tree model and commands do not depend on Svelte, the DOM, HTTP, or the database. A command returns the new state and information needed to restore focus and undo. The UI renders visible nodes and routes keyboard input. The server validates invariants independently rather than trusting the browser.
 
-Use one repository: `frontend/` contains the editor, `backend/` implements M2 persistence, and `docs/` contains design records. Do not introduce microservices, CRDTs, or event sourcing without a need. Items currently display literal text and editing uses a plain textarea. Markdown rendering inside item text is deferred to M11; Markdown file transfer is out of scope. Revisit a larger rich-text editor based on actual use cases.
+Use one repository: `frontend/` contains the editor, `backend/` implements M2 persistence, and `docs/` contains design records. Do not introduce microservices, CRDTs, or event sourcing without a need. Items currently display literal text and editing uses a plain textarea. Markdown rendering inside item text is deferred to M9; Markdown file transfer is out of scope. Revisit a larger rich-text editor based on actual use cases.
 
 ## Local development and commands
 
@@ -41,7 +41,7 @@ The root Makefile implements `install`, `dev`, `build`, `run`, `db-migrate`, `ch
 
 Agreed: each user can have multiple lists. Agreed schema: `users → lists → items`, with one row per item, a same-list parent reference, and explicit sibling order. See [Database and migrations](database.md) for agreed UUIDv4 identifiers and SQLx migration management, plus draft SQL, ownership constraints, and transactions.
 
-The agreed normalized storage approach replaces the earlier single-JSON-document storage proposal. JSON remains the nested API/export format; normalized rows are the canonical database representation. Whole-list snapshot saves with revision checks are the agreed initial approach, with a validated row diff and revision increment in one transaction. Transfer-size optimization is deferred to M10. The initial migration and owner-scoped SQLite implementation are in `backend/`. See the root README for implemented limits and runtime configuration.
+The agreed normalized storage approach replaces the earlier single-JSON-document storage proposal. JSON remains the nested API/export format; normalized rows are the canonical database representation. Whole-list snapshot saves with revision checks are the agreed initial approach, with a validated row diff and revision increment in one transaction. Transfer-size optimization is deferred to M14. The initial migration and owner-scoped SQLite implementation are in `backend/`. See the root README for implemented limits and runtime configuration.
 
 ## Autosave and drafts
 
@@ -79,7 +79,7 @@ Agreed: deploy with Docker; native local execution without Docker is also suppor
 
 Proposal: one container with the server and frontend assets; Docker Compose for startup and volume configuration; SQLite in a persistent volume; HTTPS through a reverse proxy. Do not place SQLite on a network filesystem without separate verification. Do not run multiple replicas with independent database files.
 
-Each list belongs to a user, and each user can have multiple lists. The schema can support multiple accounts. M2 uses one server-resolved local user without login, restricted to local operation. Production authentication is assigned to M5; registration and the exact mechanism remain undecided. Before public deployment, choose application authentication or a verified auth proxy/VPN. Trust identity headers only from a restricted proxy. Cookie authentication needs CSRF protection and secure cookies.
+Each list belongs to a user, and each user can have multiple lists. The schema can support multiple accounts. M2 uses one server-resolved local user without login, restricted to local operation. Production authentication is assigned to M11; registration and the exact mechanism remain undecided. Before public deployment, choose application authentication or a verified auth proxy/VPN. Trust identity headers only from a restricted proxy. Cookie authentication needs CSRF protection and secure cookies.
 
 Markdown is untrusted text: disable or sanitize raw HTML, disallow unsafe URLs, and keep secrets and list content out of logs. Validate import and depth limits on the server as well.
 

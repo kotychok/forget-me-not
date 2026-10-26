@@ -1,6 +1,6 @@
 # Milestones
 
-Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery is implemented and verified for local review; M5 and later implementation milestones have not started. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
+Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 and later implementation milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
 
 Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only for a detailed plan of a complex milestone when implementation begins. Mark a milestone complete only with actual verification evidence.
 
@@ -12,17 +12,17 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M1 | Run a keyboard editor prototype locally | M0 | Complete (reviewed and committed by user) |
 | M2 | Persist user-owned lists with reliable autosave | M1 | Complete (user proceeded to M3) |
 | M3 | Import and export JSON | M2 | Complete (reviewed and committed by user) |
-| M4 | Restore drafts and handle concurrent edits | M2 | Implemented and verified; awaiting user review |
-| M5 | Deploy and recover a protected installation | M3, M4 | Not started |
-| M6 | Item notes | M5 | Deferred |
-| M7 | Tags and filtering | M5 | Deferred |
-| M8 | Search across a user's lists | M5 | Deferred |
-| M9 | Task dates | M5 | Deferred |
-| M10 | Reduce data transfer and optimize the save protocol | M5 | Deferred |
-| M11 | Render Markdown inside item text | M5 | Deferred |
-| M12 | Open links and improve long-text editing | M5 | Deferred |
-| M13 | Capture items through Telegram Inbox | M5 | Deferred |
-| M14 | Optional, budget-controlled AI commands | M5 | Deferred |
+| M4 | Restore drafts and handle concurrent edits | M2 | Complete (reviewed and accepted by user) |
+| M5 | Open links and improve long-text editing | M4 | Next: design |
+| M6 | Search across a user's lists | M4 | Planned |
+| M7 | Item notes | M4 | Planned |
+| M8 | Tags and filtering | M4 | Planned |
+| M9 | Render Markdown inside item text | M5 | Planned |
+| M10 | Task dates | M4 | Planned |
+| M11 | Deploy and recover a protected installation | M3, M4; hosting decision | Deferred: hosting undecided |
+| M12 | Capture items through Telegram Inbox | M11 | Deferred |
+| M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
+| M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Deferred |
 
 M3 and M4 have no dependency on each other; the table does not require parallel implementation. Import/export fixtures can be designed before M2, but complete import persistence depends on it.
 
@@ -38,7 +38,7 @@ Completed through the user's explicit agreements:
 - Normalized users/lists/items, UUIDv4 identifiers, and mandatory SQLx migrations.
 - Whole-list snapshots with revision checks as the initial save approach; reduced transfer is deferred.
 
-Evidence: user confirmations recorded as D005, D006, D018–D024 in [Decisions](decisions.md). This completes the documentation milestone, not application implementation. Remaining behavior and operational details are assigned to M1–M5. The user has since reviewed M1, authorized M2, and requested M3 with JSON-only file transfer.
+Evidence: user confirmations recorded as D005, D006, D018–D024 in [Decisions](decisions.md). This completes the documentation milestone, not application implementation. Remaining behavior and operational details are assigned to M1–M11. The user has since reviewed M1, authorized M2, and requested M3 with JSON-only file transfer.
 
 ## M1 — Local keyboard editor
 
@@ -59,7 +59,7 @@ Verification: tree-command checks and browser interaction scenarios from [Editor
 
 Scope: backend API, users/lists/items, migrations, list management, ownership authorization, revision-checked saves, and save indicators. Extend `make dev` to manage frontend and backend processes. Add native migration and verification targets.
 
-Agreed: M2 uses one provisioned local user without login. Resolve that identity on the server; do not accept a client-supplied owner as authentication. Keep owner-scoped queries and foreign keys so production authentication can be added without redesigning list ownership. Bind the development server to loopback and clearly identify this as local-only operation. Login and production access protection are deferred to M5.
+Agreed: M2 uses one provisioned local user without login. Resolve that identity on the server; do not accept a client-supplied owner as authentication. Keep owner-scoped queries and foreign keys so production authentication can be added without redesigning list ownership. Bind the development server to loopback and clearly identify this as local-only operation. Login and production access protection are deferred to M11.
 
 Implemented defaults: 2,000 items/list, 32 levels, 32 KiB/item, 200 title characters, and a 1 MiB request-body limit. List deletion is permanent after confirmation; user-driven list ordering remains deferred.
 
@@ -77,7 +77,7 @@ Verification: disposable SQLite integration checks for ownership, constraints, r
 
 ## M3 — JSON portability
 
-Scope: versioned JSON, local preview, current-list export, all-saved-lists export, and atomic new-copy import. Markdown file import/export is explicitly removed; rendering Markdown in item text is deferred to M11.
+Scope: versioned JSON, local preview, current-list export, all-saved-lists export, and atomic new-copy import. Markdown file import/export is explicitly removed; rendering Markdown in item text is deferred to M9.
 
 Acceptance:
 
@@ -104,7 +104,55 @@ Acceptance:
 
 Verification: interrupted requests, reload, two-tab edits, local-storage failures, scope isolation, and M3 schema upgrade using disposable data. See [recovery behavior](recovery.md) and the [M4 implementation record](plans/m4-draft-recovery.md).
 
-## M5 — Deployment and recovery
+## Next milestones — local improvements first
+
+Hosting is undecided. Local product improvements do not depend on deployment or production authentication. M5–M10 are the proposed working order; each milestone still needs detailed design before implementation. M11 remains mandatory before exposing the application beyond localhost, but does not block native local work. Later integrations and optimization have their own dependencies rather than a blanket dependency on deployment.
+
+### M5 — Links and long-text editing
+
+Outcome: open links from item text, keep long URLs compact in navigation mode, and make the full original text comfortable to edit. Requested during M4 review; implementation is deferred. This is the next local improvement and can ship independently of Markdown rendering in M9.
+
+Acceptance:
+
+- Recognize HTTP/HTTPS links and provide an accessible way to open them without accidentally entering edit mode or triggering tree commands.
+- Show long URLs compactly in navigation mode; truncation affects presentation only, never stored text or the target URL.
+- Editing reveals the complete original URL and surrounding text. The textarea wraps and grows with its content so editing a long item is not restricted to a single visible line.
+- Preserve keyboard navigation, caret/selection, IME input, undo/redo, autosave, and literal JSON round-trip.
+- Define safe URL handling and how link activation coexists with click-to-edit before implementation. Do not fetch remote page metadata implicitly.
+
+Open design: allow a readable link label and/or an accompanying comment. The user suggested this as a possibility; decide whether ordinary item text, future Markdown links (M9), or separate item notes (M7) provide it before adding fields or changing the JSON schema.
+
+### M6 — Search
+
+Outcome: search across the current user's lists and navigate to the matching item. Deferred at the user's request; result presentation and navigation need a separate design before implementation.
+
+Acceptance:
+
+- Search results respect ownership and identify the list, matching item, and enough ancestor context to distinguish similar matches.
+- Selecting a result opens its list, expands the ancestor path, scrolls the item into view, and gives it keyboard focus with a visible match indication, without changing stored content.
+- Switching to a result preserves pending edits and the existing per-list autosave/history behavior.
+- Define keyboard navigation of results, loading/empty/error states, and behavior when a result changes or is deleted before activation.
+- Decide searched fields, matching/highlighting rules, handling of current unsaved edits, and expected scale before implementation. Choose indexing based on measured needs.
+
+Open design: where results appear, how users return to the results after opening a match, and how highlighting coexists with editing. Do not assume that filtering the visible tree alone satisfies cross-list search.
+
+### M7 — Item notes
+
+Outcome: separate notes attached to an item. Define Markdown support and editing behavior first. Acceptance: notes survive save/reload, migrations, and JSON round-trip; JSON import/export includes the new fields under an explicit schema contract. Existing lists remain compatible.
+
+### M8 — Tags and filtering
+
+Outcome: attach tags and filter items without rewriting the tree. Define per-user tag identity and filtered-tree navigation first. Acceptance: users' tags are isolated; filtering preserves context and never changes stored order; formats and migrations cover the new metadata.
+
+### M9 — Markdown inside item text
+
+Outcome: optionally render Markdown in item text while preserving the original string for editing and JSON portability. Decide the supported inline/block subset and editing behavior first. Acceptance: unsafe HTML/URLs cannot execute; editing, focus, and undo remain reliable; literal source survives save/reload and JSON round-trip. This does not include Markdown file import/export.
+
+### M10 — Task dates
+
+Outcome: task date metadata. Decide due-date versus scheduled-date semantics, date-only versus timestamp values, and timezone behavior first. Acceptance: dates survive migrations and JSON round-trip without timezone shifts; JSON portability includes the chosen date semantics. Reminders and recurrence are not implicitly included.
+
+### M11 — Deployment and recovery
 
 Scope: Docker image, proposed Compose setup if selected, Makefile deployment commands, authentication and access protection, persistent storage, migrations, backups, and operating instructions.
 
@@ -119,67 +167,13 @@ Acceptance:
 - Access protection and owner isolation work with the selected production identity mechanism.
 - Fresh installation and upgrade from the previous supported schema are verified.
 - Migration failure prevents serving an uncertain schema; backups can be restored with compatible code.
-- Text is rendered safely and deployed limits match API validation; Markdown rendering remains M11.
+- Text is rendered safely and deployed limits match API validation; Markdown rendering is tracked separately in M9.
 
 Verification: disposable container smoke checks, authentication/authorization checks, upgrade and restore exercises, and documentation review. Publishing or modifying a real host is outside this documentation task and requires a concrete deployment request.
 
-## Later milestones — agreed deferrals
+### M12 — Telegram Inbox
 
-These milestones are outside the initial core release. Their dependency on M5 keeps the current release focused; their relative order can change. Specific UI, field semantics, and implementation plans require design before work begins.
-
-### M6 — Item notes
-
-Outcome: separate notes attached to an item. Define Markdown support and editing behavior first. Acceptance: notes survive save/reload, migrations, and JSON round-trip; JSON import/export includes the new fields under an explicit schema contract. Existing lists remain compatible.
-
-### M7 — Tags and filtering
-
-Outcome: attach tags and filter items without rewriting the tree. Define per-user tag identity and filtered-tree navigation first. Acceptance: users' tags are isolated; filtering preserves context and never changes stored order; formats and migrations cover the new metadata.
-
-### M8 — Search
-
-Outcome: search across the current user's lists and navigate to the matching item. Deferred at the user's request; result presentation and navigation need a separate design before implementation.
-
-Acceptance:
-
-- Search results respect ownership and identify the list, matching item, and enough ancestor context to distinguish similar matches.
-- Selecting a result opens its list, expands the ancestor path, scrolls the item into view, and gives it keyboard focus with a visible match indication, without changing stored content.
-- Switching to a result preserves pending edits and the existing per-list autosave/history behavior.
-- Define keyboard navigation of results, loading/empty/error states, and behavior when a result changes or is deleted before activation.
-- Decide searched fields, matching/highlighting rules, handling of current unsaved edits, and expected scale before implementation. Choose indexing based on measured needs.
-
-Open design: where results appear, how users return to the results after opening a match, and how highlighting coexists with editing. Do not assume that filtering the visible tree alone satisfies cross-list search.
-
-### M9 — Task dates
-
-Outcome: task date metadata. Decide due-date versus scheduled-date semantics, date-only versus timestamp values, and timezone behavior first. Acceptance: dates survive migrations and JSON round-trip without timezone shifts; JSON portability includes the chosen date semantics. Reminders and recurrence are not implicitly included.
-
-### M10 — Transfer-size optimization
-
-Outcome: reduce the data exchanged for edits after the reliable snapshot implementation exists. Measure payload sizes and latency for agreed list sizes first. Compare compression, coalescing, conditional reads, patches, or operation-based writes; no specific replacement protocol is agreed yet.
-
-Acceptance: representative indent/outdent and text edits exchange measurably fewer bytes against the recorded baseline; revision checks, retry/idempotency, draft recovery, and atomic writes remain correct. Document before/after measurements and protocol compatibility. Optimization must not turn partial failures into lost edits. Establish a quantitative target from the baseline before implementation.
-
-### M11 — Markdown inside item text
-
-Outcome: optionally render Markdown in item text while preserving the original string for editing and JSON portability. Decide the supported inline/block subset and editing behavior first. Acceptance: unsafe HTML/URLs cannot execute; editing, focus, and undo remain reliable; literal source survives save/reload and JSON round-trip. This does not include Markdown file import/export.
-
-### M12 — Links and long-text editing
-
-Outcome: open links from item text, keep long URLs compact in navigation mode, and make the full original text comfortable to edit. Requested during M4 review; implementation is deferred. This can ship independently of Markdown rendering in M11.
-
-Acceptance:
-
-- Recognize HTTP/HTTPS links and provide an accessible way to open them without accidentally entering edit mode or triggering tree commands.
-- Show long URLs compactly in navigation mode; truncation affects presentation only, never stored text or the target URL.
-- Editing reveals the complete original URL and surrounding text. The textarea wraps and grows with its content so editing a long item is not restricted to a single visible line.
-- Preserve keyboard navigation, caret/selection, IME input, undo/redo, autosave, and literal JSON round-trip.
-- Define safe URL handling and how link activation coexists with click-to-edit before implementation. Do not fetch remote page metadata implicitly.
-
-Open design: allow a readable link label and/or an accompanying comment. The user suggested this as a possibility; decide whether ordinary item text, future Markdown links (M11), or separate item notes (M6) provide it before adding fields or changing the JSON schema.
-
-### M13 — Telegram Inbox
-
-Outcome: link a Telegram account to the authenticated application user and capture text or links into a chosen Inbox list. No LLM is needed. Implement before considering AI-assisted Telegram capture; implementation is deferred.
+Outcome: link a Telegram account to the authenticated application user and capture text or links into a chosen Inbox list. No LLM is needed. Production identity is supplied by M11. Implement before considering AI-assisted Telegram capture; implementation is deferred.
 
 Acceptance:
 
@@ -192,9 +186,11 @@ Acceptance:
 
 Open design: bot ownership/configuration, Inbox selection and creation, capture behavior for multiline text, item-level web links, and inbound rate limits. Full tree editing, voice transcription, reminders, group-chat capture, and AI interpretation are separate later proposals, not included in this milestone.
 
-### M14 — Optional AI commands
+### M13 — Optional AI commands
 
-Outcome: explicitly invoked assistance for a selected item or branch, independent of ordinary editing and Telegram capture. Initial commands: turn pasted text into a tree, break an item into subtasks, shorten/rephrase text, and summarize a branch. Tag suggestions depend on M7. Implementation is deferred; provider/model selection remains open.
+This milestone does not depend on Telegram or a hosting choice; choose explicit server-side API configuration before implementation.
+
+Outcome: explicitly invoked assistance for a selected item or branch, independent of ordinary editing and Telegram capture. Initial commands: turn pasted text into a tree, break an item into subtasks, shorten/rephrase text, and summarize a branch. Tag suggestions depend on M8. Implementation is deferred; provider/model selection remains open.
 
 Acceptance:
 
@@ -208,6 +204,12 @@ Acceptance:
 
 Open design: provider and model, pricing/accounting policy, command UI and preview, and provider data handling. Do not assume a specific monthly cost until representative requests are measured. Whole-workspace chat, retrieval/vector search, autonomous background agents, and voice processing are outside this milestone.
 
+### M14 — Transfer-size optimization
+
+Outcome: reduce the data exchanged for edits after the reliable snapshot implementation exists. Measure payload sizes and latency for agreed list sizes first. Compare compression, coalescing, conditional reads, patches, or operation-based writes; no specific replacement protocol is agreed yet.
+
+Acceptance: representative indent/outdent and text edits exchange measurably fewer bytes against the recorded baseline; revision checks, retry/idempotency, draft recovery, and atomic writes remain correct. Document before/after measurements and protocol compatibility. Optimization must not turn partial failures into lost edits. Establish a quantitative target from the baseline before implementation.
+
 ## Remaining product details
 
 Resolve within the relevant milestone rather than blocking all work now:
@@ -215,6 +217,23 @@ Resolve within the relevant milestone rather than blocking all work now:
 - M1: empty-item Enter behavior, task completion propagation, completion visibility, and deletion focus.
 - After M2: soft-delete/trash recovery and user-driven list ordering remain unimplemented. Revisit scale and limits based on real usage.
 - After M3: ID-preserving restore and archive packaging require separate scope; Markdown file transfer is not planned.
-- M5: mobile support expectations and the release support matrix if required.
+- M11: mobile support expectations and the release support matrix if required.
 
 Keep recommendations marked as proposals until the user agrees; do not infer acceptance merely because a milestone mentions them.
+
+## Roadmap renumbering — 2026-10-26
+
+M0–M4 are unchanged. Earlier decision entries retain the milestone numbers used when recorded; the current roadmap supersedes that ordering and its deployment dependencies.
+
+| Previous | Current | Scope |
+| --- | --- | --- |
+| M12 | M5 | Links and long-text editing |
+| M8 | M6 | Search |
+| M6 | M7 | Notes |
+| M7 | M8 | Tags |
+| M11 | M9 | Markdown rendering |
+| M9 | M10 | Dates |
+| M5 | M11 | Protected deployment and recovery |
+| M13 | M12 | Telegram Inbox |
+| M14 | M13 | AI commands |
+| M10 | M14 | Transfer optimization |

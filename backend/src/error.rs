@@ -4,6 +4,7 @@ pub enum AppError {
     NotFound,
     Conflict,
     Invalid(&'static str),
+    InvalidImport(String),
     Corrupt(&'static str),
     Storage,
 }

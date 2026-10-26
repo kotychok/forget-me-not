@@ -23,6 +23,15 @@ function fakeApi() {
   );
   const gets: string[] = [];
   const transport = {
+    exportJson: async () => ({
+      schemaVersion: 1 as const,
+      lists: [...documents.values()].map(({ id, title, nodes }) => ({
+        id,
+        title,
+        nodes,
+      })),
+    }),
+    importJson: async () => [],
     lists: async () =>
       [...documents.values()].map((doc, position) => ({
         id: doc.id,

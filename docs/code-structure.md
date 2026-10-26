@@ -11,7 +11,8 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
   │     ├── Autosave — one ordered save queue per list, revisions, retry reconciliation
   │     └── api — HTTP/JSON transport
   ├── EditorPane.svelte — tree UI, keyboard/composition events, DOM focus and selection
-  └── KeyboardGuide.svelte — accessible modal guide
+  ├── KeyboardGuide.svelte — accessible modal guide
+  └── JsonTransfer.svelte — file selection, preview, downloads, and confirmation
 ```
 
 - `lib/editor.ts` knows only item data, commands, and history. It does not import Svelte, HTTP, or browser DOM APIs. ID generation uses platform crypto.
@@ -23,6 +24,8 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
 
 There is no second authoritative tree in the UI. The Editor owns content/history; the pane publishes a reactive display copy. Sidebar metadata is a projection of the corresponding session/API result, not another editable tree.
 
+`lib/portable.ts` owns pure JSON validation and serialization; it does not read files, fetch, or write data. Workspace coordinates exports/imports through the concrete API; JsonTransfer handles browser file/download APIs.
+
 ## Backend
 
 ```text
@@ -32,10 +35,11 @@ main.rs — configuration, migration startup, loopback listener, shutdown
         └── store.rs — owner-scoped SQLite operations and transaction boundaries
               ├── validation.rs — IDs, limits, flattening and content invariants
               ├── error.rs — application failure categories
+              ├── store/transfer.rs — consistent exports and atomic new-copy imports
               └── migrations/*.sql — versioned schema changes
 ```
 
-`store.rs` is intentionally SQLite-specific: it is the one place to reason about SQL, row diffs, and atomic writes. Validation and storage do not use HTTP status codes; the HTTP adapter maps application failures into responses. `lib.rs` exposes the modules and a small public entry surface for the executable and tests.
+`store.rs` is intentionally SQLite-specific: it is the one place to reason about SQL, row diffs, and atomic writes. Validation and storage do not use HTTP status codes; the HTTP adapter maps application failures into responses. `portable.rs` validates versioned transfer envelopes while reusing item validation. `lib.rs` exposes the modules and a small public entry surface for the executable and tests.
 
 Do not add a separate service/repository abstraction until actual behavior needs it. Splitting a module should follow independent responsibilities or a concrete extension, not a target file length.
 

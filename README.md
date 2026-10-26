@@ -1,6 +1,6 @@
 # Forget Me Not
 
-A personal, keyboard-driven web outliner with local SQLite persistence. JSON/Markdown import/export is planned for M3.
+A personal, keyboard-driven web outliner with local SQLite persistence. M3 adds JSON-only import/export with validation, preview, and atomic new-copy imports.
 
 ## Run locally
 
@@ -31,6 +31,20 @@ The default SQLite file is `data/forget-me-not.sqlite`, excluded from Git. A loc
 - New lists are empty. Item text currently displays literally; Markdown rendering is not implemented yet.
 
 The API initially sends a complete list snapshot; SQLite updates only changed item rows in one revision-checked transaction. Moving a branch preserves IDs and descendant references.
+
+## JSON import and export
+
+Open **Import / export** in the sidebar.
+
+- **Export current list** includes your latest local edits, even when unsaved or conflicted. It does not mark them saved.
+- **Export all lists** first flushes pending edits, then exports one consistent snapshot of your saved lists. Errors/conflicts block this action; use current-list export to retain a local version instead.
+- Choose a UTF-8 JSON file to preview its titles and list/item counts. No writes happen until **Import as new copies** is confirmed.
+- Import creates fresh list/item IDs and keeps existing lists unchanged. All lists in a file are written in one transaction; failure rolls back the entire batch.
+- If an import response is lost, the operation may already have completed. It is never automatically retried; use **Refresh list index** to check your lists without discarding local edits before selecting the file again.
+
+Supported format: `schemaVersion: 1` with a `lists` array. Limits are 8 MiB/file, 100 lists, and 10,000 total items, plus existing per-list limits. Unknown fields, newer versions, duplicate IDs, and invalid structures are rejected with explicit errors. See [JSON format](docs/data-formats.md) and the [example file](fixtures/portable-v1.json).
+
+Markdown file import/export is not planned. Markdown-looking text is preserved literally in JSON; safe display rendering inside items is deferred to M11.
 
 ## Keyboard editing
 
@@ -64,7 +78,7 @@ make test-browser
 
 Browser tests start their own frontend/API on ports 5174/3002 and a fresh temporary database; they do not touch `data/forget-me-not.sqlite` or reuse a development server. The runner removes the temporary database on graceful shutdown.
 
-Dependencies are locked in `frontend/pnpm-lock.yaml` and `backend/Cargo.lock`. Migration SQL lives in `backend/migrations/` and is embedded in the backend. Both startup and `make db-migrate` use the same migration runner; applied files must not be edited. Database migration versions, list revisions, and future export format versions are independent.
+Dependencies are locked in `frontend/pnpm-lock.yaml` and `backend/Cargo.lock`. Migration SQL lives in `backend/migrations/` and is embedded in the backend. Both startup and `make db-migrate` use the same migration runner; applied files must not be edited. Database migration versions, list revisions, and JSON schema versions are independent.
 
 ## Configuration
 
@@ -80,8 +94,8 @@ Export variables in the shell; `.env` files are not loaded automatically.
 
 Example: `FMN_DB_PATH=/tmp/outline-demo.sqlite make dev`. Normal shutdown never deletes the development database. For backups of a running WAL database, use a consistent SQLite backup operation rather than copying only the main file.
 
-Current limits: 1 MiB request body, 2,000 items per list, 32 nesting levels, 32 KiB per item text, and 200 Unicode characters per title. There is no user-driven list reorder yet; lists follow creation order.
+Current limits: 1 MiB per normal save request (8 MiB for JSON import), 2,000 items per list, 32 nesting levels, 32 KiB per item text, and 200 Unicode characters per title. There is no user-driven list reorder yet; lists follow creation order.
 
 See the [code structure](docs/code-structure.md) for module responsibilities and extension points.
 
-See the [documentation](docs/README.md), [milestones](docs/milestones.md), and [M2 implementation record](docs/plans/m2-persistence.md). Working agreements for Codex: [AGENTS.md](AGENTS.md).
+See the [documentation](docs/README.md), [milestones](docs/milestones.md), and [M3 implementation record](docs/plans/m3-json-transfer.md). Working agreements for Codex: [AGENTS.md](AGENTS.md).

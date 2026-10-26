@@ -1,3 +1,4 @@
+mod transfer;
 use crate::{
     error::{AppError, Result, invalid},
     model::*,
@@ -188,8 +189,7 @@ impl Store {
                 } else {
                     let collision: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM items WHERE id=?)").bind(&row.id).fetch_one(&mut *tx).await?;
                     if collision { return Err(invalid("An item ID belongs to another list")); }
-                    sqlx::query("INSERT INTO items(id,list_id,parent_id,position,kind,text,completed,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)")
-                        .bind(&row.id).bind(id).bind(&row.parent_id).bind(row.position).bind(&row.kind).bind(&row.text).bind(row.completed).bind(time).bind(time).execute(&mut *tx).await?;
+                    insert_item(&mut tx, id, row, time).await?;
                 }
             }
             for key in old.keys().filter(|key| !ids.contains(key.as_str())) {
@@ -230,4 +230,15 @@ impl Store {
         tx.commit().await?;
         Ok(())
     }
+}
+
+async fn insert_item(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    list_id: &str,
+    row: &crate::validation::FlatItem,
+    time: i64,
+) -> Result<()> {
+    sqlx::query("INSERT INTO items(id,list_id,parent_id,position,kind,text,completed,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)")
+        .bind(&row.id).bind(list_id).bind(&row.parent_id).bind(row.position).bind(&row.kind).bind(&row.text).bind(row.completed).bind(time).bind(time).execute(&mut **tx).await?;
+    Ok(())
 }

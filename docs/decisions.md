@@ -40,4 +40,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D029 | 2026-10-26 | Agreed | Establish simple module boundaries during M2: UI, workspace, editor, autosave, transport, validation, HTTP, and SQLite storage; preserve direct calls and avoid speculative frameworks |
 
+| D030 | 2026-10-26 | Agreed | M3 is JSON-only; supersedes the Markdown file-transfer portion of D001/D008. Defer Markdown rendering inside item text to M11, separate from file transfer |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

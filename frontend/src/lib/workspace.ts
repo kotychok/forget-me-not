@@ -1,3 +1,5 @@
+import { validatePortable } from './portable.ts';
+import type { Portable } from './portable.ts';
 import { api } from './api.ts';
 import type { ListDocument, ListSummary } from './api.ts';
 import { Autosave } from './autosave.ts';
@@ -95,6 +97,29 @@ export class Workspace {
       this.notify();
     }
   }
+  async refreshIndex(): Promise<void> {
+    if (this.busy) throw new Error('Another operation is in progress');
+    this.busy = true;
+    this.notify();
+    try {
+      this.lists = (await this.transport.lists()).map((list) => {
+        const session = this.sessions.get(list.id);
+        return session
+          ? {
+              ...list,
+              title: session.title,
+              revision: session.sync.revision,
+              saveStatus: session.sync.status,
+              itemCount: visibleItems(session.editor.state.nodes, new Set())
+                .length,
+            }
+          : list;
+      });
+    } finally {
+      this.busy = false;
+      this.notify();
+    }
+  }
   async open(id: string) {
     if (this.busy) return false;
     this.busy = true;
@@ -172,6 +197,59 @@ export class Workspace {
       this.error =
         error instanceof Error ? error.message : 'Could not delete list';
       return false;
+    } finally {
+      this.busy = false;
+      this.notify();
+    }
+  }
+  exportCurrent(): Portable {
+    const session = this.current;
+    if (!session || !this.selectedId) throw new Error('Choose a list first');
+    return validatePortable({
+      schemaVersion: 1,
+      lists: [
+        {
+          id: this.selectedId,
+          title: session.title,
+          nodes: session.editor.state.nodes,
+        },
+      ],
+    });
+  }
+  async exportAll(): Promise<Portable> {
+    if (this.busy) throw new Error('Another operation is in progress');
+    this.busy = true;
+    this.notify();
+    try {
+      for (const session of this.sessions.values()) {
+        if (!(await session.sync.flush()))
+          throw new Error(
+            'Resolve unsaved changes first, or export the current list to keep its local edits.',
+          );
+      }
+      return validatePortable(await this.transport.exportJson());
+    } finally {
+      this.busy = false;
+      this.notify();
+    }
+  }
+  async importJson(document: Portable): Promise<number> {
+    if (this.busy) throw new Error('Another operation is in progress');
+    const validated = validatePortable(document);
+    this.busy = true;
+    this.error = '';
+    this.notify();
+    try {
+      const imported = await this.transport.importJson(validated);
+      this.lists = [...this.lists, ...imported];
+      if (!this.selectedId && imported[0]) {
+        try {
+          await this.activate(imported[0].id);
+        } catch {
+          this.error = 'Import completed. Select a list to open it.';
+        }
+      }
+      return imported.length;
     } finally {
       this.busy = false;
       this.notify();

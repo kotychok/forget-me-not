@@ -1,3 +1,4 @@
+import type { Portable } from './portable.ts';
 import type { Item } from './editor.ts';
 
 export type Document = { id: string; title: string; nodes: Item[] };
@@ -32,6 +33,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? (undefined as T) : response.json();
 }
 export const api = {
+  exportJson: () => request<Portable>('/export'),
+  importJson: (document: Portable) =>
+    request<ListSummary[]>('/import', {
+      method: 'POST',
+      body: JSON.stringify(document),
+    }),
   lists: () => request<ListSummary[]>('/lists'),
   get: (id: string) =>
     request<ListDocument>(`/lists/${encodeURIComponent(id)}`),

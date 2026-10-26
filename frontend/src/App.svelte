@@ -4,6 +4,7 @@
   import { Workspace } from './lib/workspace';
   import type { Session, SidebarList } from './lib/workspace';
   import EditorPane from './components/EditorPane.svelte';
+  import JsonTransfer from './components/JsonTransfer.svelte';
   import KeyboardGuide from './components/KeyboardGuide.svelte';
 
   let current = $state.raw<Session>();
@@ -139,9 +140,27 @@
         >＋ New list</button
       >
     </nav>
+    <JsonTransfer
+      currentTitle={selectedId ? title : null}
+      hasLists={lists.length > 0}
+      disabled={busy || loading}
+      onexport={async (scope) => {
+        finishRename();
+        return scope === 'current'
+          ? workspace.exportCurrent()
+          : workspace.exportAll();
+      }}
+      onrefresh={() => workspace.refreshIndex()}
+      onimport={async (document) => {
+        finishRename();
+        const count = await workspace.importJson(document);
+        updateUrl();
+        return count;
+      }}
+    />
     <div class="sidebar-bottom">
       <span class="local-dot"></span> Local only · no login
-      <span class="version">M2</span>
+      <span class="version">M3</span>
     </div>
   </aside>
 

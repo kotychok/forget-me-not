@@ -1,6 +1,7 @@
 use crate::{
     error::{AppError, Result},
     model::*,
+    portable::{MAX_FILE_BYTES, Portable},
     store::Store,
 };
 use axum::{
@@ -17,13 +18,17 @@ use tower_http::services::{ServeDir, ServeFile};
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, message) = match self {
-            Self::NotFound => (StatusCode::NOT_FOUND, "List not found"),
-            Self::Conflict => (StatusCode::CONFLICT, "List changed on the server"),
-            Self::Invalid(message) => (StatusCode::UNPROCESSABLE_ENTITY, message),
-            Self::Corrupt(message) => (StatusCode::INTERNAL_SERVER_ERROR, message),
+            Self::NotFound => (StatusCode::NOT_FOUND, "List not found".to_owned()),
+            Self::Conflict => (
+                StatusCode::CONFLICT,
+                "List changed on the server".to_owned(),
+            ),
+            Self::Invalid(message) => (StatusCode::UNPROCESSABLE_ENTITY, message.to_owned()),
+            Self::InvalidImport(message) => (StatusCode::UNPROCESSABLE_ENTITY, message),
+            Self::Corrupt(message) => (StatusCode::INTERNAL_SERVER_ERROR, message.to_owned()),
             Self::Storage => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "Storage operation failed",
+                "Storage operation failed".to_owned(),
             ),
         };
         (status, Json(serde_json::json!({"error": message}))).into_response()
@@ -77,6 +82,11 @@ pub fn app(store: Store, backend_port: u16, frontend_port: u16, assets: &FsPath)
             "/health",
             get(|| async { Json(serde_json::json!({"mode":"local-only"})) }),
         )
+        .route("/export", get(export_json))
+        .route(
+            "/import",
+            axum::routing::post(import_json).layer(DefaultBodyLimit::max(MAX_FILE_BYTES)),
+        )
         .route("/lists", get(list_all).post(create_list))
         .route(
             "/lists/{id}",
@@ -126,4 +136,28 @@ async fn delete_list(
 ) -> Result<StatusCode> {
     state.store.delete(&id, query.base_revision).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ExportQuery {
+    list_id: Option<String>,
+}
+async fn export_json(
+    State(state): State<AppState>,
+    Query(query): Query<ExportQuery>,
+) -> Result<Json<Portable>> {
+    Ok(Json(
+        state.store.export_json(query.list_id.as_deref()).await?,
+    ))
+}
+async fn import_json(
+    State(state): State<AppState>,
+    Json(value): Json<serde_json::Value>,
+) -> Result<(StatusCode, Json<Vec<ListSummary>>)> {
+    let document = Portable::from_value(value)?;
+    Ok((
+        StatusCode::CREATED,
+        Json(state.store.import_json(document).await?),
+    ))
 }

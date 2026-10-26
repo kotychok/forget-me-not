@@ -1,6 +1,6 @@
 # Database and migrations
 
-Updated: 2026-10-26. Agreed: multiple lists per user, normalized users/lists/items, UUIDv4 identifiers, and SQLx migrations. Whole-list snapshots with revision checks are the initial save approach. Detailed SQL, ordering, and operational procedures remain design proposals.
+Updated: 2026-10-26. Agreed: multiple lists per user, normalized users/lists/items, UUIDv4 identifiers, and SQLx migrations. Whole-list snapshots with revision checks are the initial save approach. M2 implements the initial schema, stable creation-order list positions, item row diffs, and embedded migrations. Production operational procedures remain planned for M5.
 
 ## Identifiers
 
@@ -24,50 +24,9 @@ Each list has one owner; shared lists and membership tables are outside the curr
 
 Prefer normalized item rows over the earlier single-JSON-column proposal. This makes ownership, structural constraints, and future item queries more explicit. The trade-off is more persistence logic. Do not keep an independently authoritative JSON copy alongside the rows. Nested JSON remains the API/export representation.
 
-## Draft schema
+## Implemented schema
 
-This executable SQL is a design example, not an installed migration. Timestamps and IDs are supplied by the application. Authentication fields are deliberately absent until the login mechanism is chosen.
-
-```sql
-PRAGMA foreign_keys = ON;
-
-CREATE TABLE users (
-    id TEXT PRIMARY KEY NOT NULL,
-    display_name TEXT NOT NULL,
-    created_at INTEGER NOT NULL
-);
-
-CREATE TABLE lists (
-    id TEXT PRIMARY KEY NOT NULL,
-    owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    title TEXT NOT NULL,
-    position INTEGER NOT NULL CHECK (position >= 0),
-    revision INTEGER NOT NULL DEFAULT 0 CHECK (revision >= 0),
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
-);
-
-CREATE INDEX lists_owner_order ON lists(owner_id, position, id);
-
-CREATE TABLE items (
-    id TEXT PRIMARY KEY NOT NULL,
-    list_id TEXT NOT NULL REFERENCES lists(id) ON DELETE CASCADE,
-    parent_id TEXT,
-    position INTEGER NOT NULL CHECK (position >= 0),
-    kind TEXT NOT NULL CHECK (kind IN ('item', 'task')),
-    text TEXT NOT NULL,
-    completed INTEGER NOT NULL DEFAULT 0 CHECK (completed IN (0, 1)),
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL,
-    UNIQUE (list_id, id),
-    FOREIGN KEY (list_id, parent_id) REFERENCES items(list_id, id)
-        ON DELETE NO ACTION DEFERRABLE INITIALLY DEFERRED,
-    CHECK (parent_id IS NULL OR parent_id <> id),
-    CHECK (kind = 'task' OR completed = 0)
-);
-
-CREATE INDEX items_tree_order ON items(list_id, parent_id, position, id);
-```
+The authoritative definition is [the initial migration](../backend/migrations/20261026000100_initial_schema.sql). It creates users, lists, items, their indexes and constraints, and a `local_identity` singleton referencing the provisioned local user. IDs and timestamps are supplied by the backend. Authentication tables remain deferred to M5.
 
 The composite parent foreign key prevents parenting an item under another list. `parent_id = NULL` means a root item. The deferred constraint permits transactional inserts/reparenting in any order, but requires a valid tree at commit. Self-parenting is rejected by SQL; longer cycles, depth limits, and ownership authorization require application validation. SQLite foreign keys must be enabled on every connection before transactions.
 
@@ -75,11 +34,11 @@ Parent deletion does not rely on recursive foreign-key cascades: explicitly dele
 
 ## Order and transactional saves
 
-Start with integer `position` values `0..n-1` within each sibling group, and separately for a user's lists. Reindex affected groups within the write transaction. The server ensures contiguous unique sibling positions; the draft SQL does not enforce uniqueness because bulk reorder would otherwise require temporary positions and special treatment of NULL root parents. Read with `ORDER BY position, id` as a deterministic fallback. IDs never determine intended order. Consider sparse ranks only if measured reorder costs justify them.
+Start with integer `position` values `0..n-1` within each sibling group, and separately for a user's lists. Reindex affected groups within the write transaction. The server ensures contiguous unique sibling positions; the migration does not enforce uniqueness because bulk reorder would otherwise require temporary positions and special treatment of NULL root parents. Read with `ORDER BY position, id` as a deterministic fallback. IDs never determine intended order. Consider sparse ranks only if measured reorder costs justify them.
 
 The agreed initial whole-list snapshot API works as follows: normalize the submitted nested tree into rows. Authorize ownership, validate the complete tree, compare-and-swap the list revision, apply a row diff, and update timestamps within one transaction. A revision mismatch or invalid item rolls back everything. Existing item IDs from another list/user must be rejected, never reassigned by a broad upsert. Preserve existing `created_at` for unchanged items. Every content change, including title changes, participates in revision checks.
 
-List ordering across a user's lists is separate from tree ordering; its concurrent-update contract still needs design. Moving branches between lists is not included in the current command set and would need an atomic operation covering both list revisions.
+List ordering is currently creation order: insertion allocates MAX(position)+1 atomically; deletion may leave harmless gaps. User-driven list reorder and its concurrent-update contract remain deferred. Moving branches between lists is not included in the current command set and would need an atomic operation covering both list revisions.
 
 Configure foreign keys on every pooled connection, a finite busy timeout, and WAL for a single-host deployment after verifying backup behavior. Keep transactions short. Collapse state remains browser UI state; sessions and identity tables are added only when authentication is chosen.
 
@@ -147,7 +106,7 @@ Once applied to a persistent/shared database, a migration is immutable: add a ne
 
 ## Applying and verifying migrations
 
-Proposed Makefile targets: `make db-migrate` for native execution and `make docker-migrate` for a one-shot container migration, both calling the same embedded migration runner against an explicit database path. The container command must work before the server starts. Exact CLI and targets are not implemented yet.
+Implemented: `make db-migrate` runs the backend with `--migrate`; ordinary server startup applies the same embedded migrations and provisions the local identity. Use `FMN_DB_PATH` to choose the database. `make docker-migrate` remains planned with M5 deployment. No SQLx CLI is required.
 
 For deployment: stop writes, make and verify a consistent backup, run migrations through one process, then start the compatible server. On migration failure, do not serve requests against an uncertain schema. Keep pending/mismatched migration checks in startup; avoid independently maintained SQL between startup and manual commands. The server should refuse a database newer than its supported migration set.
 

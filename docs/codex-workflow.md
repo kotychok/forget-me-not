@@ -16,9 +16,9 @@ A separate `.codex/config.toml` is not needed yet: there are no project-specific
 
 For documentation tasks, update the relevant files and check links and decision consistency. For complex implementation, maintain a short plan in `docs/plans/` with scope, open questions, and actual verification; do not create a separate plan for every small edit.
 
-Expose run, build, and check commands through Makefile, supporting native execution without Docker. Local frontend targets are implemented in the root Makefile and documented in the root README; backend and Docker targets remain planned.
+Expose run, build, and check commands through Makefile, supporting native execution without Docker. Frontend/backend targets and native migrations are implemented in the root Makefile and documented in the root README; Docker targets remain planned.
 
-Actual formatting, typecheck, and test commands are listed in AGENTS.md. Priority checks: tree invariants, commands and undo, format round-trips, revision conflicts, and draft recovery. Browser tests cover focus, cursor position, and keyboard interaction. Distinguish checks actually run from planned checks.
+Actual formatting, typecheck, Clippy, and test commands are listed in AGENTS.md. Browser tests use a separate temporary database and independent ports. Priority checks: tree invariants, commands and undo, format round-trips, revision conflicts, and draft recovery. Browser tests cover focus, cursor position, and keyboard interaction. Distinguish checks actually run from planned checks.
 
 The user handles commits and publication. Git was initialized and the documentation was committed by the user before M1. Use `git diff --check` when reviewing changes.
 

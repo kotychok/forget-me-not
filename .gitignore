@@ -16,3 +16,5 @@ data/
 
 playwright-report/
 test-results/
+
+.vite/

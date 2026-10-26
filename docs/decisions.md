@@ -36,4 +36,8 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D027 | 2026-10-26 | Agreed | M2 uses one server-resolved local user without login; production authentication is deferred to M5 before deployment; ownership boundaries remain enforced |
 
+| D028 | 2026-10-26 | Agreed | Begin M2 implementation after user review/commit of M1; local-only persistence, list management, and snapshot autosave are in scope |
+
+| D029 | 2026-10-26 | Agreed | Establish simple module boundaries during M2: UI, workspace, editor, autosave, transport, validation, HTTP, and SQLite storage; preserve direct calls and avoid speculative frameworks |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

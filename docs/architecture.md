@@ -16,11 +16,11 @@ Rust / Axum → validation → SQLite
 
 The tree model and commands do not depend on Svelte, the DOM, HTTP, or the database. A command returns the new state and information needed to restore focus and undo. The UI renders visible nodes and routes keyboard input. The server validates invariants independently rather than trusting the browser.
 
-Use one repository: `frontend/` is implemented for M1, `docs/` contains design records, and `backend/` is planned for M2. Do not introduce microservices, CRDTs, or event sourcing without a need. Items display Markdown in the target design; M1 currently displays literal text and editing uses a plain textarea. Revisit a larger rich-text editor based on actual use cases.
+Use one repository: `frontend/` contains the editor, `backend/` implements M2 persistence, and `docs/` contains design records. Do not introduce microservices, CRDTs, or event sourcing without a need. Items display Markdown in the target design; M1 currently displays literal text and editing uses a plain textarea. Revisit a larger rich-text editor based on actual use cases.
 
 ## Local development and commands
 
-Docker is not a required dependency for local development. With the proposed stack, frontend and backend run natively; SQLite uses a local file in `data/`. During development, the frontend can proxy `/api` to the backend so the browser uses a single origin.
+Docker is not a required dependency for local development. With the proposed stack, frontend and backend run natively; SQLite uses a local file in `data/`. During development, Vite proxies `/api` to the backend so the browser uses a single origin. The root `scripts/dev.mjs` manages both processes, waits for backend readiness, and shuts down their process groups on exit.
 
 Proposed contract for the future Makefile:
 
@@ -35,15 +35,17 @@ Proposed contract for the future Makefile:
 | `make docker-build` | Build the image |
 | `make docker-up` / `make docker-down` | Start / stop the container environment while preserving data |
 
-Local frontend targets are implemented in the root Makefile, including `install`, `dev`, `build`, `run`, `check`, `format`, `test`, `browser-install`, and `test-browser`. Backend and Docker targets remain planned. Commands should invoke the stack's standard tools rather than duplicate their logic. Configure the database path, address, and port explicitly through environment variables; local and container data must not accidentally overwrite each other. Normal shutdown does not delete SQLite data or volumes.
+The root Makefile implements `install`, `dev`, `build`, `run`, `db-migrate`, `check`, `format`, `test`, `browser-install`, and `test-browser` for the frontend and backend. Docker targets remain planned. `make run` serves built assets and the API together; `make dev` starts both development processes. Commands should invoke the stack's standard tools rather than duplicate their logic. Configure the database path, address, and port explicitly through environment variables; local and container data must not accidentally overwrite each other. Normal shutdown does not delete SQLite data or volumes.
 
 ## Persistence
 
 Agreed: each user can have multiple lists. Agreed schema: `users → lists → items`, with one row per item, a same-list parent reference, and explicit sibling order. See [Database and migrations](database.md) for agreed UUIDv4 identifiers and SQLx migration management, plus draft SQL, ownership constraints, and transactions.
 
-The agreed normalized storage approach replaces the earlier single-JSON-document storage proposal. JSON remains the nested API/export format; normalized rows are the canonical database representation. Whole-list snapshot saves with revision checks are the agreed initial approach, with a validated row diff and revision increment in one transaction. Transfer-size optimization is deferred to M10. Detailed SQL constraints remain a draft; no database has been implemented.
+The agreed normalized storage approach replaces the earlier single-JSON-document storage proposal. JSON remains the nested API/export format; normalized rows are the canonical database representation. Whole-list snapshot saves with revision checks are the agreed initial approach, with a validated row diff and revision increment in one transaction. Transfer-size optimization is deferred to M10. The initial migration and owner-scoped SQLite implementation are in `backend/`. See the root README for implemented limits and runtime configuration.
 
 ## Autosave and drafts
+
+M2 implements queued saves, revision checks, status indicators, and network-error retry/reconciliation. IndexedDB drafts and full conflict-recovery actions below are planned for M4 and are not yet implemented.
 
 - Changes appear locally immediately. After a short pause, initially proposed as 500 ms, send a snapshot; tune the interval after the prototype.
 - Allow one save request in flight per list. Accumulate subsequent changes; an older response must not mark a newer revision as saved.
@@ -66,7 +68,7 @@ Drafts protect against failures; they do not provide full offline support. Do no
 | `PUT /api/lists/:id` | Snapshot + baseRevision, atomic write |
 | `DELETE /api/lists/:id` | Delete with a revision check |
 
-Export and import preview can run in the browser; the server validates the result when saving. Define error contracts and limits before coding. Workspace import will need a separate atomic operation if included in v1.
+Export and import preview can run in the browser; the server validates the result when saving. Implemented validation/storage errors use an `error` message; conflicts return 409, missing or non-owned lists return 404, invalid documents return 422, and oversized bodies return 413. Axum extraction errors can be plain text; the client handles both response forms. Workspace import will need a separate atomic operation if included in v1.
 
 ## Access and deployment
 
@@ -79,3 +81,7 @@ Each list belongs to a user, and each user can have multiple lists. The schema c
 Markdown is untrusted text: disable or sanitize raw HTML, disallow unsafe URLs, and keep secrets and list content out of logs. Validate import and depth limits on the server as well.
 
 Backups: use a consistent SQLite backup operation rather than copying only the main file while WAL is active. Define retention and regularly verify restoration. JSON export supplements backups but does not include access settings or all server state.
+
+## Code organization
+
+The implemented module map and extension rules are documented in [Code structure](code-structure.md). Keep direct concrete boundaries: UI → Workspace/Editor/Autosave/API on the client, HTTP → Store/validation on the server.

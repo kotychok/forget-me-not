@@ -463,3 +463,122 @@ dialog.guide::backdrop {
   color: #72806c;
   font-size: 12px;
 }
+
+nav .list-link {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 5px;
+  background: transparent;
+}
+nav .list-link.selected {
+  background: #e0e8d9;
+}
+.list-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.new-list {
+  width: 100%;
+  padding: 12px;
+  text-align: left;
+  color: #72806c;
+  font-size: 12px;
+}
+.title-button {
+  font: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.title-button:disabled {
+  opacity: 1;
+}
+.title-button:hover:not(:disabled) {
+  background: transparent;
+  color: #5d8066;
+}
+.title-input {
+  font:
+    750 43px 'Manrope',
+    sans-serif;
+  color: inherit;
+  letter-spacing: -1.9px;
+  background: #f0f4eb;
+  border: 1px solid #91a187;
+  border-radius: 5px;
+  width: 100%;
+  padding: 0 5px;
+}
+.rename-form {
+  margin: 14px 0 12px;
+}
+.list-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -20px;
+}
+.error-message {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #994f3e;
+  background: #f9efe8;
+  padding: 10px 13px;
+  border-radius: 5px;
+}
+.error-message button {
+  text-decoration: underline;
+}
+@media (max-width: 620px) {
+  aside {
+    display: flex;
+    width: 100%;
+    padding: 12px 18px;
+    border-bottom: 1px solid #e2e6dc;
+  }
+  .shell {
+    flex-direction: column;
+  }
+  .sidebar-section,
+  .sidebar-bottom {
+    display: none;
+  }
+  aside nav {
+    display: flex;
+    overflow-x: auto;
+    margin-top: 10px;
+    gap: 6px;
+  }
+  nav .list-link {
+    min-width: 140px;
+    max-width: 200px;
+    margin: 0;
+  }
+  .new-list {
+    min-width: 100px;
+    width: auto;
+  }
+  .title-input {
+    font-size: 36px;
+  }
+}
+
+.pending-status {
+  font-size: 8px;
+  color: #aa925c;
+  margin-left: auto;
+}
+.pending-status.failed {
+  color: #a3483e;
+}
+
+header > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+header > button {
+  flex-shrink: 0;
+}

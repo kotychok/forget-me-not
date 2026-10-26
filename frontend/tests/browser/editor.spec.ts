@@ -1,10 +1,39 @@
 import { test, expect } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
 
 const undo = process.platform === 'darwin' ? 'Meta+z' : 'Control+z';
 const redo = process.platform === 'darwin' ? 'Meta+Shift+z' : 'Control+Shift+z';
 
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+test.beforeEach(async ({ page, request }) => {
+  const created = await request.post('/api/lists', {
+    data: { title: 'My first list' },
+  });
+  expect(created.ok()).toBeTruthy();
+  const list = await created.json();
+  const node = (text: string, kind = 'item') => ({
+    id: randomUUID(),
+    kind,
+    text,
+    completed: false,
+    children: [] as unknown[],
+  });
+  const welcome = node('A little room for your thoughts');
+  welcome.children = [
+    node('Press Enter to add a new item'),
+    node('Try Tab and Shift+Tab while editing', 'task'),
+  ];
+  const saved = await request.put(`/api/lists/${list.id}`, {
+    data: {
+      baseRevision: 0,
+      document: {
+        id: list.id,
+        title: list.title,
+        nodes: [welcome, node('Make something worth remembering', 'task')],
+      },
+    },
+  });
+  expect(saved.ok()).toBeTruthy();
+  await page.goto(`/?list=${list.id}`);
 });
 
 test('Enter, line breaks, indent/outdent, and history preserve focus and branch identity', async ({
@@ -168,23 +197,22 @@ test('delete all branches, add into empty list, and undo', async ({ page }) => {
   ).toBeFocused();
 });
 
-test('reload explicitly starts a new session and mobile viewport does not overflow', async ({
+test('saved content survives reload and mobile viewport does not overflow', async ({
   page,
 }) => {
-  await expect(
-    page.getByText('This session only — changes reset when you reload.'),
-  ).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('Saved');
   await page
     .getByRole('button', {
       name: 'Make something worth remembering',
       exact: true,
     })
     .click();
-  await page.getByRole('textbox').fill('Temporary');
+  await page.getByRole('textbox').fill('Persistent');
+  await expect(page.getByRole('status')).toHaveText('Saved');
   await page.reload();
   await expect(
-    page.getByRole('button', { name: 'Temporary', exact: true }),
-  ).toHaveCount(0);
+    page.getByRole('button', { name: 'Persistent', exact: true }),
+  ).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(
@@ -244,4 +272,185 @@ test('keyboard guide is modal, contains focus, and restores its trigger on close
   await close.click();
   await expect(dialog).not.toBeVisible();
   await expect(trigger).toBeFocused();
+});
+
+test('create, rename from heading, switch lists, and reopen after reload', async ({
+  page,
+}) => {
+  const originalId = new URL(page.url()).searchParams.get('list')!;
+  await expect(page.getByRole('button', { name: 'Rename list' })).toHaveText(
+    'My first list',
+  );
+  await page.getByRole('button', { name: 'New list', exact: false }).click();
+  const title = page.getByRole('textbox', { name: 'List title' });
+  await expect(title).toBeFocused();
+  await title.fill('Second list');
+  await title.press('Enter');
+  await expect(page.getByRole('button', { name: 'Rename list' })).toHaveText(
+    'Second list',
+  );
+  await page
+    .getByRole('button', { name: 'Add your first item', exact: false })
+    .click();
+  await page
+    .getByRole('textbox', { name: 'Item text' })
+    .fill('Second list item');
+  await expect(page.getByRole('status')).toHaveText('Saved');
+  const secondId = new URL(page.url()).searchParams.get('list')!;
+  await page
+    .locator(`nav .list-link`)
+    .filter({ hasText: 'Second list' })
+    .click();
+  // Selecting another list does not replace this list's editor history.
+  await page.goto(`/?list=${originalId}`);
+  await expect(page.getByRole('button', { name: 'Rename list' })).toHaveText(
+    'My first list',
+  );
+  await page
+    .locator('nav .list-link')
+    .filter({ hasText: 'Second list' })
+    .click();
+  await expect(
+    page.getByRole('button', { name: 'Second list item', exact: true }),
+  ).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('list')).toBe(secondId);
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Rename list' })).toHaveText(
+    'Second list',
+  );
+});
+
+test('heading rename supports Escape and persists across reload', async ({
+  page,
+}) => {
+  const heading = page.getByRole('button', { name: 'Rename list' });
+  await heading.click();
+  let input = page.getByRole('textbox', { name: 'List title' });
+  await input.fill('Cancelled');
+  await input.press('Escape');
+  await expect(heading).toHaveText('My first list');
+  await heading.click();
+  input = page.getByRole('textbox', { name: 'List title' });
+  await input.fill('Renamed from heading');
+  await input.press('Enter');
+  await expect(page.getByRole('status')).toHaveText('Saved');
+  await page.reload();
+  await expect(heading).toHaveText('Renamed from heading');
+});
+
+test('deleting a list requires confirmation and removes it from the server', async ({
+  page,
+  request,
+}) => {
+  await expect(page.getByRole('status')).toHaveText('Saved');
+  const id = new URL(page.url()).searchParams.get('list')!;
+  page.once('dialog', (dialog) => dialog.dismiss());
+  await page.getByRole('button', { name: 'Delete list', exact: true }).click();
+  expect((await request.get(`/api/lists/${id}`)).status()).toBe(200);
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByRole('button', { name: 'Delete list', exact: true }).click();
+  await expect
+    .poll(async () => (await request.get(`/api/lists/${id}`)).status())
+    .toBe(404);
+});
+
+test('server conflict keeps local text and never silently overwrites the other version', async ({
+  page,
+  request,
+}) => {
+  const id = new URL(page.url()).searchParams.get('list')!;
+  await page
+    .getByRole('button', {
+      name: 'Make something worth remembering',
+      exact: true,
+    })
+    .click();
+  const document = await (await request.get(`/api/lists/${id}`)).json();
+  await request.put(`/api/lists/${id}`, {
+    data: {
+      baseRevision: document.revision,
+      document: { id, title: 'External title', nodes: document.nodes },
+    },
+  });
+  const text = page.getByRole('textbox', { name: 'Item text' });
+  await text.fill('Local version');
+  await expect(page.getByRole('status')).toContainText('Conflict');
+  await expect(text).toHaveValue('Local version');
+  expect((await (await request.get(`/api/lists/${id}`)).json()).title).toBe(
+    'External title',
+  );
+});
+
+test('editing during a slow save remains unsaved until the latest snapshot is acknowledged', async ({
+  page,
+}) => {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let intercepted = false;
+  await page.route('**/api/lists/*', async (route) => {
+    if (route.request().method() === 'PUT' && !intercepted) {
+      intercepted = true;
+      await gate;
+    }
+    await route.continue();
+  });
+  await page
+    .getByRole('button', {
+      name: 'Make something worth remembering',
+      exact: true,
+    })
+    .click();
+  const text = page.getByRole('textbox', { name: 'Item text' });
+  await text.fill('First edit');
+  await expect(page.getByRole('status')).toHaveText('Saving…');
+  await text.fill('Newest edit');
+  await expect(page.getByRole('status')).not.toHaveText('Saved');
+  release();
+  await expect(page.getByRole('status')).toHaveText('Saved');
+  await page.reload();
+  await expect(
+    page.getByRole('button', { name: 'Newest edit', exact: true }),
+  ).toBeVisible();
+});
+
+test('switching lists preserves independent editing history and pending saves', async ({
+  page,
+}) => {
+  const firstId = new URL(page.url()).searchParams.get('list')!;
+  await page
+    .getByRole('button', {
+      name: 'Make something worth remembering',
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole('textbox', { name: 'Item text' })
+    .fill('First local edit');
+  await page.getByRole('button', { name: 'New list', exact: false }).click();
+  await page.getByRole('textbox', { name: 'List title' }).press('Escape');
+  const secondId = new URL(page.url()).searchParams.get('list')!;
+  await page
+    .getByRole('button', { name: 'Add your first item', exact: false })
+    .click();
+  await page
+    .getByRole('textbox', { name: 'Item text' })
+    .fill('Second local edit');
+  await page.locator(`[data-list-id="${firstId}"]`).click();
+  await expect(page.getByRole('textbox', { name: 'Item text' })).toHaveValue(
+    'First local edit',
+  );
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Item text' })).toHaveValue(
+    'Make something worth remembering',
+  );
+  await page.locator(`[data-list-id="${secondId}"]`).click();
+  await expect(page.getByRole('textbox', { name: 'Item text' })).toHaveValue(
+    'Second local edit',
+  );
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Item text' })).toHaveValue(
+    '',
+  );
 });

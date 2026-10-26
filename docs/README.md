@@ -1,6 +1,6 @@
 # Documentation
 
-Updated: 2026-10-26. The core direction is agreed. M1 is implemented for local review; remaining design details are tracked by milestone.
+Updated: 2026-10-26. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented for local review. Remaining design details are tracked by milestone.
 
 ## Agreed with the user
 
@@ -27,6 +27,7 @@ Updated: 2026-10-26. The core direction is agreed. M1 is implemented for local r
 ## Guide
 
 - [Milestones](milestones.md): outcomes, dependencies, acceptance criteria, and remaining decisions.
+- [Code structure](code-structure.md): module responsibilities, dependencies, and extension points.
 - [Architecture](architecture.md): components, persistence, conflicts, deployment.
 - [Editor behavior](editor-behavior.md): focus, tree operations, commands, history.
 - [Database and migrations](database.md): identifiers, ownership, schema, ordering, and migration management.
@@ -48,4 +49,4 @@ The core direction is agreed; M0 is complete as a documentation milestone. Edito
 
 Before persistence: decide expected scale and initial limits. The initial identity is one local user without login. UUIDv4, normalized tables, SQLx migrations, and initial snapshot saves are agreed. Before deployment: choose production authentication, hosting details, and backup policy. Import format details are resolved before the portability milestone.
 
-M1 implementation was authorized and is ready for local review. It is session-only, with one disposable list; no backend or autosave is implemented. See the root README for commands and the [M1 implementation record](plans/m1-local-editor.md) for verification. Further milestones have not started.
+M2 is implemented with a loopback-only backend, embedded migrations, user-owned multiple lists, heading rename, deletion confirmation, and revision-checked autosave. See the root README for commands and the [M2 implementation record](plans/m2-persistence.md) for verification. Authentication, import/export, and persistent draft/conflict recovery remain later milestones.

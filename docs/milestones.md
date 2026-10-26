@@ -1,6 +1,6 @@
 # Milestones
 
-Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 is implemented for local review; later implementation milestones have not started. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
+Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented for local review; M3 and later implementation milestones have not started. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
 
 Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only for a detailed plan of a complex milestone when implementation begins. Mark a milestone complete only with actual verification evidence.
 
@@ -9,8 +9,8 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | Milestone | Outcome | Depends on | Status |
 | --- | --- | --- | --- |
 | M0 | Agree the initial scope and technical direction | — | Complete (decisions documented) |
-| M1 | Run a keyboard editor prototype locally | M0 | Implemented; awaiting user review |
-| M2 | Persist user-owned lists with reliable autosave | M1 | Not started |
+| M1 | Run a keyboard editor prototype locally | M0 | Complete (reviewed and committed by user) |
+| M2 | Persist user-owned lists with reliable autosave | M1 | Implemented and verified; awaiting user review |
 | M3 | Import and export JSON and Markdown | M2 | Not started |
 | M4 | Restore drafts and handle concurrent edits | M2 | Not started |
 | M5 | Deploy and recover a protected installation | M3, M4 | Not started |
@@ -34,7 +34,7 @@ Completed through the user's explicit agreements:
 - Normalized users/lists/items, UUIDv4 identifiers, and mandatory SQLx migrations.
 - Whole-list snapshots with revision checks as the initial save approach; reduced transfer is deferred.
 
-Evidence: user confirmations recorded as D005, D006, D018–D024 in [Decisions](decisions.md). This completes the documentation milestone, not application implementation. Remaining behavior and operational details are assigned to M1–M5. The user has since authorized M1 implementation; later milestones remain outside the current implementation scope.
+Evidence: user confirmations recorded as D005, D006, D018–D024 in [Decisions](decisions.md). This completes the documentation milestone, not application implementation. Remaining behavior and operational details are assigned to M1–M5. The user has since reviewed M1 and authorized M2 implementation; M3 and later remain outside the current scope.
 
 ## M1 — Local keyboard editor
 
@@ -49,7 +49,7 @@ Acceptance:
 - Task conversion and completion follow the agreed rules.
 - Empty lists and keyboard focus always provide a way to continue editing.
 
-Verification: tree-command checks and browser interaction scenarios from [Editor behavior](editor-behavior.md); evidence is recorded in [M1 implementation](plans/m1-local-editor.md). User review of the editing feel is still pending. No persistence or draft recovery is provided at this milestone.
+Verification: tree-command checks and browser interaction scenarios from [Editor behavior](editor-behavior.md); evidence is recorded in [M1 implementation](plans/m1-local-editor.md). The user reviewed the editing feel, requested follow-up changes, committed M1, and moved to M2. No persistence or draft recovery is provided at this milestone.
 
 ## M2 — Database, ownership, and autosave
 
@@ -57,7 +57,7 @@ Scope: backend API, users/lists/items, migrations, list management, ownership au
 
 Agreed: M2 uses one provisioned local user without login. Resolve that identity on the server; do not accept a client-supplied owner as authentication. Keep owner-scoped queries and foreign keys so production authentication can be added without redesigning list ownership. Bind the development server to loopback and clearly identify this as local-only operation. Login and production access protection are deferred to M5.
 
-Decide first: expected list size and initial limits.
+Implemented defaults: 2,000 items/list, 32 levels, 32 KiB/item, 200 title characters, and a 1 MiB request-body limit. List deletion is permanent after confirmation; user-driven list ordering remains deferred.
 
 Acceptance:
 
@@ -69,7 +69,7 @@ Acceptance:
 - Slow/out-of-order responses cannot falsely mark newer local changes saved.
 - The server handles transaction and commit failures with rollback.
 
-Verification: disposable SQLite integration checks for ownership, constraints, revision conflicts, and migration application; browser reload and slow-save scenarios. Full draft recovery and conflict-resolution UI belong to M4.
+Verification: disposable SQLite integration checks for ownership, constraints, revision conflicts, and migration application; browser reload and slow-save scenarios. Full draft recovery and conflict-resolution UI belong to M4. See the [M2 implementation record](plans/m2-persistence.md) for evidence and limitations.
 
 ## M3 — Portable data
 
@@ -151,7 +151,7 @@ Acceptance: representative indent/outdent and text edits exchange measurably few
 Resolve within the relevant milestone rather than blocking all work now:
 
 - M1: empty-item Enter behavior, task completion propagation, completion visibility, and deletion focus.
-- M2: list deletion recovery, concurrent list ordering, and expected scale.
+- After M2: soft-delete/trash recovery and user-driven list ordering remain unimplemented. Revisit scale and limits based on real usage.
 - M3: explicit restore mode, archive export, and precise Markdown normalization.
 - M5: mobile support expectations and the release support matrix if required.
 

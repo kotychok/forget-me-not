@@ -84,3 +84,5 @@ The item action toolbar sticks to the viewport top while scrolling within the ed
 ## Remembering outline view state — planned M6b
 
 Persisting collapsed/expanded branches across reloads is planned separately from M6a file transfer. Keep it outside list content, revisions, history, and JSON/Markdown formats. The current implementation retains collapse state only in cached sessions; persistence is not implemented yet. Agreed: store view preferences in the database per user/list and share them across devices on the same installation. Proposed: persist collapsed IDs with a separate revision and keep temporary search/undo expansion local. Refresh timing, concurrency, and focus-safe application of remote changes remain open; real-time push synchronization is not implicitly included. See [M6b](milestones.md#m6b--persistent-outline-view-state).
+
+A floating Back to top button appears after scrolling more than 400 pixels. It returns to the page start and focuses the list heading (or active title input), using immediate scrolling when reduced motion is requested. It is positioned above the save notice and does not change editor content/history.

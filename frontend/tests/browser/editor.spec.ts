@@ -588,3 +588,36 @@ test('item toolbar stays reachable while scrolling a long list on desktop and mo
     await expect(page.locator('.row.active')).toHaveCSS('--depth', '0');
   }
 });
+
+test('floating back-to-top control appears on long lists and restores heading focus', async ({
+  page,
+  request,
+}) => {
+  const list = await (
+    await request.post('/api/lists', { data: { title: 'Scroll list' } })
+  ).json();
+  const nodes = Array.from({ length: 70 }, (_, index) => ({
+    id: randomUUID(),
+    kind: 'item',
+    text: `Scroll ${index}`,
+    completed: false,
+    children: [],
+  }));
+  await request.put(`/api/lists/${list.id}`, {
+    data: {
+      baseRevision: 0,
+      document: { id: list.id, title: list.title, nodes },
+    },
+  });
+  await page.goto(`/?list=${list.id}`);
+  const button = page.getByRole('button', { name: 'Back to top', exact: true });
+  await expect(button).toHaveCount(0);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(button).toBeVisible();
+  await button.click();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(button).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Rename list', exact: true }),
+  ).toBeFocused();
+});

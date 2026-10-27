@@ -13,11 +13,28 @@
   import type { SearchHit } from './lib/search';
   import KeyboardGuide from './components/KeyboardGuide.svelte';
 
+  let showBackToTop = $state(false);
+  function scrollToTop() {
+    (titleEditing ? titleInput : titleButton)?.focus({ preventScroll: true });
+    window.scrollTo({
+      top: 0,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'instant'
+        : 'smooth',
+    });
+  }
+  let searchQuery = $state('');
+  let searchSequence = 0;
+  function clearSearch() {
+    searchReveal = null;
+    searchQuery = '';
+  }
   let searchReveal = $state<{
     listId: string;
     id: string | null;
     query: string;
     token: number;
+    pending: boolean;
   } | null>(null);
   let current = $state.raw<Session>();
   let selectedId = $state<string | null>(null);
@@ -126,8 +143,14 @@
         event.returnValue = '';
       }
     };
+    const trackScroll = () => {
+      showBackToTop = window.scrollY > 400;
+    };
+    trackScroll();
+    window.addEventListener('scroll', trackScroll, { passive: true });
     window.addEventListener('beforeunload', warn);
     return () => {
+      window.removeEventListener('scroll', trackScroll);
       window.removeEventListener('beforeunload', warn);
       workspace.dispose();
     };
@@ -174,6 +197,8 @@
       >
     </nav>
     <SearchDialog
+      bind:query={searchQuery}
+      onreset={clearSearch}
       disabled={busy || loading}
       onload={() => {
         finishRename();
@@ -188,7 +213,8 @@
           listId: hit.listId,
           id: hit.itemId,
           query,
-          token: (searchReveal?.token ?? 0) + 1,
+          token: ++searchSequence,
+          pending: !!hit.itemId,
         };
         if (!hit.itemId)
           void tick().then(() => {
@@ -336,6 +362,12 @@
             <EditorPane
               {session}
               reveal={searchReveal?.listId === selectedId ? searchReveal : null}
+              searchQuery={searchReveal?.query ?? ''}
+              onclearsearch={clearSearch}
+              onrevealed={(token) => {
+                if (searchReveal?.token === token)
+                  searchReveal = { ...searchReveal, pending: false };
+              }}
               disabled={busy}
               ondirty={() => session.sync.markDirty()}
             />
@@ -353,3 +385,9 @@
     <footer>Small thoughts. Clearer days.<span>FORGET ME NOT</span></footer>
   </main>
 </div>
+
+{#if showBackToTop}<button
+    class="back-to-top"
+    aria-label="Back to top"
+    onclick={scrollToTop}>↑ Top</button
+  >{/if}

@@ -145,3 +145,53 @@ test('search handles title-only matches, failures, empty results and stale remov
   await page.keyboard.press('Escape');
   await expect(trigger).toBeFocused();
 });
+
+test('search reveal is consumed once; switching lists preserves later focus and Clear search resets context', async ({
+  page,
+  request,
+}) => {
+  const term = `Needle-${randomUUID()}`;
+  const match = node(term);
+  const parent = node('Search parent', [match]);
+  const other = node('Later focus');
+  const first = await seed(request, 'Jump source', [parent, other]);
+  const second = await seed(request, 'Jump alternate', [node('Alternate')]);
+  await page.goto(`/?list=${first.id}`);
+  await page.getByRole('button', { name: 'Search lists', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Search lists' });
+  await dialog.getByRole('textbox').fill(term);
+  await expect(
+    dialog.getByRole('status', { name: 'Search status' }),
+  ).toHaveText('1 results');
+  await dialog.getByRole('button', { name: /Search parent/ }).click();
+  await expect(page.locator('.row.active .item-text')).toHaveText(term);
+  await expect(page.getByLabel('Search context')).toContainText(term);
+  await page.getByRole('button', { name: 'Later focus', exact: true }).focus();
+  await page
+    .getByRole('button', { name: 'Collapse Search parent', exact: true })
+    .click();
+  await page.locator(`[data-list-id="${second.id}"]`).click();
+  await page.locator(`[data-list-id="${first.id}"]`).click();
+  await expect(page.locator('.row.active .item-text')).toHaveText(
+    'Later focus',
+  );
+  await expect(
+    page.getByRole('button', { name: term, exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Expand Search parent', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Clear search', exact: true }).click();
+  await expect(page.getByLabel('Search context')).toHaveCount(0);
+  await expect(page.locator('.row.search-match')).toHaveCount(0);
+  await expect(page.locator('.row.active .item-text')).toBeFocused();
+  await page.getByRole('button', { name: 'Search lists', exact: true }).click();
+  await expect(dialog.getByRole('textbox')).toHaveValue('');
+  await dialog.getByRole('textbox').fill(term);
+  await expect(
+    dialog.getByRole('status', { name: 'Search status' }),
+  ).toHaveText('1 results');
+  await dialog.getByRole('button', { name: /Search parent/ }).click();
+  await expect(page.locator('.row.active .item-text')).toHaveText(term);
+  await expect(page.locator('.row.active .item-text')).toBeFocused();
+});

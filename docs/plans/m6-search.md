@@ -31,3 +31,7 @@ Literal/Unicode matches, ancestry/order, empty and title hits, snippets, explici
 - Existing database/API code and schema were unchanged; tests used disposable databases and did not modify development data. No new long-running development server was started.
 
 No commits were made. The user makes commits after review.
+
+## Review fixes — 2026-10-27
+
+Result reveal is an acknowledged one-shot navigation intent, separate from retained highlight/query context. The parent consumes it before async focus/scroll work so pane remounts and ordinary list switching cannot replay a previous jump. The sticky toolbar exposes the active search and Clear search; clearing also resets the modal query and restores current editor focus. A regression scenario verifies navigating elsewhere, collapsing the matched branch, switching away/back, clearing context, and deliberately selecting a new hit.

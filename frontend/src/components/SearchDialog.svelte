@@ -9,8 +9,12 @@
     onload,
     onselect,
     onreveal,
+    query = $bindable(''),
+    onreset,
   }: {
     disabled?: boolean;
+    query?: string;
+    onreset: () => void;
     onload: () => Promise<Document[]>;
     onselect: (hit: SearchHit, query: string) => Promise<void>;
     onreveal: (hit: SearchHit, query: string) => void;
@@ -18,7 +22,6 @@
   let dialog = $state<HTMLDialogElement>();
   let input = $state<HTMLInputElement>();
   let resultList = $state<HTMLDivElement>();
-  let query = $state('');
   let source = $state.raw<Document[]>([]);
   let loading = $state(false);
   let selecting = $state(false);
@@ -104,6 +107,14 @@
       }
     }}
   />
+  <button
+    class="quiet"
+    disabled={selecting || !query}
+    onclick={() => {
+      onreset();
+      input?.focus();
+    }}>Clear search</button
+  >
   <p class="guide-intro">
     Literal, case-insensitive search. Open lists include local edits. Reopen or
     refresh to update results.

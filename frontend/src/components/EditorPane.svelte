@@ -10,11 +10,22 @@
     disabled = false,
     ondirty,
     reveal = null,
+    searchQuery = '',
+    onclearsearch = () => {},
+    onrevealed = () => {},
   }: {
     session: { editor: Editor; collapsed: Set<string> };
     disabled?: boolean;
     ondirty: () => void;
-    reveal?: { id: string | null; query: string; token: number } | null;
+    reveal?: {
+      id: string | null;
+      query: string;
+      token: number;
+      pending: boolean;
+    } | null;
+    searchQuery?: string;
+    onclearsearch?: () => void;
+    onrevealed?: (token: number) => void;
   } = $props();
   const initial = untrack(() => session);
   const editor = initial.editor;
@@ -31,7 +42,12 @@
   let addButton = $state<HTMLButtonElement>();
   $effect(() => {
     const request = reveal;
-    if (request?.id) untrack(() => void revealItem(request.id!));
+    if (request?.id && request.pending)
+      untrack(() => {
+        // Consume the navigation intent before any await: remounts retain only highlighting.
+        onrevealed(request.token);
+        void revealItem(request.id!);
+      });
   });
   async function revealItem(id: string) {
     editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
@@ -266,6 +282,18 @@
 
 <div inert={disabled}>
   <div class="toolbar" aria-label="Item actions">
+    {#if searchQuery}<div
+        class="search-context-bar"
+        aria-label="Search context"
+      >
+        <span>Search result: <strong>{searchQuery}</strong></span>
+        <button
+          onclick={() => {
+            onclearsearch();
+            void render();
+          }}>Clear search</button
+        >
+      </div>{/if}
     <button bind:this={addButton} onclick={() => command('add')}
       >＋ Add item</button
     >

@@ -61,4 +61,4 @@ M12 adds a future Telegram Inbox for capturing text and links; M13 adds optional
 
 M6a adds compiled Rust format adapters, outline-Markdown transfer, and a 5,000-item limit verified with synthetic workflows. M15 tracks active/archived lists, restore, and deletion; search scope and archived editing remain design questions. M6a was accepted after user export verification; M15 is not implemented.
 
-M6b is implemented and verified for review: per-user/list database collapse preferences separately from import/export, with independent revisions, retry, and refresh on list opening/window return. See [M6b implementation](plans/m6b-outline-state.md).
+M6b was verified and accepted by the user: per-user/list database collapse preferences separately from import/export, with independent revisions, retry, and refresh on list opening/window return. See [M6b implementation](plans/m6b-outline-state.md).

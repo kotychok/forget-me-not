@@ -1,6 +1,6 @@
 # M6b — Shared outline view state
 
-Status: implemented and verified; awaiting user review. Authorized after the user committed and reviewed the preceding work on 2026-10-27.
+Status: complete; implemented, verified, and accepted by the user on 2026-10-27. Authorized after the user committed and reviewed the preceding work on 2026-10-27.
 
 ## Defaults and boundaries
 

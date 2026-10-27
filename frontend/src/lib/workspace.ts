@@ -320,7 +320,7 @@ export class Workspace {
     const session = this.current;
     if (!session || !this.selectedId) throw new Error('Choose a list first');
     return validatePortable({
-      schemaVersion: 1,
+      schemaVersion: 2,
       lists: [
         {
           id: this.selectedId,
@@ -339,7 +339,7 @@ export class Workspace {
         documents.set(id, structuredClone(this.document(id, session)));
     }
     return validatePortable({
-      schemaVersion: 1,
+      schemaVersion: 2,
       lists: [...documents.values()],
     }).lists;
   }
@@ -365,7 +365,9 @@ export class Workspace {
           'This item was removed locally. Refresh search results.',
         );
       const text = hit.itemId
-        ? locate(target.editor.state.nodes, hit.itemId)!.item.text
+        ? hit.field === 'note'
+          ? (locate(target.editor.state.nodes, hit.itemId)!.item.note ?? '')
+          : locate(target.editor.state.nodes, hit.itemId)!.item.text
         : target.title;
       if (!matches(text, query))
         throw new Error('This result changed. Refresh search results.');
@@ -520,7 +522,7 @@ export class Workspace {
     this.notify();
     try {
       const source = validatePortable({
-        schemaVersion: 1,
+        schemaVersion: 2,
         lists: [record.document],
       });
       source.lists[0].title =

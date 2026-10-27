@@ -35,6 +35,7 @@
     query: string;
     token: number;
     pending: boolean;
+    note: boolean;
   } | null>(null);
   let outlinePreferences = $state.raw<{
     collapsedItemIds: string[];
@@ -240,6 +241,7 @@
           query,
           token: ++searchSequence,
           pending: !!hit.itemId,
+          note: hit.field === 'note',
         };
         if (!hit.itemId)
           void tick().then(() => {
@@ -270,7 +272,7 @@
     />
     <div class="sidebar-bottom">
       <span class="local-dot"></span> Local only · no login
-      <span class="version">M6</span>
+      <span class="version">M7</span>
     </div>
   </aside>
 

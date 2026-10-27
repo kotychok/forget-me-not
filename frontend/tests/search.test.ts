@@ -43,3 +43,17 @@ test('results are bounded explicitly and snippets include late matches without c
   assert.ok(display.startsWith('…'));
   assert.ok(display.length <= 182);
 });
+
+test('note hits are distinct from title/text hits and preserve item identity and context', () => {
+  const item = createItem('Needle item');
+  item.note = 'Needle note';
+  const results = searchDocuments(
+    [{ id: crypto.randomUUID(), title: 'List', nodes: [item] }],
+    'needle',
+  );
+  assert.equal(results.total, 2);
+  assert.equal(results.hits[0].field, undefined);
+  assert.equal(results.hits[1].field, 'note');
+  assert.equal(results.hits[1].itemId, item.id);
+  assert.deepEqual(results.hits[1].ancestors, ['Needle item']);
+});

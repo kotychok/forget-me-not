@@ -22,6 +22,7 @@ pub(crate) struct FlatItem {
     pub position: i64,
     pub kind: String,
     pub text: String,
+    pub note: String,
     pub completed: bool,
 }
 
@@ -52,12 +53,16 @@ pub(crate) fn flatten(document: &Document) -> Result<Vec<FlatItem>> {
         if item.text.len() > 32768 {
             return Err(invalid("Item text exceeds 32 KiB"));
         }
+        if item.note.len() > 65536 {
+            return Err(invalid("Item note exceeds 64 KiB"));
+        }
         output.push(FlatItem {
             id: item.id.clone(),
             parent_id: parent.map(str::to_owned),
             position: position as i64,
             kind: item.kind.clone(),
             text: item.text.clone(),
+            note: item.note.clone(),
             completed: item.completed,
         });
         pending.extend(

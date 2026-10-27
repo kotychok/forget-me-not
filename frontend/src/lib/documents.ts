@@ -9,6 +9,7 @@ function sameItems(left: Item[], right: Item[]): boolean {
         item.id === other.id &&
         item.kind === other.kind &&
         item.text === other.text &&
+        (item.note ?? '') === (other.note ?? '') &&
         item.completed === other.completed &&
         sameItems(item.children, other.children)
       );

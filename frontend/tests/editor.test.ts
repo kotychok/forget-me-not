@@ -214,3 +214,30 @@ test('only untouched additions can be cancelled, including in an empty list', ()
   const existing = new Editor([createItem()]);
   assert.equal(existing.cancelNewItem(), false);
 });
+
+test('notes apply as one undoable command and survive branch operations', () => {
+  const { editor, b } = fixture();
+  const before = editor.past.length;
+  assert.equal(editor.setNote(b.id, '**Literal**\nA note'), true);
+  assert.equal(editor.past.length, before + 1);
+  assert.equal(
+    locate(editor.state.nodes, b.id)!.item.note,
+    '**Literal**\nA note',
+  );
+  editor.execute('indent');
+  assert.equal(
+    locate(editor.state.nodes, b.id)!.item.note,
+    '**Literal**\nA note',
+  );
+  editor.undo();
+  editor.undo();
+  assert.equal(locate(editor.state.nodes, b.id)!.item.note, undefined);
+  editor.redo();
+  assert.equal(
+    locate(editor.state.nodes, b.id)!.item.note,
+    '**Literal**\nA note',
+  );
+  assert.equal(editor.setNote(b.id, '**Literal**\nA note'), false);
+  assert.equal(editor.setNote(b.id, ''), true);
+  assert.equal(locate(editor.state.nodes, b.id)!.item.note, undefined);
+});

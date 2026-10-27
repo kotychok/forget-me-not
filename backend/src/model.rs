@@ -7,6 +7,8 @@ pub struct Item {
     pub id: String,
     pub kind: String,
     pub text: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub note: String,
     pub completed: bool,
     pub children: Vec<Item>,
 }

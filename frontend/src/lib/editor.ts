@@ -2,6 +2,7 @@ export type Item = {
   id: string;
   kind: 'item' | 'task';
   text: string;
+  note?: string;
   completed: boolean;
   children: Item[];
 };
@@ -118,6 +119,19 @@ export class Editor {
     const grouped = this.group?.id === id && now - this.group.time < 750;
     this.commit(next, grouped);
     this.group = { id: id!, time: now };
+    return true;
+  }
+
+  setNote(id: string, note: string) {
+    const current = locate(this.state.nodes, id);
+    if (!current || (current.item.note ?? '') === note) return false;
+    this.breakGroup();
+    this.pendingAdd = null;
+    const next = structuredClone(this.state);
+    const item = locate(next.nodes, id)!.item;
+    if (note) item.note = note;
+    else delete item.note;
+    this.commit(next);
     return true;
   }
 

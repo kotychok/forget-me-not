@@ -20,15 +20,36 @@ fn invalid(message: String) -> AppError {
 }
 impl Portable {
     pub fn from_value(value: serde_json::Value) -> Result<Self> {
-        let document: Self = serde_path_to_error::deserialize(value)
+        if value
+            .get("schemaVersion")
+            .and_then(serde_json::Value::as_u64)
+            == Some(1)
+        {
+            fn check(value: &serde_json::Value) -> bool {
+                match value {
+                    serde_json::Value::Array(items) => items.iter().any(check),
+                    serde_json::Value::Object(map) => {
+                        map.contains_key("note") || map.values().any(check)
+                    }
+                    _ => false,
+                }
+            }
+            if check(&value) {
+                return Err(invalid(
+                    "schema v1 does not support note fields; use schemaVersion 2".into(),
+                ));
+            }
+        }
+        let mut document: Self = serde_path_to_error::deserialize(value)
             .map_err(|error| invalid(format!("$.{}: {}", error.path(), error.inner())))?;
         document.validate()?;
+        document.schema_version = 2;
         Ok(document)
     }
     pub fn validate(&self) -> Result<()> {
-        if self.schema_version != 1 {
+        if self.schema_version != 1 && self.schema_version != 2 {
             return Err(invalid(
-                "$.schemaVersion: only version 1 is supported".into(),
+                "$.schemaVersion: only versions 1 and 2 are supported".into(),
             ));
         }
         if self.lists.is_empty() || self.lists.len() > MAX_LISTS {
@@ -51,6 +72,9 @@ impl Portable {
                 return Err(invalid(format!("{path}: file exceeds 10000 items")));
             }
             for item in flat {
+                if self.schema_version == 1 && !item.note.is_empty() {
+                    return Err(invalid(format!("{path}: notes require schemaVersion 2")));
+                }
                 if !items.insert(item.id) {
                     return Err(invalid(format!("{path}: duplicate item ID across lists")));
                 }

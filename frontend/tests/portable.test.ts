@@ -29,7 +29,7 @@ test('unknown fields, unsupported versions, and duplicate IDs have actionable pa
   let source: unknown = fixture();
   (source as Record<string, unknown>).ownerId = 'untrusted';
   assert.throws(() => validatePortable(source), /\$\.ownerId: Unknown field/);
-  source = { ...fixture(), schemaVersion: 2 };
+  source = { ...fixture(), schemaVersion: 3 };
   assert.throws(() => validatePortable(source), /\$\.schemaVersion/);
   const duplicate = fixture();
   duplicate.lists[1].nodes = [structuredClone(duplicate.lists[0].nodes[0])];
@@ -96,4 +96,36 @@ test('5000-item documents remain portable and the next item is rejected', () => 
     children: [],
   });
   assert.throws(() => validatePortable(doc), /5000 per list/);
+});
+
+test('schema v1 upgrades to v2; only v2 accepts bounded literal notes', () => {
+  const old = JSON.parse(
+    readFileSync(
+      new URL('../../fixtures/portable-v1.json', import.meta.url),
+      'utf8',
+    ),
+  );
+  assert.equal(validatePortable(old).schemaVersion, 2);
+  old.lists[0].nodes[0].note = 'A note';
+  assert.throws(() => validatePortable(old), /Unknown field/);
+  old.schemaVersion = 2;
+  old.lists[0].nodes[0].note = '**Literal**\n<script>text</script>';
+  const roundtrip = parsePortable(serializePortable(validatePortable(old)));
+  assert.equal(roundtrip.lists[0].nodes[0].note, old.lists[0].nodes[0].note);
+  old.lists[0].nodes[0].note = 'a'.repeat(65537);
+  assert.throws(() => validatePortable(old), /64 KiB/);
+});
+
+test('shared v2 fixture carries notes through portable export', () => {
+  const source = parsePortable(
+    readFileSync(
+      new URL('../../fixtures/portable-v2.json', import.meta.url),
+      'utf8',
+    ),
+  );
+  assert.equal(source.schemaVersion, 2);
+  assert.equal(
+    parsePortable(serializePortable(source)).lists[0].nodes[0].note,
+    '**Trip details**\nBring the itinerary. ✈️',
+  );
 });

@@ -13,6 +13,7 @@ use uuid::Uuid;
 fn item(text: &str) -> Item {
     Item {
         id: Uuid::new_v4().to_string(),
+        note: String::new(),
         kind: "item".into(),
         text: text.into(),
         completed: false,
@@ -414,7 +415,7 @@ async fn deferred_constraint_commit_failure_is_rolled_back() {
         .execute(&mut *tx)
         .await
         .unwrap();
-    sqlx::query("INSERT INTO items VALUES (?,?,?,0,'item','Bad',0,0,0)")
+    sqlx::query("INSERT INTO items(id,list_id,parent_id,position,kind,text,completed,created_at,updated_at) VALUES (?,?,?,0,'item','Bad',0,0,0)")
         .bind(Uuid::new_v4().to_string())
         .bind(&list.id)
         .bind(Uuid::new_v4().to_string())
@@ -583,7 +584,7 @@ async fn upgrade_from_m3_preserves_user_lists_items_and_revisions() {
         .execute(&pool)
         .await
         .unwrap();
-    sqlx::query("INSERT INTO items VALUES (?,?,NULL,0,'task','Existing content',1,1,2)")
+    sqlx::query("INSERT INTO items(id,list_id,parent_id,position,kind,text,completed,created_at,updated_at) VALUES (?,?,NULL,0,'task','Existing content',1,1,2)")
         .bind(&node)
         .bind(&list)
         .execute(&pool)

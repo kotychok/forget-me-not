@@ -7,6 +7,7 @@ use uuid::Uuid;
 fn node(text: &str, children: Vec<Item>) -> Item {
     Item {
         id: Uuid::new_v4().to_string(),
+        note: String::new(),
         kind: "item".into(),
         text: text.into(),
         completed: false,
@@ -197,7 +198,7 @@ async fn additive_upgrade_from_m6a_preserves_content_and_installation_identity()
         .await
         .unwrap();
     let item = node("Existing content", vec![]);
-    sqlx::query("INSERT INTO items VALUES (?,?,NULL,0,'item',?,0,1,2)")
+    sqlx::query("INSERT INTO items(id,list_id,parent_id,position,kind,text,completed,created_at,updated_at) VALUES (?,?,NULL,0,'item',?,0,1,2)")
         .bind(&item.id)
         .bind(&list)
         .bind(&item.text)

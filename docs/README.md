@@ -31,6 +31,7 @@ Updated: 2026-10-27. The core direction is agreed. M1 was reviewed and committed
 - [Architecture](architecture.md): components, persistence, conflicts, deployment.
 - [Editor behavior](editor-behavior.md): focus, tree operations, commands, history.
 - [Database and migrations](database.md): identifiers, ownership, schema, ordering, and migration management.
+- [Item notes](notes.md): editing, persistence, search, and JSON compatibility.
 - [Search](search.md): cross-list results, navigation, local edits, and limits.
 - [Draft recovery](recovery.md): local persistence, identity scopes, recovery, and conflict choices.
 - [Data formats](data-formats.md): model, versioned JSON, outline Markdown, limits, and adapter behavior.
@@ -62,3 +63,5 @@ M12 adds a future Telegram Inbox for capturing text and links; M13 adds optional
 M6a adds compiled Rust format adapters, outline-Markdown transfer, and a 5,000-item limit verified with synthetic workflows. M15 tracks active/archived lists, restore, and deletion; search scope and archived editing remain design questions. M6a was accepted after user export verification; M15 is not implemented.
 
 M6b was verified and accepted by the user: per-user/list database collapse preferences separately from import/export, with independent revisions, retry, and refresh on list opening/window return. See [M6b implementation](plans/m6b-outline-state.md).
+
+M7 adds plain-text item notes, note search and JSON v2 while retaining v1 import. It was verified and accepted by the user; note rendering remains deferred to M9.

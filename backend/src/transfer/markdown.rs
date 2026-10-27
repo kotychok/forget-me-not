@@ -172,6 +172,7 @@ pub(super) fn decode(text: &str) -> Result<Decoded> {
         }
         let item = Item {
             id: Uuid::new_v4().to_string(),
+            note: String::new(),
             kind: if checkbox.is_some() { "task" } else { "item" }.into(),
             completed: checkbox.is_some_and(|v| v.0),
             text: unescape(checkbox.map_or(content, |v| v.1)),
@@ -206,7 +207,7 @@ pub(super) fn decode(text: &str) -> Result<Decoded> {
     }
     Ok(Decoded {
         document: Portable {
-            schema_version: 1,
+            schema_version: 2,
             lists: vec![Document {
                 id: Uuid::new_v4().to_string(),
                 title: title.unwrap_or_else(|| "Imported outline".into()),
@@ -221,6 +222,14 @@ pub(super) fn encode(document: &Portable) -> Result<Encoded> {
         return Err(AppError::InvalidImport("Markdown exports one list at a time; choose the current list or use JSON for all lists".into()));
     }
     let list = &document.lists[0];
+    fn has_notes(items: &[Item]) -> bool {
+        items
+            .iter()
+            .any(|item| !item.note.is_empty() || has_notes(&item.children))
+    }
+    if has_notes(&list.nodes) {
+        return Err(AppError::InvalidImport("This list contains item notes. Export JSON to preserve them; outline Markdown does not represent separate notes.".into()));
+    }
     fn has_unsupported_whitespace(items: &[Item]) -> bool {
         items.iter().any(|item| {
             item.text.contains('\r')

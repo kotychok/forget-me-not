@@ -52,7 +52,7 @@ test('cross-list search reveals collapsed descendants, retains query and local h
   await page.getByRole('button', { name: 'Search lists', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Search lists' });
   const query = dialog.getByRole('textbox', {
-    name: 'Search titles and item text',
+    name: 'Search titles, items and notes',
   });
   await query.fill(needle.toLowerCase());
   await expect(
@@ -112,7 +112,7 @@ test('search handles title-only matches, failures, empty results and stale remov
   await page.unroute('**/api/export');
   await dialog.getByRole('button', { name: 'Refresh search' }).click();
   const query = dialog.getByRole('textbox', {
-    name: 'Search titles and item text',
+    name: 'Search titles, items and notes',
   });
   await query.fill('No-match-' + randomUUID());
   await expect(

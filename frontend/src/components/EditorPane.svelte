@@ -4,6 +4,7 @@
   import type { Editor, Item, Command } from '../lib/editor';
   import { textLinks, compactUrl } from '../lib/links';
   import { autoSize } from '../lib/auto-size';
+  import NoteDialog from './NoteDialog.svelte';
   import MarkedText from './MarkedText.svelte';
   let {
     session,
@@ -34,6 +35,7 @@
       query: string;
       token: number;
       pending: boolean;
+      note?: boolean;
     } | null;
     searchQuery?: string;
     onclearsearch?: () => void;
@@ -44,6 +46,16 @@
   onDestroy(() => {
     initial.collapsed = new Set(collapsed);
   });
+  let noteItem = $state<{ id: string; text: string; note: string } | null>(
+    null,
+  );
+  async function openNote(id: string) {
+    const item = locate(editor.state.nodes, id)?.item;
+    if (!item) return;
+    editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
+    await render();
+    noteItem = { id, text: item.text, note: item.note ?? '' };
+  }
   let view = $state(editor.state);
   let collapsed = $state<Set<string>>(
     new Set(untrack(() => preferences?.collapsedItemIds) ?? initial.collapsed),
@@ -84,15 +96,16 @@
       untrack(() => {
         // Consume the navigation intent before any await: remounts retain only highlighting.
         onrevealed(request.token);
-        void revealItem(request.id!);
+        void revealItem(request.id!, request.note ?? false);
       });
   });
-  async function revealItem(id: string) {
+  async function revealItem(id: string, note = false) {
     editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
     await render();
     outline
       ?.querySelector<HTMLElement>(`[data-item="${id}"]`)
       ?.scrollIntoView({ block: 'center' });
+    if (note) await openNote(id);
   }
   const rows = $derived(visibleItems(view.nodes, collapsed));
   const active = $derived(locate(view.nodes, view.focus.id));
@@ -289,6 +302,9 @@
     } else if (event.key === 'Escape') {
       event.preventDefault();
       addButton?.focus();
+    } else if (event.key.toLowerCase() === 'n') {
+      event.preventDefault();
+      void openNote(view.focus.id!);
     } else if (event.key.toLowerCase() === 'l') {
       const link = target
         .closest('.row')
@@ -375,6 +391,10 @@
       onclick={() => command('down')}
       disabled={!active || active.index === active.siblings.length - 1}
       aria-label="Move branch down">↓</button
+    >
+    <button
+      disabled={!active}
+      onclick={() => active && void openNote(active.item.id)}>Note</button
     >
   </div>
 
@@ -495,6 +515,12 @@
             {/if}
           </div>
         {/if}
+        {#if item.note}<button
+            class="note-indicator"
+            aria-label={`Edit note for ${item.text || 'empty item'}`}
+            title="Item has a note"
+            onclick={() => void openNote(item.id)}>▤</button
+          >{/if}
       </div>
     {/each}
     {#if !rows.length}<div class="empty">
@@ -534,3 +560,17 @@
   </p>
 </div>
 <div class="sr-only" aria-live="polite">{announcement}</div>
+
+<NoteDialog
+  item={noteItem}
+  onapply={(id, note) => {
+    if (editor.setNote(id, note)) {
+      ondirty();
+      void render(false);
+    }
+  }}
+  onclose={() => {
+    noteItem = null;
+    void render();
+  }}
+/>

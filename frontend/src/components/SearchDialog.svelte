@@ -92,7 +92,7 @@
       onclick={() => dialog?.close()}>✕</button
     >
   </div>
-  <label for="search-query">Search titles and item text</label>
+  <label for="search-query">Search titles, items and notes</label>
   <input
     id="search-query"
     bind:this={input}
@@ -136,7 +136,7 @@
     role="group"
     aria-label="Search results"
   >
-    {#each results.hits as hit (`${hit.listId}:${hit.itemId ?? 'title'}`)}
+    {#each results.hits as hit (`${hit.listId}:${hit.itemId ?? 'title'}:${hit.field ?? 'text'}`)}
       <button
         class="search-result"
         disabled={selecting}
@@ -163,7 +163,9 @@
       >
         <span class="search-context"
           ><MarkedText text={hit.title} {query} />{hit.itemId
-            ? ' · Item'
+            ? hit.field === 'note'
+              ? ' · Note'
+              : ' · Item'
             : ' · List title'}</span
         >
         {#if hit.ancestors.length}<span class="search-path"

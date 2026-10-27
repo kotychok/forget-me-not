@@ -51,7 +51,7 @@
   function download(record?: Draft) {
     try {
       downloadJson(
-        record ? { schemaVersion: 1, lists: [record.document] } : onexport(),
+        record ? { schemaVersion: 2, lists: [record.document] } : onexport(),
         record?.document.title ?? 'local-version',
       );
     } catch (reason) {
@@ -183,6 +183,9 @@
                   ? '☑ '
                   : '☐ '
                 : '• '}{item.text.slice(0, 240) || 'Empty item'}
+              {#if item.note}<span class="draft-note-preview"
+                  >Note: {item.note.slice(0, 240)}</span
+                >{/if}
             </li>{/each}
         </ul>
         <small>Preview shows up to 8 items; recovery keeps the full list.</small

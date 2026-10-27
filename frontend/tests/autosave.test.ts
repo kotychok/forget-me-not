@@ -175,3 +175,45 @@ test('pausing during a write waits for acknowledgement without sending queued ne
   assert.equal(queue.revision, 2);
   queue.dispose();
 });
+
+test('lost-response reconciliation distinguishes note changes from identical item text', async () => {
+  const document: Document = {
+    id: 'list',
+    title: 'Notes',
+    nodes: [
+      {
+        id: 'item',
+        kind: 'item',
+        text: 'Same text',
+        note: 'Local note',
+        completed: false,
+        children: [],
+      },
+    ],
+  };
+  const queue = new Autosave(
+    0,
+    () => document,
+    {
+      save: async () => {
+        throw new Error('Lost response');
+      },
+      get: async () => ({
+        ...structuredClone(document),
+        revision: 1,
+        nodes: [{ ...document.nodes[0], note: 'Other note' }],
+      }),
+    },
+    () => {},
+    100000,
+  );
+  try {
+    queue.markDirty();
+    await queue.flush();
+    await queue.retry();
+    assert.equal(queue.status, 'conflict');
+    assert.equal(document.nodes[0].note, 'Local note');
+  } finally {
+    queue.dispose();
+  }
+});

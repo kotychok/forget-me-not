@@ -91,7 +91,7 @@ test('invalid JSON and unknown versions show errors and never enable import', as
     name: 'future.json',
     mimeType: 'application/json',
     buffer: Buffer.from(
-      fixture.replace('"schemaVersion": 1', '"schemaVersion": 2'),
+      fixture.replace('"schemaVersion": 1', '"schemaVersion": 3'),
     ),
   });
   await expect(dialog.getByRole('alert')).toContainText('$.schemaVersion');

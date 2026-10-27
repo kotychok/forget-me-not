@@ -74,4 +74,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D046 | 2026-10-27 | Authorized implementation / defaults | Proceed with M6b after user commit/review: additive owned-list view metadata, independent revision, manual per-ID preference queue and bounded conflict rebase; refresh asynchronously on list open and visible window return. Temporary expansion remains local and remote changes preserve active editor visibility. No push sync or offline preference drafts |
 
+| D047 | 2026-10-27 | Authorized implementation / defaults | Proceed with M7 after M6b acceptance: separate literal item notes, modal Apply/Cancel and one undoable commit, 64 KiB limit, ordinary content revision/autosave/recovery and note search. Additive item-column migration and JSON v2 preserve notes; read v1 without notes. Refuse outline-Markdown export containing notes rather than dropping them. Rendering remains M9 |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

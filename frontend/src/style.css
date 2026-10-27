@@ -835,3 +835,38 @@ mark {
 .outline-preferences button {
   text-decoration: underline;
 }
+
+.note-dialog {
+  width: min(700px, calc(100vw - 32px));
+}
+.note-dialog textarea {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  font: inherit;
+  line-height: 1.5;
+  color: inherit;
+  background: #fcfcf8;
+  border: 1px solid #cbd5c5;
+  border-radius: 5px;
+  resize: vertical;
+}
+.note-item-title {
+  overflow-wrap: anywhere;
+  max-height: 80px;
+  overflow: auto;
+}
+.note-indicator {
+  flex-shrink: 0;
+  color: #6c805f;
+  padding: 2px 5px;
+  line-height: 22px;
+}
+
+.draft-note-preview {
+  display: block;
+  margin-top: 4px;
+  color: #7c8778;
+  font-size: 11px;
+  white-space: pre-wrap;
+}

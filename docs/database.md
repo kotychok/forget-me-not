@@ -114,6 +114,10 @@ Use transactional migrations where supported. SQLite table rebuilds or changes r
 
 Before release, verify migration from an empty database and upgrade from the previous supported schema with representative data. Check row counts, owner/list isolation, parent constraints, completion checks, revisions, and `PRAGMA foreign_key_check`. Verify a failed migration cannot result in serving a partially upgraded database. Run `PRAGMA integrity_check` and a restore check on the backup as appropriate for the upgrade.
 
+## Item notes — M7
+
+[The additive M7 migration](../backend/migrations/20261027000400_item_notes.sql) adds `items.note TEXT NOT NULL DEFAULT ''`. Existing items retain their content and receive empty notes. Notes use existing owned-list snapshot transactions, row-diff updates, content revisions and deletion cascade. They have a 64 KiB UTF-8 validation bound; view-preference metadata and revision are independent.
+
 ## View-state metadata — M6b
 
 [The additive M6b migration](../backend/migrations/20261027000300_list_view_states.sql) adds a unique owned-list index and `list_view_states`, keyed by `(user_id, list_id)`, with JSON collapsed-ID text and an independent nonnegative revision. Its composite foreign key enforces list ownership and cascades on list deletion. No existing list/item fields or applied migrations are changed.

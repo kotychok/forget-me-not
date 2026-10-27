@@ -4,7 +4,7 @@ use crate::{
 };
 use std::collections::HashSet;
 use uuid::Uuid;
-pub const MAX_ITEMS: usize = 2000;
+pub const MAX_ITEMS: usize = 5000;
 pub const MAX_DEPTH: usize = 32;
 
 fn valid_id(id: &str) -> bool {
@@ -40,7 +40,7 @@ pub(crate) fn flatten(document: &Document) -> Result<Vec<FlatItem>> {
         .collect();
     while let Some((item, parent, position, depth)) = pending.pop() {
         if depth > MAX_DEPTH || output.len() >= MAX_ITEMS {
-            return Err(invalid("List exceeds 2000 items or 32 levels"));
+            return Err(invalid("List exceeds 5000 items or 32 levels"));
         }
         if !valid_id(&item.id) || !seen.insert(item.id.clone()) {
             return Err(invalid("Item IDs must be unique canonical UUIDv4 values"));

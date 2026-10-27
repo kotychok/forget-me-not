@@ -21,7 +21,7 @@ test.beforeEach(async ({ page, request }) => {
 async function download(page: import('@playwright/test').Page, name: string) {
   const pending = page.waitForEvent('download');
   await page
-    .getByRole('dialog', { name: 'Import / export JSON' })
+    .getByRole('dialog', { name: 'Import / export' })
     .getByRole('button', { name, exact: true })
     .click();
   const file = await pending;
@@ -41,8 +41,8 @@ test('current JSON export round-trips through preview into a new copy without ov
   expect(exported.lists[0].nodes[0].children[0].completed).toBe(true);
   expect(exported.lists[0].nodes[0].children[0].text).toContain('**tickets**');
   const before = await (await request.get('/api/lists')).json();
-  const dialog = page.getByRole('dialog', { name: 'Import / export JSON' });
-  await dialog.getByLabel('Choose JSON file').setInputFiles({
+  const dialog = page.getByRole('dialog', { name: 'Import / export' });
+  await dialog.getByLabel('Choose JSON or Markdown file').setInputFiles({
     name: 'copy.json',
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(exported)),
@@ -78,8 +78,8 @@ test('invalid JSON and unknown versions show errors and never enable import', as
   await page
     .getByRole('button', { name: 'Import / export', exact: false })
     .click();
-  const dialog = page.getByRole('dialog', { name: 'Import / export JSON' });
-  const input = dialog.getByLabel('Choose JSON file');
+  const dialog = page.getByRole('dialog', { name: 'Import / export' });
+  const input = dialog.getByLabel('Choose JSON or Markdown file');
   const before = await (await request.get('/api/lists')).json();
   await input.setInputFiles({
     name: 'broken.json',
@@ -165,8 +165,8 @@ test('canceling a valid preview makes no writes; batch import creates both lists
     exact: false,
   });
   await trigger.click();
-  const dialog = page.getByRole('dialog', { name: 'Import / export JSON' });
-  await dialog.getByLabel('Choose JSON file').setInputFiles({
+  const dialog = page.getByRole('dialog', { name: 'Import / export' });
+  await dialog.getByLabel('Choose JSON or Markdown file').setInputFiles({
     name: 'two-lists.json',
     mimeType: 'application/json',
     buffer: Buffer.from(fixture),
@@ -220,8 +220,8 @@ test('lost import response is not retried and refreshing the index preserves loc
   await page
     .getByRole('button', { name: 'Import / export', exact: false })
     .click();
-  const dialog = page.getByRole('dialog', { name: 'Import / export JSON' });
-  await dialog.getByLabel('Choose JSON file').setInputFiles({
+  const dialog = page.getByRole('dialog', { name: 'Import / export' });
+  await dialog.getByLabel('Choose JSON or Markdown file').setInputFiles({
     name: 'uncertain.json',
     mimeType: 'application/json',
     buffer: Buffer.from(fixture),

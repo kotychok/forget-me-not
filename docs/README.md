@@ -5,7 +5,7 @@ Updated: 2026-10-27. The core direction is agreed. M1 was reviewed and committed
 ## Agreed with the user
 
 - Self-hosting, nested lists, and convenient keyboard editing.
-- JSON-only file import/export. Markdown inside item text is a separate later milestone (M9).
+- JSON file transfer is implemented; outline-Markdown transfer and Rust adapters are implemented and accepted in M6a. Markdown rendering inside item text remains separate in M9.
 - Each user can have multiple lists.
 - Stack: Svelte/TypeScript/Vite + Rust/Axum + SQLite.
 - UUIDv4 IDs; normalized users/lists/items; SQLx migrations are required.
@@ -33,7 +33,7 @@ Updated: 2026-10-27. The core direction is agreed. M1 was reviewed and committed
 - [Database and migrations](database.md): identifiers, ownership, schema, ordering, and migration management.
 - [Search](search.md): cross-list results, navigation, local edits, and limits.
 - [Draft recovery](recovery.md): local persistence, identity scopes, recovery, and conflict choices.
-- [Data formats](data-formats.md): model, versioned JSON, limits, import/export.
+- [Data formats](data-formats.md): model, versioned JSON, outline Markdown, limits, and adapter behavior.
 - [Decisions](decisions.md): agreements and proposals.
 - [Codex workflow](codex-workflow.md): instructions, configuration, verification.
 
@@ -53,8 +53,12 @@ Before persistence: decide expected scale and initial limits. The initial identi
 
 M2 is implemented with a loopback-only backend, embedded migrations, user-owned multiple lists, heading rename, deletion confirmation, and revision-checked autosave. See the root README for commands and the [M2 implementation record](plans/m2-persistence.md) for verification. M3 provides JSON import/export. M4 adds local drafts and conflict actions; authentication remains M11.
 
-M3 implementation and verification: [JSON portability record](plans/m3-json-transfer.md). Markdown file transfer is excluded; Markdown rendering in item text is M9.
+M3 implementation and verification: [JSON portability record](plans/m3-json-transfer.md). M3 shipped JSON-only; the later M6a agreement adds implemented outline-Markdown transfer. Markdown rendering in item text is M9.
 
 M5 tracks clickable links, compact URL display, and full, content-sized text editing. Link labels or accompanying comments remain an open design option; see the [milestone](milestones.md#m5--links-and-long-text-editing).
 
 M12 adds a future Telegram Inbox for capturing text and links; M13 adds optional AI commands on selected content with preview, undo, and spending controls. Telegram depends on protected deployment in M11; AI can be designed independently of hosting. Detailed design and provider selection remain open. See [Milestones](milestones.md).
+
+M6a adds compiled Rust format adapters, outline-Markdown transfer, and a 5,000-item limit verified with synthetic workflows. M15 tracks active/archived lists, restore, and deletion; search scope and archived editing remain design questions. M6a was accepted after user export verification; M15 is not implemented.
+
+M6b tracks remembering collapsed/expanded branches across reloads as separate UI-state work, without changing import/export formats. Database storage shared across devices per user/list is agreed; concurrency and refresh/propagation details remain open.

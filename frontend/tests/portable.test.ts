@@ -76,3 +76,24 @@ test('lone Unicode surrogates are rejected before sending a file to the server',
   source.lists[0].nodes[0].text = '\ud800';
   assert.throws(() => validatePortable(source), /\.text/);
 });
+
+test('5000-item documents remain portable and the next item is rejected', () => {
+  const doc = fixture();
+  doc.lists = [doc.lists[0]];
+  doc.lists[0].nodes = Array.from({ length: 5000 }, (_, index) => ({
+    id: crypto.randomUUID(),
+    kind: 'item',
+    text: `Synthetic ${index}`,
+    completed: false,
+    children: [],
+  }));
+  assert.equal(countItems(parsePortable(serializePortable(doc))), 5000);
+  doc.lists[0].nodes.push({
+    id: crypto.randomUUID(),
+    kind: 'item',
+    text: 'One too many',
+    completed: false,
+    children: [],
+  });
+  assert.throws(() => validatePortable(doc), /5000 per list/);
+});

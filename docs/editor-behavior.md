@@ -80,3 +80,7 @@ Editing shows the full original text in a wrapping textarea whose height follows
 Readable labels, Markdown link syntax, and separate comments remain deferred design options for M7 notes and M9 Markdown rendering. See [M5](milestones.md#m5--links-and-long-text-editing).
 
 The item action toolbar sticks to the viewport top while scrolling within the editor, including long lists. Its opaque background separates controls from scrolling content; focused item text reserves scroll space below it.
+
+## Remembering outline view state — planned M6b
+
+Persisting collapsed/expanded branches across reloads is planned separately from M6a file transfer. Keep it outside list content, revisions, history, and JSON/Markdown formats. The current implementation retains collapse state only in cached sessions; persistence is not implemented yet. Agreed: store view preferences in the database per user/list and share them across devices on the same installation. Proposed: persist collapsed IDs with a separate revision and keep temporary search/undo expansion local. Refresh timing, concurrency, and focus-safe application of remote changes remain open; real-time push synchronization is not implicitly included. See [M6b](milestones.md#m6b--persistent-outline-view-state).

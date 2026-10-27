@@ -85,6 +85,15 @@ pub fn app(store: Store, backend_port: u16, frontend_port: u16, assets: &FsPath)
         .route("/session", get(client_identity))
         .route("/export", get(export_json))
         .route(
+            "/transfer/decode",
+            axum::routing::post(decode_file)
+                .layer(DefaultBodyLimit::max(MAX_FILE_BYTES * 6 + 4096)),
+        )
+        .route(
+            "/transfer/encode",
+            axum::routing::post(encode_file).layer(DefaultBodyLimit::max(MAX_FILE_BYTES)),
+        )
+        .route(
             "/import",
             axum::routing::post(import_json).layer(DefaultBodyLimit::max(MAX_FILE_BYTES)),
         )
@@ -165,4 +174,29 @@ async fn import_json(
 
 async fn client_identity(State(state): State<AppState>) -> Result<Json<ClientIdentity>> {
     Ok(Json(state.store.identity().await?))
+}
+
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DecodeFile {
+    format: crate::transfer::Format,
+    text: String,
+}
+async fn decode_file(Json(request): Json<DecodeFile>) -> Result<Json<crate::transfer::Decoded>> {
+    Ok(Json(crate::transfer::decode(
+        request.format,
+        &request.text,
+    )?))
+}
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EncodeFile {
+    format: crate::transfer::Format,
+    document: Portable,
+}
+async fn encode_file(Json(request): Json<EncodeFile>) -> Result<Json<crate::transfer::Encoded>> {
+    Ok(Json(crate::transfer::encode(
+        request.format,
+        &request.document,
+    )?))
 }

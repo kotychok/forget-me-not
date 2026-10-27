@@ -16,7 +16,7 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
   ├── SearchDialog.svelte — read-only search snapshot, results, and activation UI
   ├── MarkedText.svelte — escaped literal match highlighting
   ├── KeyboardGuide.svelte — accessible modal guide
-  ├── JsonTransfer.svelte — file selection, preview, downloads, and confirmation
+  ├── TransferDialog.svelte — file selection, preview, downloads, and confirmation
   └── RecoveryPanel.svelte — draft preview and explicit recovery/conflict actions
 ```
 
@@ -31,7 +31,7 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
 
 There is no second authoritative tree in the UI. The Editor owns content/history; the pane publishes a reactive display copy. Sidebar metadata is a projection of the corresponding session/API result, not another editable tree.
 
-`lib/portable.ts` owns pure JSON validation and serialization; it does not read files, fetch, or write data. Workspace coordinates exports/imports through the concrete API; JsonTransfer handles browser file/download APIs.
+`lib/portable.ts` owns pure JSON validation and serialization; it does not read files, fetch, or write data. Workspace coordinates exports/imports through the concrete API; TransferDialog handles browser file/download APIs.
 
 `lib/documents.ts` compares document content independently of field insertion order. `lib/download.ts` is the shared browser JSON-download adapter. Recovery actions pause Autosave before replacing a session; `{#key current}` remounts the pane when a fresh server version replaces the editor.
 
@@ -48,7 +48,7 @@ main.rs — configuration, migration startup, loopback listener, shutdown
               └── migrations/*.sql — versioned schema changes
 ```
 
-`store.rs` is intentionally SQLite-specific: it is the one place to reason about SQL, row diffs, and atomic writes. Validation and storage do not use HTTP status codes; the HTTP adapter maps application failures into responses. `portable.rs` validates versioned transfer envelopes while reusing item validation. `lib.rs` exposes the modules and a small public entry surface for the executable and tests.
+`store.rs` is intentionally SQLite-specific: it is the one place to reason about SQL, row diffs, and atomic writes. Validation and storage do not use HTTP status codes; the HTTP adapter maps application failures into responses. `transfer/` contains pure format adapters with separate decode/encode dispatch; the HTTP layer exposes read-only conversion endpoints and never parses Markdown itself. `portable.rs` validates versioned transfer envelopes while reusing item validation. `lib.rs` exposes the modules and a small public entry surface for the executable and tests.
 
 Do not add a separate service/repository abstraction until actual behavior needs it. Splitting a module should follow independent responsibilities or a concrete extension, not a target file length.
 
@@ -63,3 +63,11 @@ Do not add a separate service/repository abstraction until actual behavior needs
 ## Verification boundaries
 
 Model, queue, and workspace tests run without Svelte or a browser. SQLite/API integration tests use disposable databases. Browser tests verify the complete composition, especially focus, switching sessions, autosave races, and persistence. Prefer testing behavior over module layout or private implementation details.
+
+## Format adapters — M6a
+
+Small, statically compiled Rust modules live under `transfer/`: `mod.rs` for supported formats/capabilities, `json.rs`, and `markdown.rs`. Import and export are separate capabilities; a future format may implement just one. This is a source-module extension point, not dynamically loaded shared libraries or an external plugin runtime.
+
+Adapters only decode/encode; they do not authenticate, access SQLite, mutate sessions, or assign persisted ownership. Decode produces the shared portable model plus warnings, followed by existing limits/validation. Formats without IDs need temporary normalization IDs before validation; the common atomic import still assigns fresh persisted IDs. JSON's strict ID/schema contract is preserved. Export consumes a shared document snapshot and produces bytes, media type, suggested extension, and any loss warnings.
+
+Implemented flow: read-only decode/preview → explicit confirmation → existing atomic new-copy import; current-local or saved-workspace snapshot → selected encoder → download. Keep current-list exports inclusive of unsaved edits, all-list export consistency, and uncertain-import response handling. Avoid duplicate format parsers on the frontend; use read-only backend conversion endpoints while keeping the UI responsible for selection, warnings, preview, and confirmation. The `Format` enum dispatches decode and encode separately. Each adapter is a pure module; a future unsupported direction can return an explicit error without creating a dynamic plugin loader. App passes conversion API functions into TransferDialog; Workspace continues to own persistence and export snapshot coordination.

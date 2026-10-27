@@ -60,4 +60,16 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D039 | 2026-10-27 | Agreed scope / implementation defaults | Begin M6 after user review and commit of M5. Defaults: retained-query search modal, literal case-insensitive titles/item search, read-only owned snapshot overlaid with local edits, contextual results, and checked reveal/focus without clearing history. Use explicit existing snapshot limits; defer dedicated indexing until measured needs justify it |
 
+| D040 | 2026-10-27 | Agreed | Supersedes D030's Markdown file-transfer exclusion: plan outline-Markdown import/export with compiled Rust format adapters and separate direction capabilities. Top-level paragraphs are root items, explicit indentation determines hierarchy, and task markers determine checkbox state. JSON remains the full supported portable format; Markdown rendering stays M9. Track implementation and unresolved parsing/scale details in M6a |
+
+| D041 | 2026-10-27 | Observed scale / proposed verification | The user's largest current sample has 2,976 list-marker lines plus prose, exceeding the present 2,000-item limit. Verify synthetic 3,000–5,000-item workflows before selecting a higher shared limit; do not silently split/truncate or change limits merely from file size |
+
+| D042 | 2026-10-27 | Agreed deferral | Add M15 for active/archived lists, restoration to active, and explicit deletion. Search inclusion, archived editing, and persistence/portable schema details require design; archive is distinct from any future trash/recoverable-delete feature |
+
+| D043 | 2026-10-27 | Agreed implementation / verified default | Implement M6a before the user imports their private file through the UI; remove that file from the repository (user retains a separate copy). JSON and outline-Markdown use pure Rust adapters and read-only conversion endpoints, preserving shared atomic new-copy import. Raise the synchronized per-list limit to 5,000 after synthetic scale verification; retain independent byte/depth limits |
+
+| D044 | 2026-10-27 | Agreed freeze / deferral | The user verified export and accepted the current M6a behavior. Track persistent per-list collapsed/expanded state separately in M6b as presentation data, independent of file import/export. Storage, synchronization, and temporary search-expansion policy remain open |
+
+| D045 | 2026-10-27 | Agreed | M6b view preferences are database-backed per user/list and shared across devices on the same installation. Keep them separate from content and file transfer. Collapsed-ID storage, independent revision, temporary-expansion policy, and refresh/conflict mechanics remain implementation proposals/design details; real-time push is not implied |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

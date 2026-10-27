@@ -16,7 +16,7 @@ Rust / Axum → validation → SQLite
 
 The tree model and commands do not depend on Svelte, the DOM, HTTP, or the database. A command returns the new state and information needed to restore focus and undo. The UI renders visible nodes and routes keyboard input. The server validates invariants independently rather than trusting the browser.
 
-Use one repository: `frontend/` contains the editor, `backend/` implements M2 persistence, and `docs/` contains design records. Do not introduce microservices, CRDTs, or event sourcing without a need. Items retain literal text, with compact plain-text URL display and separate safe HTTP/HTTPS opening controls. Editing uses a content-sized plain textarea. Markdown rendering inside item text is deferred to M9; Markdown file transfer is out of scope. Revisit a larger rich-text editor based on actual use cases.
+Use one repository: `frontend/` contains the editor, `backend/` implements M2 persistence, and `docs/` contains design records. Do not introduce microservices, CRDTs, or event sourcing without a need. Items retain literal text, with compact plain-text URL display and separate safe HTTP/HTTPS opening controls. Editing uses a content-sized plain textarea. Markdown rendering inside item text is deferred to M9; outline-Markdown file transfer is implemented in M6a through shared-model Rust adapters. Revisit a larger rich-text editor based on actual use cases.
 
 ## Local development and commands
 
@@ -69,6 +69,8 @@ Drafts protect against failures; they do not provide full offline support. Do no
 | `DELETE /api/lists/:id` | Delete with a revision check |
 | `GET /api/session` | Installation and server-resolved owner identity for local draft scope |
 | `GET /api/export` | Consistent JSON export of owned saved lists; optional listId filter |
+| `POST /api/transfer/decode` | Read-only format decoding and preview model with warnings |
+| `POST /api/transfer/encode` | Read-only encoding of a validated snapshot |
 | `POST /api/import` | Validate a schema-v1 envelope; create new copies atomically |
 
 Export and import preview can run in the browser; the server validates the result when saving. Implemented validation/storage errors use an `error` message; conflicts return 409, missing or non-owned lists return 404, invalid documents return 422, and oversized bodies return 413. Axum extraction errors can be plain text; the client handles both response forms. M3 implements a separate atomic workspace-import operation with an 8 MiB route limit; normal save routes retain the 1 MiB limit.

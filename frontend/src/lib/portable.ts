@@ -81,8 +81,8 @@ export function validatePortable(value: unknown): Portable {
           at,
         );
         if (depth > 32) fail(at, 'Maximum nesting is 32 levels');
-        if (++count > 2000 || ++total > MAX_TOTAL_ITEMS)
-          fail(at, 'Too many items (2000 per list; 10000 per file)');
+        if (++count > 5000 || ++total > MAX_TOTAL_ITEMS)
+          fail(at, 'Too many items (5000 per list; 10000 per file)');
         const itemId = id(item.id, `${at}.id`, itemIds);
         if (item.kind !== 'item' && item.kind !== 'task')
           fail(`${at}.kind`, 'Expected item or task');

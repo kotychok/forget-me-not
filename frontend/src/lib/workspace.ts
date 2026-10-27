@@ -27,12 +27,16 @@ export class Workspace {
   busy = false;
   error = '';
   private sessions = new Map<string, Session>();
-  private transport: typeof api;
+  private transport: Omit<typeof api, 'decodeFile' | 'encodeFile'>;
   private notify: () => void;
   readonly drafts: Drafts | undefined;
   private draftIdentityReady = false;
 
-  constructor(notify: () => void, transport = api, storage?: DraftStorage) {
+  constructor(
+    notify: () => void,
+    transport: Omit<typeof api, 'decodeFile' | 'encodeFile'> = api,
+    storage?: DraftStorage,
+  ) {
     this.notify = notify;
     this.transport = transport;
     if (storage) this.drafts = new Drafts(storage, notify);

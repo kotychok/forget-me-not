@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
+  import { api } from './lib/api';
   import type { SaveStatus } from './lib/autosave';
   import { IndexedDbDrafts } from './lib/draft-storage';
   import type { Draft } from './lib/draft-storage';
@@ -7,7 +8,7 @@
   import { Workspace } from './lib/workspace';
   import type { Session, SidebarList } from './lib/workspace';
   import EditorPane from './components/EditorPane.svelte';
-  import JsonTransfer from './components/JsonTransfer.svelte';
+  import TransferDialog from './components/TransferDialog.svelte';
   import SearchDialog from './components/SearchDialog.svelte';
   import type { SearchHit } from './lib/search';
   import KeyboardGuide from './components/KeyboardGuide.svelte';
@@ -196,7 +197,9 @@
           });
       }}
     />
-    <JsonTransfer
+    <TransferDialog
+      ondecode={api.decodeFile}
+      onencode={api.encodeFile}
       currentTitle={selectedId ? title : null}
       hasLists={lists.length > 0}
       disabled={busy || loading}

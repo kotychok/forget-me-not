@@ -114,6 +114,12 @@ Use transactional migrations where supported. SQLite table rebuilds or changes r
 
 Before release, verify migration from an empty database and upgrade from the previous supported schema with representative data. Check row counts, owner/list isolation, parent constraints, completion checks, revisions, and `PRAGMA foreign_key_check`. Verify a failed migration cannot result in serving a partially upgraded database. Run `PRAGMA integrity_check` and a restore check on the backup as appropriate for the upgrade.
 
+## Planned view-state metadata — M6b
+
+Agreed: persist collapsed/expanded preferences per user/list in the database, shared across devices. Keep these records separate from list content, content revisions, and JSON/Markdown file formats. Implementation has not started; an additive migration is required.
+
+Proposed schema: `list_view_states` keyed by `(user_id, list_id)`, storing a JSON array of collapsed item IDs and an independent view-state revision. All other branches are expanded by default. Enforce owned-list access server-side and remove view state when its list is deleted. Validate IDs against the owned list; tolerate and prune stale IDs without affecting content. Exact columns, constraints, conflict handling, and API are implementation design choices, not an applied schema.
+
 ## Sources
 
 - [RFC 9562](https://www.rfc-editor.org/rfc/rfc9562.html) — UUIDv4 and UUIDv7 definitions.

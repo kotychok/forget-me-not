@@ -33,6 +33,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.status === 204 ? (undefined as T) : response.json();
 }
 export const api = {
+  decodeFile: (format: 'json' | 'markdown', text: string) =>
+    request<{ document: Portable; warnings: string[] }>('/transfer/decode', {
+      method: 'POST',
+      body: JSON.stringify({ format, text }),
+    }),
+  encodeFile: (format: 'json' | 'markdown', document: Portable) =>
+    request<{
+      text: string;
+      extension: string;
+      mediaType: string;
+      warnings: string[];
+    }>('/transfer/encode', {
+      method: 'POST',
+      body: JSON.stringify({ format, document }),
+    }),
   session: () => request<{ serverId: string; ownerId: string }>('/session'),
   exportJson: () => request<Portable>('/export'),
   importJson: (document: Portable) =>

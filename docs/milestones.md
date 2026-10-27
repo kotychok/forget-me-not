@@ -1,6 +1,6 @@
 # Milestones
 
-Updated: 2026-10-27. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing was reviewed and committed by the user; M6 search is implemented and verified for local review; later milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
+Updated: 2026-10-27. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing was reviewed and committed by the user; M6 search was reviewed and accepted by the user; M6a format adapters were accepted after user export verification; later milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
 
 Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only for a detailed plan of a complex milestone when implementation begins. Mark a milestone complete only with actual verification evidence.
 
@@ -14,7 +14,9 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M3 | Import and export JSON | M2 | Complete (reviewed and committed by user) |
 | M4 | Restore drafts and handle concurrent edits | M2 | Complete (reviewed and accepted by user) |
 | M5 | Open links and improve long-text editing | M4 | Complete (reviewed and committed by user) |
-| M6 | Search across a user's lists | M4 | Implemented and verified; awaiting user review |
+| M6 | Search across a user's lists | M4 | Complete (reviewed and accepted by user) |
+| M6a | Format adapters and outline-Markdown transfer | M3, M6 | Complete (accepted by user; export verified) |
+| M6b | Remember collapsed and expanded branches | M4 | Planned; separate UI-state work |
 | M7 | Item notes | M4 | Planned |
 | M8 | Tags and filtering | M4 | Planned |
 | M9 | Render Markdown inside item text | M5 | Planned |
@@ -23,6 +25,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M12 | Capture items through Telegram Inbox | M11 | Deferred |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
 | M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Deferred |
+| M15 | Active and archived lists | M6; portability/schema design | Deferred |
 
 M3 and M4 have no dependency on each other; the table does not require parallel implementation. Import/export fixtures can be designed before M2, but complete import persistence depends on it.
 
@@ -61,7 +64,7 @@ Scope: backend API, users/lists/items, migrations, list management, ownership au
 
 Agreed: M2 uses one provisioned local user without login. Resolve that identity on the server; do not accept a client-supplied owner as authentication. Keep owner-scoped queries and foreign keys so production authentication can be added without redesigning list ownership. Bind the development server to loopback and clearly identify this as local-only operation. Login and production access protection are deferred to M11.
 
-Implemented defaults: 2,000 items/list, 32 levels, 32 KiB/item, 200 title characters, and a 1 MiB request-body limit. List deletion is permanent after confirmation; user-driven list ordering remains deferred.
+M2 initially shipped with 2,000 items/list (raised to 5,000 in M6a), 32 levels, 32 KiB/item, 200 title characters, and a 1 MiB request-body limit. List deletion is permanent after confirmation; user-driven list ordering remains deferred.
 
 Acceptance:
 
@@ -77,7 +80,7 @@ Verification: disposable SQLite integration checks for ownership, constraints, r
 
 ## M3 — JSON portability
 
-Scope: versioned JSON, local preview, current-list export, all-saved-lists export, and atomic new-copy import. Markdown file import/export is explicitly removed; rendering Markdown in item text is deferred to M9.
+Scope: versioned JSON, local preview, current-list export, all-saved-lists export, and atomic new-copy import. Markdown file import/export was excluded from M3; it is now a separate M6a follow-up. Rendering Markdown in item text remains M9.
 
 Acceptance:
 
@@ -137,6 +140,37 @@ Acceptance:
 - Decide searched fields, matching/highlighting rules, handling of current unsaved edits, and expected scale before implementation. Choose indexing based on measured needs.
 
 Implemented defaults: retained-query modal, literal Unicode case-insensitive matching, contextual snippets, checked target activation, view-only highlights, and explicit snapshot/result limits. See [Search behavior](search.md). Larger-scale indexing and fuzzy matching require separate design.
+
+### M6a — Format adapters and outline-Markdown transfer
+
+Outcome: add import/export formats as small Rust modules with separate direction capabilities, reusing a common model, preview, validation, and atomic new-copy persistence. JSON remains supported with its existing strict contract; add the agreed outline-Markdown dialect. This follow-up was authorized after agreement on the outline dialect; it is implemented and verified for review without renumbering established milestones.
+
+Acceptance:
+
+- Preserve current JSON behavior, local unsaved export, ownership isolation, all-or-nothing import, and lost-response handling.
+- Read-only conversion/preview does not persist anything. Warnings explain unsupported constructs and format losses before confirmation.
+- Follow the agreed [outline-Markdown contract](data-formats.md#outline-markdown-contract--m6a): top-level paragraphs are root items; only explicit indentation creates children; task markers are explicit.
+- New formats can support import, export, or both without embedding parsing in HTTP handlers or SQL storage. No dynamic plugin loader is required.
+- Verify a synthetic 3,000–5,000-item list before choosing a higher shared item limit, so the user's largest current sample can be handled intact if feasible. The verified current limit is now 5,000; do not silently split or truncate.
+- Test synthetic dialect fixtures, escaping and multiline rules, structural export/import round-trips, malformed input, limits, preview/cancel, and transactional persistence. The user's personal sample is reference material, not required committed test data.
+
+Implemented defaults: compiled enum dispatch, read-only conversion endpoints, explicit multiline/escaping rules, and a synchronized 5,000-item limit after scale verification. See [adapter boundaries](code-structure.md#format-adapters--m6a) and [M6a implementation](plans/m6a-format-adapters.md).
+
+### M6b — Persistent outline view state
+
+Outcome: remember which branches are collapsed or expanded per user/list in the database, shared across browsers and devices on the same installation. Requested after the user accepted the current M6a behavior; this is UI-state work, independent of import/export. Implementation has not started.
+
+Acceptance:
+
+- Restore collapsed/expanded branches for the same list without changing item content, list revisions, autosave state, or undo history.
+- Scope remembered state by installation, user, and list identity; another account or installation must not inherit it.
+- Ignore stale item IDs after deletion or replacement. Imported copies have new IDs and do not inherit the source list's view state through file transfer.
+- Storage failures must not prevent ordinary editing; define a non-blocking fallback and verify reload/list-switch behavior.
+- Keep JSON/Markdown content formats unchanged; collapse state remains separate presentation data.
+
+Agreed: database-backed, shared across devices for the same user/list. Proposed implementation: store collapsed item IDs in a separate view-state record with its own revision. Remember manual changes; temporary search/undo expansion should not overwrite saved preferences. These storage details and the temporary-expansion rule remain implementation proposals.
+
+Open design: refresh/propagation timing across tabs/devices, concurrent preference updates, offline/failure retry behavior, and focus safety when another device collapses an active branch. Shared state does not yet imply real-time push updates.
 
 ### M7 — Item notes
 
@@ -212,13 +246,27 @@ Outcome: reduce the data exchanged for edits after the reliable snapshot impleme
 
 Acceptance: representative indent/outdent and text edits exchange measurably fewer bytes against the recorded baseline; revision checks, retry/idempotency, draft recovery, and atomic writes remain correct. Document before/after measurements and protocol compatibility. Optimization must not turn partial failures into lost edits. Establish a quantitative target from the baseline before implementation.
 
+### M15 — Active and archived lists
+
+Outcome: distinguish active lists from archived lists, archive without losing content, restore to active, and allow explicit deletion. Requested as a future feature; implementation is deferred.
+
+Acceptance:
+
+- Active and archived lists have separate, understandable navigation; archiving preserves list/item IDs, hierarchy, and content.
+- Users can archive and restore owned lists without losing pending edits or drafts. Concurrent changes follow revision/conflict rules.
+- Define how search includes/excludes archives, and label archived results clearly when included. Define whether archived content can be edited and how switching/reload/deep links behave.
+- Deletion remains available with explicit confirmation. Current deletion is permanent; archive is not a trash bin, and recoverable deletion requires separate scope.
+- Use an additive migration and update API validation, ownership checks, search, and JSON portability under an explicit backward-compatible format policy. Do not silently drop archive state from a full portable export.
+
+Open design: archive placement/order, read-only versus editable archives, default search scope and inclusion control, deleted-list recovery, and conversion warnings for formats that cannot represent archive state.
+
 ## Remaining product details
 
 Resolve within the relevant milestone rather than blocking all work now:
 
 - M1: empty-item Enter behavior, task completion propagation, completion visibility, and deletion focus.
 - After M2: soft-delete/trash recovery and user-driven list ordering remain unimplemented. Revisit scale and limits based on real usage.
-- After M3: ID-preserving restore and archive packaging require separate scope; Markdown file transfer is not planned.
+- After M3: ID-preserving restore and archive packaging require separate scope; outline-Markdown transfer is tracked in M6a.
 - M11: mobile support expectations and the release support matrix if required.
 
 Keep recommendations marked as proposals until the user agrees; do not infer acceptance merely because a milestone mentions them.

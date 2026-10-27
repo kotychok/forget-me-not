@@ -16,7 +16,7 @@ Rust / Axum → validation → SQLite
 
 The tree model and commands do not depend on Svelte, the DOM, HTTP, or the database. A command returns the new state and information needed to restore focus and undo. The UI renders visible nodes and routes keyboard input. The server validates invariants independently rather than trusting the browser.
 
-Use one repository: `frontend/` contains the editor, `backend/` implements M2 persistence, and `docs/` contains design records. Do not introduce microservices, CRDTs, or event sourcing without a need. Items currently display literal text and editing uses a plain textarea. Markdown rendering inside item text is deferred to M9; Markdown file transfer is out of scope. Revisit a larger rich-text editor based on actual use cases.
+Use one repository: `frontend/` contains the editor, `backend/` implements M2 persistence, and `docs/` contains design records. Do not introduce microservices, CRDTs, or event sourcing without a need. Items retain literal text, with compact plain-text URL display and separate safe HTTP/HTTPS opening controls. Editing uses a content-sized plain textarea. Markdown rendering inside item text is deferred to M9; Markdown file transfer is out of scope. Revisit a larger rich-text editor based on actual use cases.
 
 ## Local development and commands
 

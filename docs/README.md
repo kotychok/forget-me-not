@@ -1,6 +1,6 @@
 # Documentation
 
-Updated: 2026-10-26. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 was reviewed and committed; M4 draft recovery was reviewed and accepted by the user; M5 links and long-text editing is next; deployment is deferred to M11 while hosting is undecided. Remaining design details are tracked by milestone.
+Updated: 2026-10-26. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 was reviewed and committed; M4 draft recovery was reviewed and accepted by the user; M5 links and long-text editing is implemented for local review; deployment is deferred to M11 while hosting is undecided. Remaining design details are tracked by milestone.
 
 ## Agreed with the user
 

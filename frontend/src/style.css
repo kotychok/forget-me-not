@@ -282,6 +282,27 @@ h1 span {
   min-width: 0;
   border-radius: 0;
 }
+.item-content {
+  flex: 1;
+  min-width: 0;
+}
+.item-content .item-text {
+  display: block;
+  width: 100%;
+}
+.item-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 3px;
+  font-size: 11px;
+  color: #587452;
+}
+.item-links a {
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .item-text:hover:not(:disabled) {
   background: transparent;
 }
@@ -291,7 +312,8 @@ h1 span {
 }
 .row textarea {
   flex: 1;
-  resize: vertical;
+  resize: none;
+  overflow: hidden;
   padding: 2px 0;
   line-height: 22px;
   color: #303b35;

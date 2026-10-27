@@ -2,6 +2,8 @@
   import { tick, untrack, onDestroy } from 'svelte';
   import { locate, visibleItems } from '../lib/editor';
   import type { Editor, Item, Command } from '../lib/editor';
+  import { textLinks, compactUrl } from '../lib/links';
+  import { autoSize } from '../lib/auto-size';
   let {
     session,
     disabled = false,
@@ -218,6 +220,14 @@
     } else if (event.key === 'Escape') {
       event.preventDefault();
       addButton?.focus();
+    } else if (event.key.toLowerCase() === 'l') {
+      const link = target
+        .closest('.row')
+        ?.querySelector<HTMLAnchorElement>('.item-links a');
+      if (link) {
+        event.preventDefault();
+        link.focus();
+      }
     } else if (event.key === 'Delete' && !event.shiftKey) {
       event.preventDefault();
       command('delete');
@@ -279,6 +289,10 @@
     aria-label="List editor"
   >
     {#each rows as { item, depth } (item.id)}
+      {@const parts = textLinks(item.text)}
+      {@const links = [
+        ...new Set(parts.flatMap((part) => (part.href ? [part.href] : []))),
+      ]}
       <div
         class="row"
         class:active={view.focus.id === item.id}
@@ -314,6 +328,7 @@
         {:else}<span class="bullet">•</span>{/if}
         {#if view.focus.id === item.id && view.focus.mode === 'edit'}
           <textarea
+            use:autoSize={item.text}
             data-item={item.id}
             aria-label="Item text"
             onkeydown={keys}
@@ -334,24 +349,47 @@
             }}
             onblur={() => editor.breakGroup()}></textarea>
         {:else}
-          <button
-            class="item-text"
-            onkeydown={keys}
-            data-item={item.id}
-            onfocus={() => {
-              if (editor.state.focus.id !== item.id) {
-                editor.setFocus({
-                  id: item.id,
-                  mode: 'navigate',
-                  start: 0,
-                  end: 0,
-                });
-                void render(false);
-              }
-            }}
-            onclick={() => focusItem(item.id, true)}
-            >{item.text || 'Empty item'}</button
-          >
+          <div class="item-content">
+            <button
+              class="item-text"
+              onkeydown={keys}
+              data-item={item.id}
+              onfocus={() => {
+                if (editor.state.focus.id !== item.id) {
+                  editor.setFocus({
+                    id: item.id,
+                    mode: 'navigate',
+                    start: 0,
+                    end: 0,
+                  });
+                  void render(false);
+                }
+              }}
+              onclick={() => focusItem(item.id, true)}
+              >{#if item.text}{#each parts as part}{#if part.href}<span
+                      title={part.text}>{compactUrl(part.text)}</span
+                    >{:else}{part.text}{/if}{/each}{:else}Empty item{/if}</button
+            >
+            {#if links.length}
+              <div class="item-links" aria-label="Item links">
+                {#each links as href}
+                  <a
+                    {href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={href}
+                    aria-label={`Open ${href} in a new tab`}
+                    onkeydown={(event) => {
+                      if (event.key === 'Escape') {
+                        event.preventDefault();
+                        focusItem(item.id);
+                      }
+                    }}>↗ {new URL(href).hostname}</a
+                  >
+                {/each}
+              </div>
+            {/if}
+          </div>
         {/if}
       </div>
     {/each}

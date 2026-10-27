@@ -41,6 +41,10 @@
     <dd>Navigate and collapse in navigation mode</dd>
     <dt>Space</dt>
     <dd>Complete task in navigation mode</dd>
+    <dt>L</dt>
+    <dd>
+      Focus item links; Enter opens, Tab switches links, Esc returns to item
+    </dd>
     <dt>Del</dt>
     <dd>Delete branch in navigation mode</dd>
     <dt>Cmd/Ctrl + Z</dt>

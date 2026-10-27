@@ -529,7 +529,9 @@ test('Tab moves whole branches in navigation without entering edit mode and Esca
         name: 'Press Enter to add a new item',
         exact: true,
       })
-      .locator('..'),
+      .locator(
+        'xpath=ancestor::div[contains(concat(" ", normalize-space(@class), " "), " row ")][1]',
+      ),
   ).toHaveCSS('--depth', '2');
   await parent.press('Escape');
   const add = page.getByRole('button', { name: '＋ Add item', exact: true });

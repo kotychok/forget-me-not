@@ -1,6 +1,6 @@
 # Milestones
 
-Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 and later implementation milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
+Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing is implemented for local review; later milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
 
 Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only for a detailed plan of a complex milestone when implementation begins. Mark a milestone complete only with actual verification evidence.
 
@@ -13,7 +13,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M2 | Persist user-owned lists with reliable autosave | M1 | Complete (user proceeded to M3) |
 | M3 | Import and export JSON | M2 | Complete (reviewed and committed by user) |
 | M4 | Restore drafts and handle concurrent edits | M2 | Complete (reviewed and accepted by user) |
-| M5 | Open links and improve long-text editing | M4 | Next: design |
+| M5 | Open links and improve long-text editing | M4 | Implemented and verified; awaiting user review |
 | M6 | Search across a user's lists | M4 | Planned |
 | M7 | Item notes | M4 | Planned |
 | M8 | Tags and filtering | M4 | Planned |
@@ -110,7 +110,7 @@ Hosting is undecided. Local product improvements do not depend on deployment or 
 
 ### M5 — Links and long-text editing
 
-Outcome: open links from item text, keep long URLs compact in navigation mode, and make the full original text comfortable to edit. Requested during M4 review; implementation is deferred. This is the next local improvement and can ship independently of Markdown rendering in M9.
+Outcome: open links from item text, keep long URLs compact in navigation mode, and make the full original text comfortable to edit. Requested during M4 review and authorized after the user committed the preceding work. This local improvement and can ship independently of Markdown rendering in M9.
 
 Acceptance:
 
@@ -119,6 +119,8 @@ Acceptance:
 - Editing reveals the complete original URL and surrounding text. The textarea wraps and grows with its content so editing a long item is not restricted to a single visible line.
 - Preserve keyboard navigation, caret/selection, IME input, undo/redo, autosave, and literal JSON round-trip.
 - Define safe URL handling and how link activation coexists with click-to-edit before implementation. Do not fetch remote page metadata implicitly.
+
+Verification: 34 frontend tests, 31 isolated browser scenarios, frontend build, and visual inspection. See [M5 implementation](plans/m5-links-editing.md).
 
 Open design: allow a readable link label and/or an accompanying comment. The user suggested this as a possibility; decide whether ordinary item text, future Markdown links (M9), or separate item notes (M7) provide it before adding fields or changing the JSON schema.
 

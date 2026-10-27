@@ -56,4 +56,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D037 | 2026-10-26 | Agreed replan | Hosting remains undecided; move deployment later and remove it as a prerequisite for local product improvements. The current milestone numbering and mapping in milestones.md supersede earlier milestone references and blanket deployment dependencies; individual feature design remains open |
 
+| D038 | 2026-10-26 | Agreed scope / implementation defaults | Begin reordered M5 after user commit: compact plain-text URL display, separate HTTP/HTTPS opening controls, full content-sized editing, and unchanged JSON/storage. Defaults: new-tab links, L for link focus, Escape back to item. Custom labels/comments remain deferred |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

@@ -8,8 +8,16 @@
   import type { Session, SidebarList } from './lib/workspace';
   import EditorPane from './components/EditorPane.svelte';
   import JsonTransfer from './components/JsonTransfer.svelte';
+  import SearchDialog from './components/SearchDialog.svelte';
+  import type { SearchHit } from './lib/search';
   import KeyboardGuide from './components/KeyboardGuide.svelte';
 
+  let searchReveal = $state<{
+    listId: string;
+    id: string | null;
+    query: string;
+    token: number;
+  } | null>(null);
   let current = $state.raw<Session>();
   let selectedId = $state<string | null>(null);
   let lists = $state<SidebarList[]>([]);
@@ -164,6 +172,30 @@
         >＋ New list</button
       >
     </nav>
+    <SearchDialog
+      disabled={busy || loading}
+      onload={() => {
+        finishRename();
+        return workspace.searchSource();
+      }}
+      onselect={async (hit, query) => {
+        await workspace.openSearchHit(hit, query);
+        updateUrl();
+      }}
+      onreveal={(hit: SearchHit, query: string) => {
+        searchReveal = {
+          listId: hit.listId,
+          id: hit.itemId,
+          query,
+          token: (searchReveal?.token ?? 0) + 1,
+        };
+        if (!hit.itemId)
+          void tick().then(() => {
+            titleButton?.focus();
+            titleButton?.scrollIntoView({ block: 'center' });
+          });
+      }}
+    />
     <JsonTransfer
       currentTitle={selectedId ? title : null}
       hasLists={lists.length > 0}
@@ -184,7 +216,7 @@
     />
     <div class="sidebar-bottom">
       <span class="local-dot"></span> Local only · no login
-      <span class="version">M4</span>
+      <span class="version">M6</span>
     </div>
   </aside>
 
@@ -300,6 +332,7 @@
             {@const session = current}
             <EditorPane
               {session}
+              reveal={searchReveal?.listId === selectedId ? searchReveal : null}
               disabled={busy}
               ondirty={() => session.sync.markDirty()}
             />

@@ -19,6 +19,10 @@ The default SQLite file is `data/forget-me-not.sqlite`, excluded from Git. A loc
 
 **Local use only:** the API binds to IPv4 loopback and checks request Host/Origin. There is no login. Production authentication and Docker deployment are planned for M11.
 
+## Search
+
+Choose **Search lists** to search list titles and item text across lists, including local edits in open lists. Results show list/ancestor context; opening one reveals and focuses its item. Reopen search to return to the same query, or refresh results explicitly. Search is literal and case-insensitive; it uses existing snapshot limits (100 lists, 10,000 items, 8 MiB) and shows up to 200 results. See [Search behavior](docs/search.md).
+
 ## Links and long text
 
 Long HTTP/HTTPS URLs display compactly; separate domain links open the complete address in a new tab. Click item text or use F2 to edit the full original source in a wrapping, automatically growing field. In navigation, L focuses links, Enter opens one, Tab moves between them, and Escape returns to the item. Link detection does not fetch remote content or add Markdown rendering.

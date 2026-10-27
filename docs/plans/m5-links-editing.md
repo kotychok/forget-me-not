@@ -1,6 +1,6 @@
 # M5 — Links and long-text editing
 
-Status: implemented and verified; awaiting user review. Authorized after the user committed the M4 work and roadmap reordering.
+Status: complete; reviewed and committed by the user on 2026-10-27. Authorized after the user committed the M4 work and roadmap reordering.
 
 ## Behavior and boundaries
 

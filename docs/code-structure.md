@@ -13,12 +13,15 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
   │     │     └── IndexedDbDrafts — native storage adapter
   │     └── api — HTTP/JSON transport
   ├── EditorPane.svelte — tree UI, keyboard/composition events, DOM focus and selection
+  ├── SearchDialog.svelte — read-only search snapshot, results, and activation UI
+  ├── MarkedText.svelte — escaped literal match highlighting
   ├── KeyboardGuide.svelte — accessible modal guide
   ├── JsonTransfer.svelte — file selection, preview, downloads, and confirmation
   └── RecoveryPanel.svelte — draft preview and explicit recovery/conflict actions
 ```
 
 - `lib/links.ts` detects plain-text HTTP/HTTPS links and formats compact display strings without mutating source data; it has no DOM, model, or HTTP dependency. `lib/auto-size.ts` is a DOM action for textarea content/width sizing and cleanup, with no tree/history dependency.
+- `lib/search.ts` owns pure literal matching, result context, snippets, and result caps. Workspace overlays cached local documents on a read-only owned snapshot and validates activation; SearchDialog owns modal state and stale-response guards. App sends a view-only reveal request to EditorPane for expansion, focus, and scroll. Search never flushes autosave or adds history.
 - `lib/editor.ts` knows only item data, commands, and history. It does not import Svelte, HTTP, or browser DOM APIs. ID generation uses platform crypto.
 - `lib/autosave.ts` manages save generations and acknowledgements. It accepts explicit save/get functions and has no UI dependency. An acknowledgement never replaces current editor content.
 - `lib/api.ts` owns URLs, request timeouts, JSON, and HTTP errors.

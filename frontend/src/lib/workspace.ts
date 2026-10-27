@@ -7,6 +7,9 @@ import type { ListDocument, ListSummary } from './api.ts';
 import { Autosave } from './autosave.ts';
 import type { SaveStatus } from './autosave.ts';
 import { Editor, visibleItems } from './editor.ts';
+import { locate } from './editor.ts';
+import { matches } from './search.ts';
+import type { SearchHit } from './search.ts';
 
 export type Session = {
   editor: Editor;
@@ -287,6 +290,69 @@ export class Workspace {
         },
       ],
     });
+  }
+  async searchSource() {
+    // Read only: do not flush autosave or create editor sessions for search.
+    const source = await this.transport.exportJson();
+    const documents = new Map(source.lists.map((doc) => [doc.id, doc]));
+    for (const [id, session] of this.sessions) {
+      if (this.lists.some((list) => list.id === id))
+        documents.set(id, structuredClone(this.document(id, session)));
+    }
+    return validatePortable({
+      schemaVersion: 1,
+      lists: [...documents.values()],
+    }).lists;
+  }
+  async openSearchHit(hit: SearchHit, query: string) {
+    if (this.busy) throw new Error('Another operation is in progress');
+    this.busy = true;
+    this.notify();
+    try {
+      const session = this.sessions.get(hit.listId);
+      if (session) {
+        // Confirm access/existence, but never replace a cached local version.
+        await this.transport.get(hit.listId);
+      } else {
+        const document = await this.transport.get(hit.listId);
+        if (hit.itemId && !locate(document.nodes, hit.itemId))
+          throw new Error('This item was removed. Refresh search results.');
+        this.makeSession(document);
+      }
+      const target = this.sessions.get(hit.listId)!;
+      if (hit.itemId && !locate(target.editor.state.nodes, hit.itemId))
+        throw new Error(
+          'This item was removed locally. Refresh search results.',
+        );
+      const text = hit.itemId
+        ? locate(target.editor.state.nodes, hit.itemId)!.item.text
+        : target.title;
+      if (!matches(text, query))
+        throw new Error('This result changed. Refresh search results.');
+      if (!this.lists.some((list) => list.id === hit.listId))
+        this.lists = [
+          ...this.lists,
+          {
+            id: hit.listId,
+            title: target.title,
+            revision: target.sync.revision,
+            position: this.lists.length,
+            itemCount: visibleItems(target.editor.state.nodes, new Set())
+              .length,
+          },
+        ];
+      this.selectedId = hit.listId;
+      if (hit.itemId)
+        target.editor.setFocus({
+          id: hit.itemId,
+          mode: 'navigate',
+          start: 0,
+          end: 0,
+        });
+    } finally {
+      this.busy = false;
+      this.notify();
+    }
   }
   async exportAll(): Promise<Portable> {
     if (this.busy) throw new Error('Another operation is in progress');

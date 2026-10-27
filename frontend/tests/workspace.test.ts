@@ -229,3 +229,85 @@ test('a storage failure blocks loading another version without discarding local 
     workspace.dispose();
   }
 });
+
+test('search overlays local edits without flushing and opens nested hits without changing history', async () => {
+  const f = fakeApi();
+  const child = createItem('Nested needle');
+  f.documents.get(f.second.id)!.nodes = [createItem('Parent')];
+  f.documents.get(f.second.id)!.nodes[0].children.push(child);
+  const workspace = new Workspace(() => {}, f.transport);
+  try {
+    await workspace.load(f.first.id);
+    const original = workspace.current!;
+    original.editor.setFocus({
+      id: f.first.nodes[0].id,
+      mode: 'edit',
+      start: 0,
+      end: 0,
+    });
+    original.editor.edit('Local needle', 12, 12);
+    original.sync.markDirty();
+    const past = structuredClone(original.editor.past);
+    const source = await workspace.searchSource();
+    assert.equal(
+      source.find((d) => d.id === f.first.id)!.nodes[0].text,
+      'Local needle',
+    );
+    assert.equal(f.documents.get(f.first.id)!.nodes[0].text, 'Original');
+    await workspace.openSearchHit(
+      {
+        listId: f.second.id,
+        title: 'Second',
+        itemId: child.id,
+        text: child.text,
+        ancestors: ['Parent'],
+      },
+      'needle',
+    );
+    assert.equal(workspace.current!.editor.state.focus.id, child.id);
+    assert.deepEqual(original.editor.past, past);
+    assert.equal(original.sync.dirty, true);
+    await workspace.open(f.first.id);
+    assert.equal(workspace.current, original);
+    const missing = {
+      listId: f.second.id,
+      title: 'Second',
+      itemId: crypto.randomUUID(),
+      text: 'needle',
+      ancestors: [],
+    };
+    await assert.rejects(workspace.openSearchHit(missing, 'needle'), /removed/);
+    assert.equal(workspace.selectedId, f.first.id);
+  } finally {
+    workspace.dispose();
+  }
+});
+
+test('search can activate a list created after the sidebar was loaded and rejects changed matches', async () => {
+  const f = fakeApi();
+  const workspace = new Workspace(() => {}, f.transport);
+  try {
+    await workspace.load(f.first.id);
+    const remote = {
+      id: crypto.randomUUID(),
+      title: 'New remote list',
+      revision: 0,
+      nodes: [createItem('Remote needle')],
+    };
+    f.documents.set(remote.id, remote);
+    const hit = {
+      listId: remote.id,
+      title: remote.title,
+      itemId: remote.nodes[0].id,
+      text: 'Remote needle',
+      ancestors: [],
+    };
+    await assert.rejects(workspace.openSearchHit(hit, 'absent'), /changed/);
+    assert.equal(workspace.selectedId, f.first.id);
+    await workspace.openSearchHit(hit, 'needle');
+    assert.equal(workspace.selectedId, remote.id);
+    assert.ok(workspace.lists.some((list) => list.id === remote.id));
+  } finally {
+    workspace.dispose();
+  }
+});

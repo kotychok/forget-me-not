@@ -58,4 +58,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D038 | 2026-10-26 | Agreed scope / implementation defaults | Begin reordered M5 after user commit: compact plain-text URL display, separate HTTP/HTTPS opening controls, full content-sized editing, and unchanged JSON/storage. Defaults: new-tab links, L for link focus, Escape back to item. Custom labels/comments remain deferred |
 
+| D039 | 2026-10-27 | Agreed scope / implementation defaults | Begin M6 after user review and commit of M5. Defaults: retained-query search modal, literal case-insensitive titles/item search, read-only owned snapshot overlaid with local edits, contextual results, and checked reveal/focus without clearing history. Use explicit existing snapshot limits; defer dedicated indexing until measured needs justify it |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

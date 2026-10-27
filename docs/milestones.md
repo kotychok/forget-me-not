@@ -1,6 +1,6 @@
 # Milestones
 
-Updated: 2026-10-26. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing is implemented for local review; later milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
+Updated: 2026-10-27. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing was reviewed and committed by the user; M6 search is implemented and verified for local review; later milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
 
 Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only for a detailed plan of a complex milestone when implementation begins. Mark a milestone complete only with actual verification evidence.
 
@@ -13,8 +13,8 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M2 | Persist user-owned lists with reliable autosave | M1 | Complete (user proceeded to M3) |
 | M3 | Import and export JSON | M2 | Complete (reviewed and committed by user) |
 | M4 | Restore drafts and handle concurrent edits | M2 | Complete (reviewed and accepted by user) |
-| M5 | Open links and improve long-text editing | M4 | Implemented and verified; awaiting user review |
-| M6 | Search across a user's lists | M4 | Planned |
+| M5 | Open links and improve long-text editing | M4 | Complete (reviewed and committed by user) |
+| M6 | Search across a user's lists | M4 | Implemented and verified; awaiting user review |
 | M7 | Item notes | M4 | Planned |
 | M8 | Tags and filtering | M4 | Planned |
 | M9 | Render Markdown inside item text | M5 | Planned |
@@ -126,7 +126,7 @@ Open design: allow a readable link label and/or an accompanying comment. The use
 
 ### M6 — Search
 
-Outcome: search across the current user's lists and navigate to the matching item. Deferred at the user's request; result presentation and navigation need a separate design before implementation.
+Outcome: search across the current user's lists and navigate to the matching item. Authorized after the user reviewed and committed M5. Initial behavior uses a modal with retained query, contextual results, and explicit refresh; see [M6 implementation](plans/m6-search.md).
 
 Acceptance:
 
@@ -136,7 +136,7 @@ Acceptance:
 - Define keyboard navigation of results, loading/empty/error states, and behavior when a result changes or is deleted before activation.
 - Decide searched fields, matching/highlighting rules, handling of current unsaved edits, and expected scale before implementation. Choose indexing based on measured needs.
 
-Open design: where results appear, how users return to the results after opening a match, and how highlighting coexists with editing. Do not assume that filtering the visible tree alone satisfies cross-list search.
+Implemented defaults: retained-query modal, literal Unicode case-insensitive matching, contextual snippets, checked target activation, view-only highlights, and explicit snapshot/result limits. See [Search behavior](search.md). Larger-scale indexing and fuzzy matching require separate design.
 
 ### M7 — Item notes
 

@@ -4,14 +4,17 @@
   import type { Editor, Item, Command } from '../lib/editor';
   import { textLinks, compactUrl } from '../lib/links';
   import { autoSize } from '../lib/auto-size';
+  import MarkedText from './MarkedText.svelte';
   let {
     session,
     disabled = false,
     ondirty,
+    reveal = null,
   }: {
     session: { editor: Editor; collapsed: Set<string> };
     disabled?: boolean;
     ondirty: () => void;
+    reveal?: { id: string | null; query: string; token: number } | null;
   } = $props();
   const initial = untrack(() => session);
   const editor = initial.editor;
@@ -26,6 +29,17 @@
   let outline = $state<HTMLDivElement>();
   let emptyButton = $state<HTMLButtonElement>();
   let addButton = $state<HTMLButtonElement>();
+  $effect(() => {
+    const request = reveal;
+    if (request?.id) untrack(() => void revealItem(request.id!));
+  });
+  async function revealItem(id: string) {
+    editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
+    await render();
+    outline
+      ?.querySelector<HTMLElement>(`[data-item="${id}"]`)
+      ?.scrollIntoView({ block: 'center' });
+  }
   const rows = $derived(visibleItems(view.nodes, collapsed));
   const active = $derived(locate(view.nodes, view.focus.id));
   const total = $derived(visibleItems(view.nodes, new Set()).length);
@@ -297,6 +311,7 @@
         class="row"
         class:active={view.focus.id === item.id}
         class:completed={item.completed}
+        class:search-match={reveal?.id === item.id}
         style:--depth={depth}
       >
         <button
@@ -367,8 +382,15 @@
               }}
               onclick={() => focusItem(item.id, true)}
               >{#if item.text}{#each parts as part}{#if part.href}<span
-                      title={part.text}>{compactUrl(part.text)}</span
-                    >{:else}{part.text}{/if}{/each}{:else}Empty item{/if}</button
+                      title={part.text}
+                      ><MarkedText
+                        text={compactUrl(part.text)}
+                        query={reveal?.id === item.id ? reveal.query : ''}
+                      /></span
+                    >{:else}<MarkedText
+                      text={part.text}
+                      query={reveal?.id === item.id ? reveal.query : ''}
+                    />{/if}{/each}{:else}Empty item{/if}</button
             >
             {#if links.length}
               <div class="item-links" aria-label="Item links">

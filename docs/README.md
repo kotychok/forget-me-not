@@ -1,6 +1,6 @@
 # Documentation
 
-Updated: 2026-10-26. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 was reviewed and committed; M4 draft recovery was reviewed and accepted by the user; M5 links and long-text editing is implemented for local review; deployment is deferred to M11 while hosting is undecided. Remaining design details are tracked by milestone.
+Updated: 2026-10-27. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 was reviewed and committed; M4 draft recovery was reviewed and accepted by the user; M5 links and long-text editing was reviewed and committed; M6 search is implemented for local review; deployment is deferred to M11 while hosting is undecided. Remaining design details are tracked by milestone.
 
 ## Agreed with the user
 
@@ -31,6 +31,7 @@ Updated: 2026-10-26. The core direction is agreed. M1 was reviewed and committed
 - [Architecture](architecture.md): components, persistence, conflicts, deployment.
 - [Editor behavior](editor-behavior.md): focus, tree operations, commands, history.
 - [Database and migrations](database.md): identifiers, ownership, schema, ordering, and migration management.
+- [Search](search.md): cross-list results, navigation, local edits, and limits.
 - [Draft recovery](recovery.md): local persistence, identity scopes, recovery, and conflict choices.
 - [Data formats](data-formats.md): model, versioned JSON, limits, import/export.
 - [Decisions](decisions.md): agreements and proposals.

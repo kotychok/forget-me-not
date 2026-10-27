@@ -1,4 +1,5 @@
 mod transfer;
+mod view_state;
 use crate::{
     error::{AppError, Result, invalid},
     model::*,

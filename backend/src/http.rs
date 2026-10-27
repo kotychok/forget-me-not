@@ -97,6 +97,10 @@ pub fn app(store: Store, backend_port: u16, frontend_port: u16, assets: &FsPath)
             "/import",
             axum::routing::post(import_json).layer(DefaultBodyLimit::max(MAX_FILE_BYTES)),
         )
+        .route(
+            "/lists/{id}/view",
+            get(get_outline_view).patch(patch_outline_view),
+        )
         .route("/lists", get(list_all).post(create_list))
         .route(
             "/lists/{id}",
@@ -199,4 +203,18 @@ async fn encode_file(Json(request): Json<EncodeFile>) -> Result<Json<crate::tran
         request.format,
         &request.document,
     )?))
+}
+
+async fn get_outline_view(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Result<Json<OutlineView>> {
+    Ok(Json(state.store.outline_view(&id).await?))
+}
+async fn patch_outline_view(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(request): Json<PatchView>,
+) -> Result<Json<OutlineView>> {
+    Ok(Json(state.store.patch_outline_view(&id, request).await?))
 }

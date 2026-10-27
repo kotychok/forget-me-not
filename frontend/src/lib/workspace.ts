@@ -1,3 +1,4 @@
+import { OutlineState } from './outline-state.ts';
 import { Drafts } from './drafts.ts';
 import type { Draft, DraftStorage } from './draft-storage.ts';
 import { validatePortable } from './portable.ts';
@@ -16,6 +17,7 @@ export type Session = {
   title: string;
   sync: Autosave;
   collapsed: Set<string>;
+  outline?: OutlineState;
 };
 export type SidebarList = ListSummary & { saveStatus?: SaveStatus };
 
@@ -27,14 +29,22 @@ export class Workspace {
   busy = false;
   error = '';
   private sessions = new Map<string, Session>();
-  private transport: Omit<typeof api, 'decodeFile' | 'encodeFile'>;
+  private transport: Omit<
+    typeof api,
+    'decodeFile' | 'encodeFile' | 'getView' | 'patchView'
+  > &
+    Partial<Pick<typeof api, 'getView' | 'patchView'>>;
   private notify: () => void;
   readonly drafts: Drafts | undefined;
   private draftIdentityReady = false;
 
   constructor(
     notify: () => void,
-    transport: Omit<typeof api, 'decodeFile' | 'encodeFile'> = api,
+    transport: Omit<
+      typeof api,
+      'decodeFile' | 'encodeFile' | 'getView' | 'patchView'
+    > &
+      Partial<Pick<typeof api, 'getView' | 'patchView'>> = api,
     storage?: DraftStorage,
   ) {
     this.notify = notify;
@@ -48,7 +58,9 @@ export class Workspace {
     return this.current?.title ?? 'No lists yet';
   }
   get hasUnsaved() {
-    return [...this.sessions.values()].some((session) => session.sync.dirty);
+    return [...this.sessions.values()].some(
+      (session) => session.sync.dirty || session.outline?.dirty,
+    );
   }
 
   private document(id: string, session: Session) {
@@ -139,6 +151,24 @@ export class Workspace {
         () => this.sessionChanged(document.id),
       ),
     };
+    const previous = this.sessions.get(document.id);
+    if (previous?.outline) session.outline = previous.outline;
+    else if (this.transport.getView && this.transport.patchView)
+      session.outline = new OutlineState(
+        document.id,
+        {
+          getView: (id) => this.transport.getView!(id),
+          patchView: async (id, revision, changes) => {
+            const current = this.sessions.get(id);
+            if (current?.sync.dirty && !(await current.sync.flush()))
+              throw new Error(
+                'Save list changes before syncing outline preferences.',
+              );
+            return this.transport.patchView!(id, revision, changes);
+          },
+        },
+        this.notify,
+      );
     this.sessions.set(document.id, session);
     return session;
   }
@@ -149,6 +179,7 @@ export class Workspace {
       await this.drafts?.prune(document);
       this.sessionChanged(id);
     }
+    void this.sessions.get(id)?.outline?.refresh();
     this.selectedId = id;
   }
   async load(preferred: string | null) {
@@ -170,6 +201,9 @@ export class Workspace {
       this.loading = false;
       this.notify();
     }
+  }
+  async refreshOutline() {
+    await this.current?.outline?.refresh();
   }
   async refreshIndex(): Promise<void> {
     if (this.busy) throw new Error('Another operation is in progress');
@@ -262,6 +296,7 @@ export class Workspace {
       }
       await this.transport.delete(id, session.sync.revision);
       session.sync.dispose();
+      session.outline?.dispose();
       await this.drafts?.release(
         this.document(id, session),
         session.sync.revision,
@@ -324,6 +359,7 @@ export class Workspace {
         this.makeSession(document);
       }
       const target = this.sessions.get(hit.listId)!;
+      void target.outline?.refresh();
       if (hit.itemId && !locate(target.editor.state.nodes, hit.itemId))
         throw new Error(
           'This item was removed locally. Refresh search results.',
@@ -455,6 +491,7 @@ export class Workspace {
         session.sync.revision,
         false,
       );
+      session.outline?.dispose();
       this.sessions.delete(id);
       this.makeSession(copy);
       this.selectedId = copy.id;
@@ -503,6 +540,9 @@ export class Workspace {
     await this.drafts?.discard(record);
   }
   dispose() {
-    this.sessions.forEach((session) => session.sync.dispose());
+    this.sessions.forEach((session) => {
+      session.sync.dispose();
+      session.outline?.dispose();
+    });
   }
 }

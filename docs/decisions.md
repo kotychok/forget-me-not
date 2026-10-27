@@ -72,4 +72,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D045 | 2026-10-27 | Agreed | M6b view preferences are database-backed per user/list and shared across devices on the same installation. Keep them separate from content and file transfer. Collapsed-ID storage, independent revision, temporary-expansion policy, and refresh/conflict mechanics remain implementation proposals/design details; real-time push is not implied |
 
+| D046 | 2026-10-27 | Authorized implementation / defaults | Proceed with M6b after user commit/review: additive owned-list view metadata, independent revision, manual per-ID preference queue and bounded conflict rebase; refresh asynchronously on list open and visible window return. Temporary expansion remains local and remote changes preserve active editor visibility. No push sync or offline preference drafts |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

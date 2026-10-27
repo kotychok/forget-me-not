@@ -242,7 +242,7 @@ h1 span {
   background: #f0f4eb;
 }
 .row [data-item] {
-  scroll-margin-top: 100px;
+  scroll-margin-top: calc(var(--outline-toolbar-height, 80px) + 16px);
 }
 .row:focus-within {
   background: #edf3e7;
@@ -824,4 +824,14 @@ mark {
   border: 1px solid #cbd5c5;
   box-shadow: 0 3px 16px #303b3014;
   font-size: 12px;
+}
+
+.outline-preferences {
+  flex-basis: 100%;
+  min-height: 20px;
+  font-size: 10px;
+  color: #7c8778;
+}
+.outline-preferences button {
+  text-decoration: underline;
 }

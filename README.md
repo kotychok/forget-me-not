@@ -19,6 +19,10 @@ The default SQLite file is `data/forget-me-not.sqlite`, excluded from Git. A loc
 
 **Local use only:** the API binds to IPv4 loopback and checks request Host/Origin. There is no login. Production authentication and Docker deployment are planned for M11.
 
+## Remembered outline view
+
+Manual collapsed/expanded branches are remembered in SQLite per user/list and shared across devices. Preferences refresh when opening a list or returning to the window/tab; there is no live push. Search/undo expansion stays temporary. The toolbar shows view sync status and retry; view preferences do not change content revisions or JSON/Markdown files. Wait for acknowledgement before closing; pending preferences are not offline drafts.
+
 ## Search
 
 Choose **Search lists** to search list titles and item text across lists, including local edits in open lists. Results show list/ancestor context; opening one reveals and focuses its item. Reopen search to return to the same query, or refresh results explicitly. Search is literal and case-insensitive; it uses existing snapshot limits (100 lists, 10,000 items, 8 MiB) and shows up to 200 results. See [Search behavior](docs/search.md).

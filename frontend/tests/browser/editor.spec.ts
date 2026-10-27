@@ -200,7 +200,9 @@ test('delete all branches, add into empty list, and undo', async ({ page }) => {
 test('saved content survives reload and mobile viewport does not overflow', async ({
   page,
 }) => {
-  await expect(page.getByRole('status')).toHaveText('Saved');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).toHaveText('Saved');
   await page
     .getByRole('button', {
       name: 'Make something worth remembering',
@@ -208,7 +210,9 @@ test('saved content survives reload and mobile viewport does not overflow', asyn
     })
     .click();
   await page.getByRole('textbox').fill('Persistent');
-  await expect(page.getByRole('status')).toHaveText('Saved');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).toHaveText('Saved');
   await page.reload();
   await expect(
     page.getByRole('button', { name: 'Persistent', exact: true }),
@@ -295,7 +299,9 @@ test('create, rename from heading, switch lists, and reopen after reload', async
   await page
     .getByRole('textbox', { name: 'Item text' })
     .fill('Second list item');
-  await expect(page.getByRole('status')).toHaveText('Saved');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).toHaveText('Saved');
   const secondId = new URL(page.url()).searchParams.get('list')!;
   await page
     .locator(`nav .list-link`)
@@ -333,7 +339,9 @@ test('heading rename supports Escape and persists across reload', async ({
   input = page.getByRole('textbox', { name: 'List title' });
   await input.fill('Renamed from heading');
   await input.press('Enter');
-  await expect(page.getByRole('status')).toHaveText('Saved');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).toHaveText('Saved');
   await page.reload();
   await expect(heading).toHaveText('Renamed from heading');
 });
@@ -342,7 +350,9 @@ test('deleting a list requires confirmation and removes it from the server', asy
   page,
   request,
 }) => {
-  await expect(page.getByRole('status')).toHaveText('Saved');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).toHaveText('Saved');
   const id = new URL(page.url()).searchParams.get('list')!;
   page.once('dialog', (dialog) => dialog.dismiss());
   await page.getByRole('button', { name: 'Delete list', exact: true }).click();
@@ -374,7 +384,9 @@ test('server conflict keeps local text and never silently overwrites the other v
   });
   const text = page.getByRole('textbox', { name: 'Item text' });
   await text.fill('Local version');
-  await expect(page.getByRole('status')).toContainText('Conflict');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).toContainText('Conflict');
   await expect(text).toHaveValue('Local version');
   expect((await (await request.get(`/api/lists/${id}`)).json()).title).toBe(
     'External title',
@@ -408,9 +420,13 @@ test('editing during a slow save remains unsaved until the latest snapshot is ac
     'Saving…',
   );
   await text.fill('Newest edit');
-  await expect(page.getByRole('status')).not.toHaveText('Saved');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).not.toHaveText('Saved');
   release();
-  await expect(page.getByRole('status')).toHaveText('Saved');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).toHaveText('Saved');
   await page.reload();
   await expect(
     page.getByRole('button', { name: 'Newest edit', exact: true }),

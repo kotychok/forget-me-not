@@ -13,10 +13,22 @@
     searchQuery = '',
     onclearsearch = () => {},
     onrevealed = () => {},
+    preferences = null,
+    oncollapse = () => {},
+    onretryview = () => {},
   }: {
     session: { editor: Editor; collapsed: Set<string> };
     disabled?: boolean;
     ondirty: () => void;
+    preferences?: {
+      collapsedItemIds: string[];
+      version: number;
+      error: string;
+      loading: boolean;
+      dirty: boolean;
+    } | null;
+    oncollapse?: (id: string, collapsed: boolean) => void;
+    onretryview?: () => void;
     reveal?: {
       id: string | null;
       query: string;
@@ -33,13 +45,39 @@
     initial.collapsed = new Set(collapsed);
   });
   let view = $state(editor.state);
-  let collapsed = $state<Set<string>>(new Set(initial.collapsed));
+  let collapsed = $state<Set<string>>(
+    new Set(untrack(() => preferences?.collapsedItemIds) ?? initial.collapsed),
+  );
+  let previousManual = new Set<string>();
+  $effect(() => {
+    const snapshot = preferences;
+    if (!snapshot) return;
+    untrack(() => {
+      const manual = new Set(snapshot.collapsedItemIds);
+      const next = new Set(collapsed);
+      for (const id of new Set([...previousManual, ...manual])) {
+        if (previousManual.has(id) === manual.has(id)) continue;
+        if (manual.has(id)) next.add(id);
+        else next.delete(id);
+      }
+      // Remote preferences must never remove a focused editor from the DOM.
+      for (
+        let at = locate(editor.state.nodes, editor.state.focus.id);
+        at?.parent;
+        at = locate(editor.state.nodes, at.parent.id)
+      )
+        next.delete(at.parent.id);
+      previousManual = manual;
+      collapsed = next;
+    });
+  });
   let version = $state(0);
   let announcement = $state('');
   let composing = false;
   let outline = $state<HTMLDivElement>();
   let emptyButton = $state<HTMLButtonElement>();
   let addButton = $state<HTMLButtonElement>();
+  let toolbarHeight = $state(0);
   $effect(() => {
     const request = reveal;
     if (request?.id && request.pending)
@@ -163,6 +201,7 @@
       }
     }
     collapsed = next;
+    oncollapse(id, next.has(id));
     void render();
   }
 
@@ -280,8 +319,23 @@
   }
 </script>
 
-<div inert={disabled}>
-  <div class="toolbar" aria-label="Item actions">
+<div inert={disabled} style:--outline-toolbar-height={`${toolbarHeight}px`}>
+  <div
+    class="toolbar"
+    aria-label="Item actions"
+    bind:clientHeight={toolbarHeight}
+  >
+    {#if preferences}<div
+        class="outline-preferences"
+        role="status"
+        aria-label="Outline preferences"
+      >
+        {#if preferences.error}<span
+            >Outline preferences not synced: {preferences.error}</span
+          ><button onclick={onretryview}>Retry view sync</button>
+        {:else if preferences.loading}Loading outline preferences…{:else if preferences.dirty}Saving
+          outline preferences…{:else}Outline preferences saved{/if}
+      </div>{/if}
     {#if searchQuery}<div
         class="search-context-bar"
         aria-label="Search context"

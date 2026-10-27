@@ -32,7 +32,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return response.status === 204 ? (undefined as T) : response.json();
 }
+export type OutlineView = { collapsedItemIds: string[]; revision: number };
+export type ViewChange = { itemId: string; collapsed: boolean };
 export const api = {
+  getView: (id: string) =>
+    request<OutlineView>(`/lists/${encodeURIComponent(id)}/view`),
+  patchView: (id: string, baseRevision: number, changes: ViewChange[]) =>
+    request<OutlineView>(`/lists/${encodeURIComponent(id)}/view`, {
+      method: 'PATCH',
+      body: JSON.stringify({ baseRevision, changes }),
+    }),
   decodeFile: (format: 'json' | 'markdown', text: string) =>
     request<{ document: Portable; warnings: string[] }>('/transfer/decode', {
       method: 'POST',

@@ -67,6 +67,8 @@ Drafts protect against failures; they do not provide full offline support. Do no
 | `GET /api/lists/:id` | Document and revision |
 | `PUT /api/lists/:id` | Snapshot + baseRevision, atomic write |
 | `DELETE /api/lists/:id` | Delete with a revision check |
+| `GET /api/lists/:id/view` | Owned manual collapse preferences and independent revision |
+| `PATCH /api/lists/:id/view` | Revision-checked per-item view changes, separate from content |
 | `GET /api/session` | Installation and server-resolved owner identity for local draft scope |
 | `GET /api/export` | Consistent JSON export of owned saved lists; optional listId filter |
 | `POST /api/transfer/decode` | Read-only format decoding and preview model with warnings |

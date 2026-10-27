@@ -1,6 +1,6 @@
 # Milestones
 
-Updated: 2026-10-27. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing was reviewed and committed by the user; M6 search was reviewed and accepted by the user; M6a format adapters were accepted after user export verification; later milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
+Updated: 2026-10-27. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing was reviewed and committed by the user; M6 search was reviewed and accepted by the user; M6a format adapters and review fixes were committed and verified by the user; M6b is implemented and verified for local review; later milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
 
 Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only for a detailed plan of a complex milestone when implementation begins. Mark a milestone complete only with actual verification evidence.
 
@@ -16,7 +16,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M5 | Open links and improve long-text editing | M4 | Complete (reviewed and committed by user) |
 | M6 | Search across a user's lists | M4 | Complete (reviewed and accepted by user) |
 | M6a | Format adapters and outline-Markdown transfer | M3, M6 | Complete (accepted by user; export verified) |
-| M6b | Remember collapsed and expanded branches | M4 | Planned; separate UI-state work |
+| M6b | Remember collapsed and expanded branches | M4 | Implemented and verified; awaiting user review |
 | M7 | Item notes | M4 | Planned |
 | M8 | Tags and filtering | M4 | Planned |
 | M9 | Render Markdown inside item text | M5 | Planned |
@@ -158,19 +158,19 @@ Implemented defaults: compiled enum dispatch, read-only conversion endpoints, ex
 
 ### M6b — Persistent outline view state
 
-Outcome: remember which branches are collapsed or expanded per user/list in the database, shared across browsers and devices on the same installation. Requested after the user accepted the current M6a behavior; this is UI-state work, independent of import/export. Implementation has not started.
+Outcome: remember which branches are collapsed or expanded per user/list in the database, shared across browsers and devices on the same installation. Requested after the user accepted the current M6a behavior; this is UI-state work, independent of import/export. Implementation is authorized, complete, and verified for local review.
 
 Acceptance:
 
-- Restore collapsed/expanded branches for the same list without changing item content, list revisions, autosave state, or undo history.
+- Restore collapsed/expanded branches for the same list without marking item content dirty or changing list revisions or undo history.
 - Scope remembered state by installation, user, and list identity; another account or installation must not inherit it.
 - Ignore stale item IDs after deletion or replacement. Imported copies have new IDs and do not inherit the source list's view state through file transfer.
 - Storage failures must not prevent ordinary editing; define a non-blocking fallback and verify reload/list-switch behavior.
 - Keep JSON/Markdown content formats unchanged; collapse state remains separate presentation data.
 
-Agreed: database-backed, shared across devices for the same user/list. Proposed implementation: store collapsed item IDs in a separate view-state record with its own revision. Remember manual changes; temporary search/undo expansion should not overwrite saved preferences. These storage details and the temporary-expansion rule remain implementation proposals.
+Implemented defaults: database-backed collapsed IDs per user/list with a separate revision; only manual changes are saved. Temporary search/undo expansion stays local.
 
-Open design: refresh/propagation timing across tabs/devices, concurrent preference updates, offline/failure retry behavior, and focus safety when another device collapses an active branch. Shared state does not yet imply real-time push updates.
+Refresh on opening a list and visible focus/visibility return. Rebase per-item pending changes after revision conflicts, show retryable failures, and preserve focused editor visibility. No real-time push is included. See [M6b implementation](plans/m6b-outline-state.md).
 
 ### M7 — Item notes
 

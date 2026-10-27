@@ -36,6 +36,13 @@
     token: number;
     pending: boolean;
   } | null>(null);
+  let outlinePreferences = $state.raw<{
+    collapsedItemIds: string[];
+    version: number;
+    error: string;
+    loading: boolean;
+    dirty: boolean;
+  } | null>(null);
   let current = $state.raw<Session>();
   let selectedId = $state<string | null>(null);
   let lists = $state<SidebarList[]>([]);
@@ -65,6 +72,16 @@
   const workspace = new Workspace(
     () => {
       current = workspace.current;
+      const outline = current?.outline;
+      outlinePreferences = outline
+        ? {
+            collapsedItemIds: [...outline.collapsed],
+            version: outline.version,
+            error: outline.error,
+            loading: outline.loading,
+            dirty: outline.dirty,
+          }
+        : null;
       selectedId = workspace.selectedId;
       lists = workspace.lists;
       title = workspace.title;
@@ -147,9 +164,17 @@
       showBackToTop = window.scrollY > 400;
     };
     trackScroll();
+    const refreshView = () => {
+      if (document.visibilityState === 'visible')
+        void workspace.refreshOutline();
+    };
+    window.addEventListener('focus', refreshView);
+    document.addEventListener('visibilitychange', refreshView);
     window.addEventListener('scroll', trackScroll, { passive: true });
     window.addEventListener('beforeunload', warn);
     return () => {
+      window.removeEventListener('focus', refreshView);
+      document.removeEventListener('visibilitychange', refreshView);
       window.removeEventListener('scroll', trackScroll);
       window.removeEventListener('beforeunload', warn);
       workspace.dispose();
@@ -361,6 +386,10 @@
             {@const session = current}
             <EditorPane
               {session}
+              preferences={outlinePreferences}
+              oncollapse={(id, collapsed) =>
+                session.outline?.set(id, collapsed)}
+              onretryview={() => void session.outline?.retry()}
               reveal={searchReveal?.listId === selectedId ? searchReveal : null}
               searchQuery={searchReveal?.query ?? ''}
               onclearsearch={clearSearch}

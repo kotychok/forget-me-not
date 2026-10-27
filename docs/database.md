@@ -40,7 +40,7 @@ The agreed initial whole-list snapshot API works as follows: normalize the submi
 
 List ordering is currently creation order: insertion allocates MAX(position)+1 atomically; deletion may leave harmless gaps. User-driven list reorder and its concurrent-update contract remain deferred. Moving branches between lists is not included in the current command set and would need an atomic operation covering both list revisions.
 
-Configure foreign keys on every pooled connection, a finite busy timeout, and WAL for a single-host deployment after verifying backup behavior. Keep transactions short. Collapse state remains browser UI state. M4 adds an installation singleton with a generated UUID via a new additive migration for draft scoping. Authentication/session tables remain deferred to M11.
+Configure foreign keys on every pooled connection, a finite busy timeout, and WAL for a single-host deployment after verifying backup behavior. Keep transactions short. M6b stores manual collapse preferences separately in SQLite; temporary expansion remains browser UI state. M4 adds an installation singleton with a generated UUID via a new additive migration for draft scoping. Authentication/session tables remain deferred to M11.
 
 ## Example: indent and outdent over the API
 
@@ -114,11 +114,11 @@ Use transactional migrations where supported. SQLite table rebuilds or changes r
 
 Before release, verify migration from an empty database and upgrade from the previous supported schema with representative data. Check row counts, owner/list isolation, parent constraints, completion checks, revisions, and `PRAGMA foreign_key_check`. Verify a failed migration cannot result in serving a partially upgraded database. Run `PRAGMA integrity_check` and a restore check on the backup as appropriate for the upgrade.
 
-## Planned view-state metadata — M6b
+## View-state metadata — M6b
 
-Agreed: persist collapsed/expanded preferences per user/list in the database, shared across devices. Keep these records separate from list content, content revisions, and JSON/Markdown file formats. Implementation has not started; an additive migration is required.
+[The additive M6b migration](../backend/migrations/20261027000300_list_view_states.sql) adds a unique owned-list index and `list_view_states`, keyed by `(user_id, list_id)`, with JSON collapsed-ID text and an independent nonnegative revision. Its composite foreign key enforces list ownership and cascades on list deletion. No existing list/item fields or applied migrations are changed.
 
-Proposed schema: `list_view_states` keyed by `(user_id, list_id)`, storing a JSON array of collapsed item IDs and an independent view-state revision. All other branches are expanded by default. Enforce owned-list access server-side and remove view state when its list is deleted. Validate IDs against the owned list; tolerate and prune stale IDs without affecting content. Exact columns, constraints, conflict handling, and API are implementation design choices, not an applied schema.
+Owned GET returns current branch IDs with stale IDs filtered, defaulting to an empty set/revision zero when no row exists. PATCH compares the separate revision and applies explicit per-ID collapsed booleans in a transaction. It starts with a no-op owned-list write to obtain the SQLite write lock without incrementing content revision or timestamps. Stale IDs are pruned and only current same-list branches can be collapsed. Unknown IDs are ignored without exposing other lists. Malformed IDs or excessive changes are rejected. This metadata is absent from JSON/Markdown exports; database backups include it.
 
 ## Sources
 

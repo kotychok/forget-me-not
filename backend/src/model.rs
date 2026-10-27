@@ -57,3 +57,22 @@ pub struct ClientIdentity {
     pub server_id: String,
     pub owner_id: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct OutlineView {
+    pub collapsed_item_ids: Vec<String>,
+    pub revision: i64,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ViewChange {
+    pub item_id: String,
+    pub collapsed: bool,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PatchView {
+    pub base_revision: i64,
+    pub changes: Vec<ViewChange>,
+}

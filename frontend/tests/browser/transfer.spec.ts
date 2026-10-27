@@ -144,7 +144,9 @@ test('current-list export preserves local edits even after a server conflict', a
   await page
     .getByRole('textbox', { name: 'Item text' })
     .fill('Local copy from conflict');
-  await expect(page.getByRole('status')).toContainText('Conflict');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).toContainText('Conflict');
   await page
     .getByRole('button', { name: 'Import / export', exact: false })
     .click();
@@ -208,7 +210,9 @@ test('lost import response is not retried and refreshing the index preserves loc
   await page
     .getByRole('textbox', { name: 'Item text' })
     .fill('Keep local draft');
-  await expect(page.getByRole('status')).toContainText('Conflict');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).toContainText('Conflict');
   let attempts = 0;
   await page.route('**/api/import', async (route) => {
     attempts++;
@@ -249,6 +253,8 @@ test('lost import response is not retried and refreshing the index preserves loc
   await expect(page.getByRole('textbox', { name: 'Item text' })).toHaveValue(
     'Keep local draft',
   );
-  await expect(page.getByRole('status')).toContainText('Conflict');
+  await expect(
+    page.getByRole('status', { name: 'Save status', exact: true }),
+  ).toContainText('Conflict');
   await expect(page.locator('nav .list-link')).toHaveCount(before.length + 2);
 });

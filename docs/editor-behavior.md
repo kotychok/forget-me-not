@@ -40,7 +40,7 @@ In a textarea, ordinary arrows, Space, and Backspace behave as text input. Ordin
 - Plain items and tasks with checkboxes are agreed; proposed type names are `item` and `task`.
 - Proposal: completing a task does not automatically complete descendants or change the parent status.
 - Completed items stay in place. Automatic hiding/sorting can make navigation unpredictable, so it is not proposed for v1.
-- Collapse state is separate browser UI state, not a change to list content.
+- Manual collapse preferences are separate per-user/list database metadata (M6b); temporary expansion is browser UI state. Neither changes list content.
 
 ## Item/task conversion
 
@@ -81,8 +81,10 @@ Readable labels, Markdown link syntax, and separate comments remain deferred des
 
 The item action toolbar sticks to the viewport top while scrolling within the editor, including long lists. Its opaque background separates controls from scrolling content; focused item text reserves scroll space below it.
 
-## Remembering outline view state — planned M6b
+## Remembering outline view state — M6b
 
-Persisting collapsed/expanded branches across reloads is planned separately from M6a file transfer. Keep it outside list content, revisions, history, and JSON/Markdown formats. The current implementation retains collapse state only in cached sessions; persistence is not implemented yet. Agreed: store view preferences in the database per user/list and share them across devices on the same installation. Proposed: persist collapsed IDs with a separate revision and keep temporary search/undo expansion local. Refresh timing, concurrency, and focus-safe application of remote changes remain open; real-time push synchronization is not implicitly included. See [M6b](milestones.md#m6b--persistent-outline-view-state).
+Manual collapsed branch IDs are stored per user/list in SQLite and shared across devices on the same installation. Refresh asynchronously when opening a list and returning to a visible window/tab; no real-time push is included. Changes apply locally immediately and save after 400 ms. Separate view revisions and per-ID changes allow concurrent devices to merge different branches; the last successful same-branch command wins.
+
+Search, undo and automatic structural expansion remain temporary. A remote collapse never removes the active item from view: its ancestor path stays locally expanded without overwriting the saved preference. Preference loading/saving/failure status is separate from content save status, with Retry view sync after failures. Pending preferences are included in unload warnings but have no offline draft recovery. Existing dirty content may need to save before a new branch preference is committed; view commands never mark content dirty. See [M6b implementation](plans/m6b-outline-state.md).
 
 A floating Back to top button appears after scrolling more than 400 pixels. It returns to the page start and focuses the list heading (or active title input), using immediate scrolling when reduced motion is requested. It is positioned above the save notice and does not change editor content/history.

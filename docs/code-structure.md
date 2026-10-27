@@ -8,6 +8,7 @@ The application uses small modules with direct calls. There is one frontend and 
 App.svelte — composes the page, URL selection, rename input, and browser dialogs
   ├── Workspace — list/session lifecycle and API coordination
   │     ├── Editor — tree commands and session undo/redo
+  │     ├── OutlineState — manual view preferences, independent revision/queue/retry
   │     ├── Autosave — one ordered save queue per list, revisions, retry reconciliation
   │     ├── Drafts — scope, serialized local writes, acknowledgement cleanup
   │     │     └── IndexedDbDrafts — native storage adapter
@@ -23,6 +24,7 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
 - `lib/links.ts` detects plain-text HTTP/HTTPS links and formats compact display strings without mutating source data; it has no DOM, model, or HTTP dependency. `lib/auto-size.ts` is a DOM action for textarea content/width sizing and cleanup, with no tree/history dependency.
 - `lib/search.ts` owns pure literal matching, result context, snippets, and result caps. Workspace overlays cached local documents on a read-only owned snapshot and validates activation; SearchDialog owns modal state and stale-response guards. App sends a view-only reveal request to EditorPane for expansion, focus, and scroll. Search never flushes autosave or adds history.
 - `lib/editor.ts` knows only item data, commands, and history. It does not import Svelte, HTTP, or browser DOM APIs. ID generation uses platform crypto.
+- `lib/outline-state.ts` manages manual collapse preferences and per-ID replay after view revision conflicts. Workspace owns it per session and supplies preference snapshots/callbacks to EditorPane. Temporary reveal and focus safety stay in the pane; view preferences never enter Editor history or file formats.
 - `lib/autosave.ts` manages save generations and acknowledgements. It accepts explicit save/get functions and has no UI dependency. An acknowledgement never replaces current editor content.
 - `lib/api.ts` owns URLs, request timeouts, JSON, and HTTP errors.
 - `lib/workspace.ts` owns list metadata and cached editor sessions. It coordinates the concrete API and queues, exposes ordinary state, and notifies the UI through one callback. It knows nothing about Svelte, URL history, focus, or confirmation dialogs.
@@ -45,6 +47,7 @@ main.rs — configuration, migration startup, loopback listener, shutdown
               ├── validation.rs — IDs, limits, flattening and content invariants
               ├── error.rs — application failure categories
               ├── store/transfer.rs — consistent exports and atomic new-copy imports
+              ├── store/view_state.rs — owned view metadata and independent CAS transactions
               └── migrations/*.sql — versioned schema changes
 ```
 

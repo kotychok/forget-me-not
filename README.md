@@ -119,3 +119,7 @@ Current limits: 1 MiB per normal save request (8 MiB for JSON import), 5,000 ite
 See the [code structure](docs/code-structure.md) for module responsibilities and extension points.
 
 See the [documentation](docs/README.md), [milestones](docs/milestones.md), and [M4 implementation record](docs/plans/m4-draft-recovery.md). Working agreements for Codex: [AGENTS.md](AGENTS.md).
+
+## License
+
+Licensed under the [MIT License](LICENSE).

@@ -4,6 +4,8 @@
   import type { Editor, Item, Command } from '../lib/editor';
   import { textLinks, compactUrl } from '../lib/links';
   import { autoSize } from '../lib/auto-size';
+  import MarkdownView from './MarkdownView.svelte';
+  import { markdown } from '../lib/markdown';
   import TagsDialog from './TagsDialog.svelte';
   import { tagNames, taggedItems } from '../lib/tags';
   import NoteDialog from './NoteDialog.svelte';
@@ -48,6 +50,7 @@
   onDestroy(() => {
     initial.collapsed = new Set(collapsed);
   });
+  let markdownEnabled = $state(true);
   let tagFilter = $state('');
   let tagItem = $state<{ id: string; text: string; tags: string[] } | null>(
     null,
@@ -468,6 +471,9 @@
       disabled={!active}
       onclick={() => active && void openTags(active.item.id)}>Tags</button
     >
+    <label class="markdown-toggle"
+      ><input type="checkbox" bind:checked={markdownEnabled} /> Markdown preview</label
+    >
     {#if availableTags.length || tagFilter}<div class="tag-filter-bar">
         <label
           >Filter by tag <select
@@ -499,9 +505,11 @@
   >
     {#each rows as { item, depth } (item.id)}
       {@const parts = textLinks(item.text)}
-      {@const links = [
-        ...new Set(parts.flatMap((part) => (part.href ? [part.href] : []))),
-      ]}
+      {@const links = markdownEnabled
+        ? markdown(item.text).links
+        : [
+            ...new Set(parts.flatMap((part) => (part.href ? [part.href] : []))),
+          ].map((href) => ({ href, label: new URL(href).hostname }))}
       <div
         class="row"
         class:active={view.focus.id === item.id}
@@ -578,16 +586,19 @@
                 }
               }}
               onclick={() => focusItem(item.id, true)}
-              >{#if item.text}{#each parts as part}{#if part.href}<span
-                      title={part.text}
-                      ><MarkedText
-                        text={compactUrl(part.text)}
+              >{#if item.text}{#if markdownEnabled}<MarkdownView
+                    text={item.text}
+                    query={reveal?.id === item.id ? reveal.query : ''}
+                  />{:else}{#each parts as part}{#if part.href}<span
+                        title={part.text}
+                        ><MarkedText
+                          text={compactUrl(part.text)}
+                          query={reveal?.id === item.id ? reveal.query : ''}
+                        /></span
+                      >{:else}<MarkedText
+                        text={part.text}
                         query={reveal?.id === item.id ? reveal.query : ''}
-                      /></span
-                    >{:else}<MarkedText
-                      text={part.text}
-                      query={reveal?.id === item.id ? reveal.query : ''}
-                    />{/if}{/each}{:else}Empty item{/if}</button
+                      />{/if}{/each}{/if}{:else}Empty item{/if}</button
             >
             {#if item.tags?.length}<div
                 class="item-tags"
@@ -608,7 +619,8 @@
               >{/if}
             {#if links.length}
               <div class="item-links" aria-label="Item links">
-                {#each links as href}
+                {#each links as link}
+                  {@const href = link.href}
                   <a
                     {href}
                     target="_blank"
@@ -620,7 +632,7 @@
                         event.preventDefault();
                         focusItem(item.id);
                       }
-                    }}>↗ {new URL(href).hostname}</a
+                    }}>↗ {link.label}</a
                   >
                 {/each}
               </div>

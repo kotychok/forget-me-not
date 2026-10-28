@@ -17,12 +17,7 @@ export function textLinks(text: string): TextPart[] {
       )
         candidate = candidate.slice(0, -1);
     }
-    try {
-      const url = new URL(candidate);
-      if (!url.hostname || url.username || url.password) continue;
-    } catch {
-      continue;
-    }
+    if (!safeHttpUrl(candidate)) continue;
     if (match.index > offset)
       parts.push({ text: text.slice(offset, match.index) });
     parts.push({ text: candidate, href: candidate });
@@ -34,4 +29,25 @@ export function textLinks(text: string): TextPart[] {
 
 export function compactUrl(url: string) {
   return url.length > 72 ? `${url.slice(0, 56)}…${url.slice(-12)}` : url;
+}
+
+/** Shared URL policy for plain text and Markdown: absolute HTTP(S), no credentials or controls. */
+export function safeHttpUrl(value: string): string | null {
+  if (
+    !value ||
+    value.trim() !== value ||
+    /[\u0000-\u0020\u007f-\u009f\\]/u.test(value)
+  )
+    return null;
+  try {
+    const url = new URL(value);
+    return (url.protocol === 'http:' || url.protocol === 'https:') &&
+      !!url.hostname &&
+      !url.username &&
+      !url.password
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
 }

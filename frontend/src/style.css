@@ -927,3 +927,93 @@ mark {
 .filter-context .item-text {
   color: #7c8778;
 }
+
+.markdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  margin-left: auto;
+}
+.markdown-toggle input {
+  accent-color: #6c8a5e;
+}
+.markdown-view {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.markdown-view code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9em;
+  background: #e9ede5;
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: pre-wrap;
+}
+.markdown-view .md-codeblock {
+  display: block;
+  padding: 8px 10px;
+  margin: 6px 0;
+  line-height: 1.5;
+}
+.md-paragraph {
+  display: block;
+  margin: 0 0 6px;
+}
+.md-paragraph:last-child {
+  margin-bottom: 0;
+}
+.md-heading {
+  display: block;
+  font-weight: 700;
+  margin: 4px 0;
+}
+.md-h1 {
+  font-size: 1.25em;
+}
+.md-h2 {
+  font-size: 1.15em;
+}
+.md-quote {
+  display: block;
+  border-left: 3px solid #bcccb2;
+  padding-left: 10px;
+  margin: 6px 0;
+  color: #6c7e65;
+}
+.md-list {
+  display: block;
+  margin: 4px 0;
+}
+.md-listitem {
+  display: flex;
+  gap: 5px;
+  padding-left: 10px;
+}
+.md-marker {
+  flex-shrink: 0;
+}
+.md-link,
+.markdown-view a {
+  color: #587452;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.md-rule {
+  display: block;
+  border-top: 1px solid #cbd5c5;
+  margin: 8px 0;
+}
+.note-preview {
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #d5dfcc;
+  border-radius: 5px;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.md-source,
+.md-fallback {
+  white-space: pre-wrap;
+}

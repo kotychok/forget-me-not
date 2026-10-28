@@ -1,4 +1,5 @@
 <script lang="ts">
+  import MarkdownView from './MarkdownView.svelte';
   import { tick, onMount } from 'svelte';
   let {
     item,
@@ -12,10 +13,12 @@
   let dialog = $state<HTMLDialogElement>();
   let input = $state<HTMLTextAreaElement>();
   let draft = $state('');
+  let preview = $state(false);
   let original = '';
   const bytes = $derived(new TextEncoder().encode(draft).length);
   $effect(() => {
     if (!item || !dialog) return;
+    preview = false;
     original = item.note;
     draft = item.note;
     dialog.showModal();
@@ -52,9 +55,18 @@
   </div>
   <p class="note-item-title">{item?.text || 'Empty item'}</p>
   <p class="guide-intro">
-    Plain text. Markdown is kept literally. Apply saves one undoable change;
-    Cancel discards this draft.
+    Edit the original text. Preview renders Markdown without changing it. Apply
+    saves one undoable change; Cancel discards this draft.
   </p>
+  <button
+    class="quiet"
+    aria-pressed={preview}
+    onclick={() => (preview = !preview)}
+    >{preview ? 'Hide note preview' : 'Preview note'}</button
+  >
+  {#if preview}<div class="note-preview" aria-label="Note preview">
+      <MarkdownView text={draft} interactive />
+    </div>{/if}
   <label for="item-note">Note text</label>
   <textarea id="item-note" bind:this={input} bind:value={draft} rows="12"
   ></textarea>

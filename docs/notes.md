@@ -4,7 +4,7 @@ Each item or task can have one separate plain-text note, up to 64 KiB UTF-8. Emp
 
 ## Editing
 
-Focus an item in navigation and press N, or use the toolbar Note action. Items with notes have a small note button. The modal shows the item text and full note source. Enter inserts a newline; normal textarea editing/undo works inside the draft. Markdown and HTML-looking strings remain literal; rendering is deferred to M9.
+Focus an item in navigation and press N, or use the toolbar Note action. Items with notes have a small note button. The modal shows the item text and full note source. Enter inserts a newline; normal textarea editing/undo works inside the draft. The textarea always edits literal source. M9 adds an optional read-only Markdown preview of the modal draft; it does not apply changes. HTML remains literal and images do not load. See [Markdown display](markdown-display.md).
 
 Apply note commits one undoable editor command and schedules ordinary autosave. Cancel, Escape, or Close discards the modal draft and returns focus to the item, without modifying content or history. Applying an empty note removes it; undo restores it. The size counter disables Apply above 65,536 bytes. The independent 1 MiB list-save limit still applies.
 

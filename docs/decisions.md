@@ -78,4 +78,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D048 | 2026-10-28 | Authorized implementation / defaults | Proceed with M8 after M7 acceptance: exact case-sensitive tag names within owned item data, 12/item and 40 Unicode characters/name, one-command modal edits, single-tag current-list projection with ancestor context, structural locks and explicit reset. Store tags atomically with content, preserve drafts/search, and export JSON v3 while reading v1/v2. Markdown refuses tags rather than dropping them; filter state is not stored as content/view preferences |
 
+| D049 | 2026-10-28 | Authorized implementation / defaults | Begin M9 after user verification and commit of M8. Render an allowlisted Markdown subset without HTML injection or remote image loading; retain original source, JSON v3 and schema. Default item preview can be disabled, links open through separate checked controls, and notes have optional draft preview. These display defaults await user review |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

@@ -32,6 +32,7 @@ Updated: 2026-10-28. The core direction is agreed. M1 was reviewed and committed
 - [Editor behavior](editor-behavior.md): focus, tree operations, commands, history.
 - [Database and migrations](database.md): identifiers, ownership, schema, ordering, and migration management.
 - [Tags and filtering](tags.md): tag identity, current-list projection, command guards, and portability.
+- [Markdown display](markdown-display.md): supported syntax, safe links, source editing, and limits.
 - [Item notes](notes.md): editing, persistence, search, and JSON compatibility.
 - [Search](search.md): cross-list results, navigation, local edits, and limits.
 - [Draft recovery](recovery.md): local persistence, identity scopes, recovery, and conflict choices.
@@ -65,6 +66,8 @@ M6a adds compiled Rust format adapters, outline-Markdown transfer, and a 5,000-i
 
 M6b was verified and accepted by the user: per-user/list database collapse preferences separately from import/export, with independent revisions, retry, and refresh on list opening/window return. See [M6b implementation](plans/m6b-outline-state.md).
 
-M7 adds plain-text item notes, note search and JSON v2 while retaining v1 import. It was verified and accepted by the user; note rendering remains deferred to M9.
+M7 adds plain-text item notes, note search and JSON v2 while retaining v1 import. It was verified and accepted by the user; M9 adds optional note preview.
 
-M8 adds item tags, safe current-list filtering, tag search and JSON v3 with v1/v2 input compatibility. It is implemented and verified for local review.
+M8 adds item tags, safe current-list filtering, tag search and JSON v3 with v1/v2 input compatibility. It was reviewed and committed by the user.
+
+M9 adds optional Markdown display for items and note drafts, preserving source and JSON v3 without database changes. See [Markdown display](markdown-display.md).

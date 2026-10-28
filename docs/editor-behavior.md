@@ -71,13 +71,13 @@ Save status appears in a fixed, non-interactive overlay without shifting the edi
 
 ## Links and long-text editing (M5)
 
-HTTP/HTTPS URLs in plain item text are detected without Markdown parsing. In navigation, URLs longer than 72 characters display a shortened source string (first 56 characters, ellipsis, last 12); a tooltip exposes the full source. All other text is displayed literally. Shortening never changes stored text or the link target.
+HTTP/HTTPS URLs in plain item text are detected without Markdown parsing. In navigation, URLs longer than 72 characters display a shortened source string (first 56 characters, ellipsis, last 12); a tooltip exposes the full source. With Markdown preview disabled, all other text is displayed literally. M9 enables formatted preview by default; see [Markdown display](markdown-display.md). Shortening never changes stored text or the link target.
 
 Clicking item text or F2 still starts editing. Separate, underlined domain links below the item open the full address in a new tab with `noopener noreferrer`. In navigation, L focuses the first link; Tab moves between links, Enter activates one, and Escape on a link returns focus to the item. There is no automatic remote metadata fetch. Only validated HTTP/HTTPS URLs without embedded credentials become links; punctuation heuristics can leave ambiguous prose URLs as literal text. HTML is never interpreted.
 
 Editing shows the full original text in a wrapping textarea whose height follows content and available width. Resizing is view-only and creates no history/save operation. Item text is the sole source; there are no new database or JSON fields.
 
-Readable labels, Markdown link syntax, and separate comments remain deferred design options for M7 notes and M9 Markdown rendering. See [M5](milestones.md#m5--links-and-long-text-editing).
+M9 supports Markdown link labels; M7 supplies separate notes. Link opening remains separate from item editing.
 
 The item action toolbar sticks to the viewport top while scrolling within the editor, including long lists. Its opaque background separates controls from scrolling content; focused item text reserves scroll space below it.
 

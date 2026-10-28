@@ -82,4 +82,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D050 | 2026-10-28 | Authorized implementation / agreed semantics | Begin M10 after user commit of M9. User chose only a date-only deadline, without scheduled-start date or reminders. Defaults: optional dueDate on items/tasks, local-calendar badges, Apply/Cancel history, retained metadata on conversion, literal date search, additive migration and JSON v4 with older input support; defaults await user review |
 
+| D051 | 2026-10-28 | Requested replan / design direction | Design access before deployment; no public self-registration for now, administrator page preferred for adding friends. Split M11 accounts/sessions, M11a account administration, M11b integration tokens and M11c deployment, preserving M12–M15. Access mechanisms, library choices, activation flow and expiry/rotation defaults in access-control.md remain proposals; no auth implementation or deployment is authorized by this design discussion |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

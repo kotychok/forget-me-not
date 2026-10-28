@@ -21,8 +21,11 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M8 | Tags and filtering | M4 | Complete (reviewed and committed by user) |
 | M9 | Render Markdown inside item text | M5 | Complete (committed by user) |
 | M10 | Task dates | M4 | Implemented and verified; awaiting user review |
-| M11 | Deploy and recover a protected installation | M3, M4; hosting decision | Deferred: hosting undecided |
-| M12 | Capture items through Telegram Inbox | M11 | Deferred |
+| M11 | Accounts, login and browser sessions | M4; access design | Next: design before implementation |
+| M11a | Admin-managed friends and account activation | M11 | Planned design |
+| M11b | Scoped personal API tokens | M11; integration requirements | Planned; independent of deployment |
+| M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Deferred: hosting undecided |
+| M12 | Capture items through Telegram Inbox | M11c | Deferred |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
 | M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Deferred |
 | M15 | Active and archived lists | M6; portability/schema design | Deferred |
@@ -109,7 +112,7 @@ Verification: interrupted requests, reload, two-tab edits, local-storage failure
 
 ## Next milestones — local improvements first
 
-Hosting is undecided. Local product improvements do not depend on deployment or production authentication. M5–M10 are the proposed working order; each milestone still needs detailed design before implementation. M11 remains mandatory before exposing the application beyond localhost, but does not block native local work. Later integrations and optimization have their own dependencies rather than a blanket dependency on deployment.
+Hosting is undecided. Local product improvements do not depend on deployment or production authentication. M5–M10 are the proposed working order; each milestone still needs detailed design before implementation. M11/M11a access and M11c deployment remain mandatory before exposing the application beyond localhost, but does not block native local work. Later integrations and optimization have their own dependencies rather than a blanket dependency on deployment.
 
 ### M5 — Links and long-text editing
 
@@ -188,28 +191,29 @@ Outcome: optional Markdown display with unchanged source editing, storage and JS
 
 Outcome: one date-only deadline, as selected by the user. Implemented defaults: Date/D modal Apply/Cancel, clear and undo/redo, local-calendar Today/Overdue/Done badges, literal date search, owned snapshot persistence and JSON v4 with v1–v3 input compatibility. Dates remain attached when converting plain items/tasks. No reminders, recurrence or scheduled-start field. See [Due dates](dates.md) and [implementation record](plans/m10-task-dates.md).
 
-### M11 — Deployment and recovery
+### M11 — Accounts and browser sessions
 
-Scope: Docker image, proposed Compose setup if selected, Makefile deployment commands, authentication and access protection, persistent storage, migrations, backups, and operating instructions.
+Replanned on 2026-10-28 at the user's request: design access before deployment. No public self-registration. Proposed scope: explicit first-admin bootstrap preserving the existing user's ownership, password login/change, persistent cookie sessions, expiry/renewal/revocation and safe reauthentication with pending edits. Resolve the owner per authenticated request; replace the globally fixed local identity in authenticated mode. Verify isolation across all routes and browser caches/drafts.
 
-Agreed: add production authentication here, after the local M2 implementation and before exposing the installation beyond localhost. The login mechanism remains undecided; the local development identity must not silently become a production authentication bypass.
+Rust candidates: axum-login, tower-sessions with a compatible SQLite store, and RustCrypto argon2. Exact dependencies and policies are not yet selected. See [Access-control design](access-control.md).
 
-Decide first: deployment environment, production identity/authentication, HTTPS entry point, backup location/retention, and supported upgrade policy.
+### M11a — Administrator-managed accounts
 
-Acceptance:
+Requested direction: a separate admin page to add friends when needed. Proposed scope: pending-account creation, single-use activation/password-reset links delivered manually, disable/reactivate, session revocation, last-admin protection and local recovery. Admin privileges manage accounts, not automatic access to private lists. No public sign-up or initial SMTP requirement. Detailed design awaits review.
 
-- Both native local startup and Docker deployment follow documented commands.
-- Restarting or replacing a container preserves data; ordinary shutdown never deletes volumes.
-- Access protection and owner isolation work with the selected production identity mechanism.
-- Fresh installation and upgrade from the previous supported schema are verified.
-- Migration failure prevents serving an uncertain schema; backups can be restored with compatible code.
-- Text is rendered safely and deployed limits match API validation; Markdown rendering is tracked separately in M9.
+### M11b — Personal API tokens
 
-Verification: disposable container smoke checks, authentication/authorization checks, upgrade and restore exercises, and documentation review. Publishing or modifying a real host is outside this documentation task and requires a concrete deployment request.
+Proposed separate milestone for integrations: scoped random bearer tokens, digest-only secret storage, explicit expiry, creation/last-use metadata, revocation and rotation. Browser login uses sessions and does not depend on this milestone. API tokens are not a prerequisite for deployment unless a selected deployment requirement needs them. Do not confuse them with activation/reset secrets or Telegram bot credentials.
+
+### M11c — Deployment and recovery
+
+Former M11 deployment scope moves here; M12–M15 numbers stay unchanged. Hosting remains undecided. Prerequisites: M11 and M11a implemented and accepted; selected host/HTTPS/proxy configuration; backups and restore policy.
+
+Scope: Docker image/Compose if selected, native/container Makefile commands, persistent storage, migration startup, protected installation and operating instructions. Verify authentication/owner isolation in the deployed configuration, restart persistence, upgrade failure behavior and consistent SQLite backup restoration. Deployment must not enable the local development identity bypass. Publishing/modifying a real host requires a concrete deployment request.
 
 ### M12 — Telegram Inbox
 
-Outcome: link a Telegram account to the authenticated application user and capture text or links into a chosen Inbox list. No LLM is needed. Production identity is supplied by M11. Implement before considering AI-assisted Telegram capture; implementation is deferred.
+Outcome: link a Telegram account to the authenticated application user and capture text or links into a chosen Inbox list. No LLM is needed. Production identity is supplied by M11 and protected deployment by M11c. Implement before considering AI-assisted Telegram capture; implementation is deferred.
 
 Acceptance:
 
@@ -267,7 +271,7 @@ Resolve within the relevant milestone rather than blocking all work now:
 - M1: empty-item Enter behavior, task completion propagation, completion visibility, and deletion focus.
 - After M2: soft-delete/trash recovery and user-driven list ordering remain unimplemented. Revisit scale and limits based on real usage.
 - After M3: ID-preserving restore and archive packaging require separate scope; outline-Markdown transfer is tracked in M6a.
-- M11: mobile support expectations and the release support matrix if required.
+- M11c: mobile support expectations and the release support matrix if required.
 
 Keep recommendations marked as proposals until the user agrees; do not infer acceptance merely because a milestone mentions them.
 
@@ -287,3 +291,7 @@ M0–M4 are unchanged. Earlier decision entries retain the milestone numbers use
 | M13 | M12 | Telegram Inbox |
 | M14 | M13 | AI commands |
 | M10 | M14 | Transfer optimization |
+
+## Access-first replan — 2026-10-28
+
+The user requested account/token design and admin-created friends before deployment, without public self-registration. M11 now covers identity/sessions; M11a administration; M11b optional integration credentials; former deployment work becomes M11c. Detailed mechanisms in [Access control](access-control.md) are proposals, not implementation approval. M10 date assignment/display was reviewed positively; its full acceptance status is unchanged.

@@ -21,3 +21,5 @@
 - M9 Markdown display was committed by the user. Preserve literal source and current JSON; use allowlisted lexer tokens and escaped Svelte rendering, never raw HTML. Images remain text; only checked HTTP/HTTPS links open explicitly. See docs/markdown-display.md.
 
 - M10 is authorized: user selected one date-only deadline, without a scheduled date or reminders. Due dates use Gregorian YYYY-MM-DD (0001–9999), original strings and local-calendar status; no UTC conversion. JSON v4 reads v1–v3 and rejects date fields in older schemas. Keep dates in semantic equality, history, drafts, owned row diffs and new-copy imports. See docs/dates.md.
+
+- Access-first replan: user requested account/token design before deployment and no public self-registration, with admin-managed friends. M11 is accounts/browser sessions, M11a administration, M11b optional scoped API tokens, M11c deployment. Follow docs/access-control.md; mechanisms and Rust dependency candidates are proposals, not implementation authorization. Preserve existing local ownership when bootstrapping; resolve authenticated identity per request, never through a mutable global owner.

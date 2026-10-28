@@ -19,9 +19,13 @@ The default SQLite file is `data/forget-me-not.sqlite`, excluded from Git. A loc
 
 **Local use only:** the API binds to IPv4 loopback and checks request Host/Origin. There is no login. Production authentication and Docker deployment are planned for M11.
 
+## Tags and filtering
+
+Focus an item and press **T**, or choose **Tags**. Apply up to 12 case-sensitive names, separated by commas. Click a tag chip or choose **Filter by tag** to show matches with ancestor context. Structural commands are locked while filtering; **Clear tag filter** or Escape returns to the full tree. Tags save with content, participate in search/recovery, and are preserved in JSON v3. See [Tags and filtering](docs/tags.md).
+
 ## Item notes
 
-Focus an item and press **N**, or choose **Note** in the toolbar. Apply commits one undoable change; Cancel/Escape discards the draft. Notes save with list content, are searchable, and are preserved in JSON v2. Markdown remains literal; outline-Markdown export of lists with notes is refused with a JSON recommendation. See [Item notes](docs/notes.md).
+Focus an item and press **N**, or choose **Note** in the toolbar. Apply commits one undoable change; Cancel/Escape discards the draft. Notes save with list content, are searchable, and are preserved in current JSON exports. Markdown remains literal; outline-Markdown export of lists with notes/tags is refused with a JSON recommendation. See [Item notes](docs/notes.md).
 
 ## Remembered outline view
 
@@ -70,7 +74,7 @@ Open **Import / export** in the sidebar.
 - Import creates fresh list/item IDs and keeps existing lists unchanged. All lists in a file are written in one transaction; failure rolls back the entire batch.
 - If an import response is lost, the operation may already have completed. It is never automatically retried; use **Refresh list index** to check your lists without discarding local edits before selecting the file again.
 
-JSON format: `schemaVersion: 2` (legacy v1 files are accepted) with a `lists` array. Limits are 8 MiB/file, 100 lists, and 10,000 total items, plus existing per-list limits. Unknown fields, newer versions, duplicate IDs, and invalid structures are rejected with explicit errors. See [JSON format](docs/data-formats.md) and the [example file](fixtures/portable-v1.json).
+JSON format: `schemaVersion: 3` (legacy v1/v2 files are accepted) with a `lists` array. Limits are 8 MiB/file, 100 lists, and 10,000 total items, plus existing per-list limits. Unknown fields, newer versions, duplicate IDs, and invalid structures are rejected with explicit errors. See [JSON format](docs/data-formats.md) and the [example file](fixtures/portable-v1.json).
 
 Outline Markdown import/export is available through the Import / export dialog. Import `.md` files with preview, or select Markdown for current-list export. Top-level paragraphs become root items, indentation defines nesting, and explicit task markers preserve checkboxes. JSON is the full portable format and supports all-list export. Markdown-looking text is preserved literally in JSON; safe display rendering inside items is deferred to M9.
 
@@ -122,7 +126,7 @@ Export variables in the shell; `.env` files are not loaded automatically.
 
 Example: `FMN_DB_PATH=/tmp/outline-demo.sqlite make dev`. Normal shutdown never deletes the development database. For backups of a running WAL database, use a consistent SQLite backup operation rather than copying only the main file.
 
-Current limits: 1 MiB per normal save request (8 MiB for JSON import), 5,000 items per list, 32 nesting levels, 32 KiB per item text, 64 KiB per note, and 200 Unicode characters per title. There is no user-driven list reorder yet; lists follow creation order.
+Current limits: 1 MiB per normal save request (8 MiB for JSON import), 5,000 items per list, 32 nesting levels, 32 KiB per item text, 64 KiB per note, 12 tags/item with 40 characters/name, and 200 Unicode characters per title. There is no user-driven list reorder yet; lists follow creation order.
 
 See the [code structure](docs/code-structure.md) for module responsibilities and extension points.
 

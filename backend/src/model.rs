@@ -9,6 +9,8 @@ pub struct Item {
     pub text: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub note: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
     pub completed: bool,
     pub children: Vec<Item>,
 }

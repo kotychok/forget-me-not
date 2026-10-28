@@ -217,3 +217,45 @@ test('lost-response reconciliation distinguishes note changes from identical ite
     queue.dispose();
   }
 });
+
+test('lost-response reconciliation distinguishes tags even when text and note match', async () => {
+  const document: Document = {
+    id: 'list',
+    title: 'Tags',
+    nodes: [
+      {
+        id: 'item',
+        kind: 'item',
+        text: 'Same text',
+        tags: ['local'],
+        completed: false,
+        children: [],
+      },
+    ],
+  };
+  const queue = new Autosave(
+    0,
+    () => document,
+    {
+      save: async () => {
+        throw new Error('Lost response');
+      },
+      get: async () => ({
+        ...structuredClone(document),
+        revision: 1,
+        nodes: [{ ...document.nodes[0], tags: ['remote'] }],
+      }),
+    },
+    () => {},
+    100000,
+  );
+  try {
+    queue.markDirty();
+    await queue.flush();
+    await queue.retry();
+    assert.equal(queue.status, 'conflict');
+    assert.deepEqual(document.nodes[0].tags, ['local']);
+  } finally {
+    queue.dispose();
+  }
+});

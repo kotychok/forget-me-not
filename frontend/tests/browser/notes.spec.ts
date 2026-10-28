@@ -32,7 +32,7 @@ test.beforeEach(async ({ page, request }) => {
   await page.goto(`/?list=${list.id}`);
 });
 
-test('note Apply/Cancel and undo preserve literal content, persist, export v2 and search notes', async ({
+test('note Apply/Cancel and undo preserve literal content, persist, export current JSON and search notes', async ({
   page,
   request,
 }) => {
@@ -108,7 +108,7 @@ test('note Apply/Cancel and undo preserve literal content, persist, export v2 an
   const exported = JSON.parse(
     await readFile((await (await ready).path())!, 'utf8'),
   );
-  expect(exported.schemaVersion).toBe(2);
+  expect(exported.schemaVersion).toBe(3);
   expect(exported.lists[0].nodes[0].note).toBe(text);
   await transfer.getByLabel('Export format').selectOption('markdown');
   await transfer

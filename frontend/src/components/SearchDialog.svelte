@@ -92,7 +92,7 @@
       onclick={() => dialog?.close()}>✕</button
     >
   </div>
-  <label for="search-query">Search titles, items and notes</label>
+  <label for="search-query">Search titles, items, notes and tags</label>
   <input
     id="search-query"
     bind:this={input}
@@ -139,6 +139,7 @@
     {#each results.hits as hit (`${hit.listId}:${hit.itemId ?? 'title'}:${hit.field ?? 'text'}`)}
       <button
         class="search-result"
+        data-search-list={hit.listId}
         disabled={selecting}
         onclick={() => choose(hit)}
         onkeydown={(event) => {
@@ -165,7 +166,9 @@
           ><MarkedText text={hit.title} {query} />{hit.itemId
             ? hit.field === 'note'
               ? ' · Note'
-              : ' · Item'
+              : hit.field === 'tag'
+                ? ' · Tags'
+                : ' · Item'
             : ' · List title'}</span
         >
         {#if hit.ancestors.length}<span class="search-path"

@@ -41,6 +41,11 @@
     <dd>Navigate and collapse in navigation mode</dd>
     <dt>Space</dt>
     <dd>Complete task in navigation mode</dd>
+    <dt>T</dt>
+    <dd>
+      Edit active item tags in navigation. A tag filter locks structural
+      commands; Escape clears it.
+    </dd>
     <dt>N</dt>
     <dd>Open the active item note in navigation mode</dd>
     <dt>L</dt>

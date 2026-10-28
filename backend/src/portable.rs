@@ -20,36 +20,37 @@ fn invalid(message: String) -> AppError {
 }
 impl Portable {
     pub fn from_value(value: serde_json::Value) -> Result<Self> {
-        if value
+        let version = value
             .get("schemaVersion")
             .and_then(serde_json::Value::as_u64)
-            == Some(1)
-        {
-            fn check(value: &serde_json::Value) -> bool {
-                match value {
-                    serde_json::Value::Array(items) => items.iter().any(check),
-                    serde_json::Value::Object(map) => {
-                        map.contains_key("note") || map.values().any(check)
-                    }
-                    _ => false,
+            .unwrap_or(0);
+        fn contains_field(value: &serde_json::Value, name: &str) -> bool {
+            match value {
+                serde_json::Value::Array(items) => items.iter().any(|v| contains_field(v, name)),
+                serde_json::Value::Object(map) => {
+                    map.contains_key(name) || map.values().any(|v| contains_field(v, name))
                 }
+                _ => false,
             }
-            if check(&value) {
-                return Err(invalid(
-                    "schema v1 does not support note fields; use schemaVersion 2".into(),
-                ));
-            }
+        }
+        if version == 1 && contains_field(&value, "note") {
+            return Err(invalid(
+                "schema v1 does not support note fields; use schemaVersion 3".into(),
+            ));
+        }
+        if (version == 1 || version == 2) && contains_field(&value, "tags") {
+            return Err(invalid("Tags require schemaVersion 3".into()));
         }
         let mut document: Self = serde_path_to_error::deserialize(value)
             .map_err(|error| invalid(format!("$.{}: {}", error.path(), error.inner())))?;
         document.validate()?;
-        document.schema_version = 2;
+        document.schema_version = 3;
         Ok(document)
     }
     pub fn validate(&self) -> Result<()> {
-        if self.schema_version != 1 && self.schema_version != 2 {
+        if !matches!(self.schema_version, 1..=3) {
             return Err(invalid(
-                "$.schemaVersion: only versions 1 and 2 are supported".into(),
+                "$.schemaVersion: only versions 1, 2 and 3 are supported".into(),
             ));
         }
         if self.lists.is_empty() || self.lists.len() > MAX_LISTS {
@@ -72,6 +73,9 @@ impl Portable {
                 return Err(invalid(format!("{path}: file exceeds 10000 items")));
             }
             for item in flat {
+                if self.schema_version < 3 && item.tags != "[]" {
+                    return Err(invalid(format!("{path}: tags require schemaVersion 3")));
+                }
                 if self.schema_version == 1 && !item.note.is_empty() {
                     return Err(invalid(format!("{path}: notes require schemaVersion 2")));
                 }

@@ -32,7 +32,7 @@ impl Store {
         let mut total_items = 0;
         let mut document_bytes = 0;
         for row in rows {
-            let items = sqlx::query_as::<_,ItemRow>("SELECT id,parent_id,position,kind,text,note,completed FROM items WHERE list_id=? ORDER BY position,id").bind(&row.id).fetch_all(&mut *tx).await?;
+            let items = sqlx::query_as::<_,ItemRow>("SELECT id,parent_id,position,kind,text,note,tags,completed FROM items WHERE list_id=? ORDER BY position,id").bind(&row.id).fetch_all(&mut *tx).await?;
             total_items += items.len();
             if total_items > MAX_TOTAL_ITEMS {
                 return Err(AppError::InvalidImport(
@@ -56,7 +56,7 @@ impl Store {
         }
         tx.commit().await?;
         let result = Portable {
-            schema_version: 2,
+            schema_version: 3,
             lists,
         };
         result.validate()?;

@@ -1,8 +1,10 @@
+import { validateTags } from './tags.ts';
 export type Item = {
   id: string;
   kind: 'item' | 'task';
   text: string;
   note?: string;
+  tags?: string[];
   completed: boolean;
   children: Item[];
 };
@@ -131,6 +133,24 @@ export class Editor {
     const item = locate(next.nodes, id)!.item;
     if (note) item.note = note;
     else delete item.note;
+    this.commit(next);
+    return true;
+  }
+
+  setTags(id: string, value: string[]) {
+    const tags = validateTags(value);
+    const current = locate(this.state.nodes, id);
+    if (
+      !current ||
+      JSON.stringify(current.item.tags ?? []) === JSON.stringify(tags)
+    )
+      return false;
+    this.breakGroup();
+    this.pendingAdd = null;
+    const next = structuredClone(this.state);
+    const item = locate(next.nodes, id)!.item;
+    if (tags.length) item.tags = tags;
+    else delete item.tags;
     this.commit(next);
     return true;
   }

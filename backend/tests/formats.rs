@@ -7,6 +7,7 @@ use uuid::Uuid;
 fn item(text: &str, kind: &str, completed: bool, children: Vec<Item>) -> Item {
     Item {
         note: String::new(),
+        tags: vec![],
         id: Uuid::new_v4().to_string(),
         text: text.into(),
         kind: kind.into(),
@@ -61,7 +62,7 @@ fn nested_markers_tasks_and_additional_headings_are_explicit() {
 #[test]
 fn markdown_round_trip_preserves_literal_content_multiline_empty_items_and_structure() {
     let source = Portable {
-        schema_version: 2,
+        schema_version: 3,
         lists: vec![Document {
             id: Uuid::new_v4().to_string(),
             title: "Title #".into(),

@@ -23,6 +23,7 @@ pub(crate) struct FlatItem {
     pub kind: String,
     pub text: String,
     pub note: String,
+    pub tags: String,
     pub completed: bool,
 }
 
@@ -56,6 +57,7 @@ pub(crate) fn flatten(document: &Document) -> Result<Vec<FlatItem>> {
         if item.note.len() > 65536 {
             return Err(invalid("Item note exceeds 64 KiB"));
         }
+        validate_tags(&item.tags)?;
         output.push(FlatItem {
             id: item.id.clone(),
             parent_id: parent.map(str::to_owned),
@@ -63,6 +65,7 @@ pub(crate) fn flatten(document: &Document) -> Result<Vec<FlatItem>> {
             kind: item.kind.clone(),
             text: item.text.clone(),
             note: item.note.clone(),
+            tags: serde_json::to_string(&item.tags).map_err(|_| invalid("Invalid tags"))?,
             completed: item.completed,
         });
         pending.extend(
@@ -77,6 +80,28 @@ pub(crate) fn flatten(document: &Document) -> Result<Vec<FlatItem>> {
 pub(crate) fn validate_title(title: &str) -> Result<()> {
     if title.trim().is_empty() || title.chars().count() > 200 {
         return Err(invalid("Title must contain 1–200 characters"));
+    }
+    Ok(())
+}
+
+pub(crate) fn validate_tags(tags: &[String]) -> Result<()> {
+    if tags.len() > 12 {
+        return Err(invalid("An item can have at most 12 tags"));
+    }
+    let mut seen = HashSet::new();
+    for tag in tags {
+        if tag.is_empty()
+            || tag.chars().count() > 40
+            || tag.trim_matches(|c: char| c.is_whitespace() || c == '\u{feff}') != tag
+            || tag.chars().any(|c| c.is_control() || c == ',')
+        {
+            return Err(invalid(
+                "Tags must contain 1–40 characters without surrounding whitespace, commas or control characters",
+            ));
+        }
+        if !seen.insert(tag) {
+            return Err(invalid("Duplicate tag names are not allowed"));
+        }
     }
     Ok(())
 }

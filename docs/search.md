@@ -1,6 +1,6 @@
 # Search behavior
 
-M6 adds cross-list search from the sidebar's **Search lists** button. Search is a trimmed, case-insensitive literal substring in list titles, item text, and separate notes. Cyrillic is supported; regex punctuation is literal. It includes completed tasks and collapsed branches. Note matches are labelled Note and open the item note modal after revealing the item. It does not search a link's remote contents.
+M6 adds cross-list search from the sidebar's **Search lists** button. Search is a trimmed, case-insensitive literal substring in list titles, item text, separate notes, and tag names. Cyrillic is supported; regex punctuation is literal. It includes completed tasks and collapsed branches. Note matches are labelled Note and open the item note modal after revealing the item. Tag hits are labelled Tags and reveal the item. Tag search is case-insensitive like other search fields; tag identity and tag filtering use exact case-sensitive names. Activating any search hit clears a current tag filter. It does not search a link's remote contents.
 
 ## Results and navigation
 

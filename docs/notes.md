@@ -14,7 +14,7 @@ Unapplied modal text is not a durable local draft; leaving the page while it dif
 
 Search includes notes. Note matches are separate results labelled Note, with list/item/ancestor context. Activating one reveals its item and opens the note modal; a stale note match is rejected before selection. The search jump remains one-shot across list switches.
 
-JSON exports schemaVersion 2. The optional `note` string defaults to empty and is omitted when empty. Both frontend/backend reject note fields in v1 files; v1 without notes is accepted and upgraded to v2. Unknown fields, unsupported future versions, and existing bounds remain rejected. API item payloads and old stored drafts without `note` remain valid empty-note records.
+Notes were introduced in schemaVersion 2; current M8 exports use schemaVersion 3 with tags. The optional `note` string defaults to empty and is omitted when empty. Both frontend/backend reject note fields in v1 files; v1 without notes and v2 notes files are accepted and upgraded to the current schema. Unknown fields, unsupported future versions, and existing bounds remain rejected. API item payloads and old stored drafts without `note` remain valid empty-note records.
 
 Outline Markdown does not represent separate notes. Exporting a list with notes fails explicitly and recommends JSON; it never silently drops them. Markdown imports create items with empty notes. Markdown rendering inside notes is not part of M7.
 

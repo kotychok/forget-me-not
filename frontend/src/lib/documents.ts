@@ -10,6 +10,7 @@ function sameItems(left: Item[], right: Item[]): boolean {
         item.kind === other.kind &&
         item.text === other.text &&
         (item.note ?? '') === (other.note ?? '') &&
+        JSON.stringify(item.tags ?? []) === JSON.stringify(other.tags ?? []) &&
         item.completed === other.completed &&
         sameItems(item.children, other.children)
       );

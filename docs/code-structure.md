@@ -15,6 +15,7 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
   │     └── api — HTTP/JSON transport
   ├── EditorPane.svelte — tree UI, keyboard/composition events, DOM focus and selection
   ├── SearchDialog.svelte — read-only search snapshot, results, and activation UI
+  ├── TagsDialog.svelte — temporary tag draft, validation and suggestions
   ├── NoteDialog.svelte — temporary plain-text note draft, Apply/Cancel and size/focus handling
   ├── MarkedText.svelte — escaped literal match highlighting
   ├── KeyboardGuide.svelte — accessible modal guide
@@ -24,6 +25,7 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
 
 - `lib/links.ts` detects plain-text HTTP/HTTPS links and formats compact display strings without mutating source data; it has no DOM, model, or HTTP dependency. `lib/auto-size.ts` is a DOM action for textarea content/width sizing and cleanup, with no tree/history dependency.
 - `lib/search.ts` owns pure literal matching, result context, snippets, and result caps. Workspace overlays cached local documents on a read-only owned snapshot and validates activation; SearchDialog owns modal state and stale-response guards. App sends a view-only reveal request to EditorPane for expansion, focus, and scroll. Search never flushes autosave or adds history.
+- `lib/tags.ts` owns pure tag validation, name discovery and ancestor-preserving tree projection. Editor commits tags in one history step; EditorPane owns the local filter and structural guards. Filtering never becomes the authoritative tree, file content, or saved view preference.
 - `lib/editor.ts` knows only item data, commands, and history. It does not import Svelte, HTTP, or browser DOM APIs. ID generation uses platform crypto. setNote is one history command; notes stay with branches.
 - `lib/outline-state.ts` manages manual collapse preferences and per-ID replay after view revision conflicts. Workspace owns it per session and supplies preference snapshots/callbacks to EditorPane. Temporary reveal and focus safety stay in the pane; view preferences never enter Editor history or file formats.
 - `lib/autosave.ts` manages save generations and acknowledgements. It accepts explicit save/get functions and has no UI dependency. An acknowledgement never replaces current editor content.

@@ -8,7 +8,7 @@ fn fixture() -> serde_json::Value {
     serde_json::from_str(include_str!("../../fixtures/portable-v1.json")).unwrap()
 }
 #[tokio::test]
-async fn notes_persist_copy_and_export_in_v2_while_legacy_files_still_import() {
+async fn notes_persist_copy_and_export_in_current_schema_while_legacy_files_still_import() {
     let dir = tempfile::tempdir().unwrap();
     let store = Store::open(&dir.path().join("test.sqlite")).await.unwrap();
     let v2 = Portable::from_value(
@@ -21,7 +21,7 @@ async fn notes_persist_copy_and_export_in_v2_while_legacy_files_still_import() {
     );
     let mut legacy = fixture();
     let upgraded = Portable::from_value(legacy.clone()).unwrap();
-    assert_eq!(upgraded.schema_version, 2);
+    assert_eq!(upgraded.schema_version, 3);
     legacy["lists"][0]["nodes"][0]["note"] = json!("No v1 notes");
     assert!(Portable::from_value(legacy.clone()).is_err());
     legacy["schemaVersion"] = json!(2);
@@ -31,7 +31,7 @@ async fn notes_persist_copy_and_export_in_v2_while_legacy_files_still_import() {
     let original = store.get(&copies[0].id).await.unwrap();
     assert_eq!(original.nodes[0].note, "**Literal**\n<html>note</html>");
     let exported = store.export_json(Some(&original.id)).await.unwrap();
-    assert_eq!(exported.schema_version, 2);
+    assert_eq!(exported.schema_version, 3);
     assert!(transfer::encode(Format::Markdown, &exported).is_err());
     let text = transfer::encode(Format::Json, &exported).unwrap().text;
     let copy = store
@@ -67,7 +67,7 @@ fn note_limits_and_future_versions_are_rejected_before_import() {
     assert!(Portable::from_value(source.clone()).is_err());
     source["lists"][0]["nodes"][0]["note"] = json!("a".repeat(65536));
     assert!(Portable::from_value(source.clone()).is_ok());
-    source["schemaVersion"] = json!(3);
+    source["schemaVersion"] = json!(4);
     assert!(Portable::from_value(source).is_err());
 }
 

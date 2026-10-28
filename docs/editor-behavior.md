@@ -88,3 +88,7 @@ Manual collapsed branch IDs are stored per user/list in SQLite and shared across
 Search, undo and automatic structural expansion remain temporary. A remote collapse never removes the active item from view: its ancestor path stays locally expanded without overwriting the saved preference. Preference loading/saving/failure status is separate from content save status, with Retry view sync after failures. Pending preferences are included in unload warnings but have no offline draft recovery. Existing dirty content may need to save before a new branch preference is committed; view commands never mark content dirty. See [M6b implementation](plans/m6b-outline-state.md).
 
 A floating Back to top button appears after scrolling more than 400 pixels. It returns to the page start and focuses the list heading (or active title input), using immediate scrolling when reduced motion is requested. It is positioned above the save notice and does not change editor content/history.
+
+## Tag filtering — M8
+
+T in navigation opens the active item's tag draft. Apply commits one undoable content command; Cancel/Escape discards it. A single-tag filter shows exact-name matches and ancestors without changing order or content. While filtered, structural commands/collapse are blocked; arrows use displayed paths, and Escape from navigation clears the filter. Undo/redo and search reveal clear it before acting. Removing the active tag clears it and restores item focus. Saved collapse preferences are not changed by required filter expansion. See [Tags and filtering](tags.md).

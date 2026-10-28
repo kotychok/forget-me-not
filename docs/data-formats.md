@@ -1,18 +1,18 @@
-# JSON data format — schema v2 with v1 import compatibility
+# JSON data format — schema v3 with v1/v2 import compatibility
 
 Implemented: JSON and constrained outline-Markdown file import/export through compiled Rust adapters (M6a). This supersedes the earlier exclusion of Markdown file transfer. Markdown rendering inside item text is deferred to M9; all text is currently literal.
 
 ## Portable model
 
-The envelope has exactly two fields: `schemaVersion: 2` and `lists`. Schema v1 is still accepted for input and normalized to v2; older readers limited to v1 cannot read the new v2 export. Each list has `id`, `title`, and `nodes`. Each nested item has `id`, `kind` (`item` or `task`), `text`, `completed`, and `children`, plus optional `note` in v2. Notes are literal UTF-8 text (up to 64 KiB); missing or empty means no note, and empty notes are omitted on export. V1 rejects note fields rather than silently dropping them. Arrays preserve list and sibling order. Plain items must have `completed: false`.
+The envelope has exactly two fields: `schemaVersion: 3` and `lists`. V1/v2 are accepted and normalized to v3; readers limited to older schemas cannot read a v3 export. Each list has `id`, `title`, and `nodes`. Each nested item has `id`, `kind` (`item` or `task`), `text`, `completed`, and `children`, plus optional `note` from v2 and `tags` from v3. Notes are literal UTF-8 text (up to 64 KiB); missing or empty means no note, and empty notes are omitted on export. V1 rejects note fields and v1/v2 reject tag fields rather than silently dropping them. Tags are case-sensitive string arrays of at most 12 distinct names, each 1–40 Unicode characters without boundary whitespace, commas, controls or malformed Unicode. Missing/empty arrays mean no tags; empty arrays are omitted on export. Arrays preserve list and sibling order. Plain items must have `completed: false`.
 
 IDs are canonical lowercase UUIDv4 strings. List IDs must be unique within a file; item IDs must be unique across all lists in the file. Database rows use parent references; portable files use nested arrays without duplicated parent IDs.
 
-See the [shared schema-v1 fixture](../fixtures/portable-v1.json) for a complete example with multiline Unicode text, literal formatting characters, nested tasks, and an empty list. Both frontend and backend test this legacy fixture and the [schema-v2 notes fixture](../fixtures/portable-v2.json).
+See the [shared schema-v1 fixture](../fixtures/portable-v1.json) for a complete example with multiline Unicode text, literal formatting characters, nested tasks, and an empty list. Both frontend and backend test this legacy fixture and the [schema-v2 notes fixture](../fixtures/portable-v2.json) and [schema-v3 tags fixture](../fixtures/portable-v3.json).
 
 JSON is a complete portable copy of supported list content, not a backup of the whole installation. Owner identity, account data, server timestamps, revisions, collapse state, cursor/selection, drafts, and undo history are excluded. Database migration versions, list revisions, and `schemaVersion` are independent.
 
-Unknown fields and unsupported schema versions are rejected instead of silently discarded. A future schema migration must explicitly define how older files are read. Notes use schema v2 in M7. Future tags and dates require an explicit compatibility contract; they cannot be added as silently ignored fields.
+Unknown fields and unsupported schema versions are rejected instead of silently discarded. A future schema migration must explicitly define how older files are read. Notes were added in v2/M7 and tags in v3/M8. Future dates require an explicit compatibility contract; they cannot be added as silently ignored fields.
 
 ## Export
 
@@ -42,6 +42,8 @@ Repeated intentional import creates another set of copies. ID-preserving restore
 | Nesting | 32 item levels |
 | Item text | 32 KiB UTF-8 |
 | Item note | 64 KiB UTF-8 |
+| Tags per item | 12 |
+| Tag name | 1–40 Unicode characters |
 | List title | 1–200 Unicode characters, not blank |
 | Serialized single-list save request | 1 MiB |
 
@@ -77,7 +79,7 @@ For the agreed mixed-prose example, the task paragraph and each of the following
 - item 2
 ```
 
-Markdown does not carry internal item IDs, server metadata, or separate item notes. Lists containing notes cannot be exported to Markdown; use JSON v2. Markdown import creates empty notes. Markdown exports one current list at a time; JSON supports all lists. Titles with line breaks/surrounding whitespace, literal carriage returns in item text, and leading tab indentation cannot be exported losslessly and produce an explicit JSON-fallback error. Import creates new copies through the existing shared validation/transaction path. Full JSON portability remains available independently.
+Markdown does not carry internal item IDs, server metadata, or separate item notes/tags. Lists containing notes or tags cannot be exported to Markdown; use JSON v3. Markdown import creates empty notes and tags. Markdown exports one current list at a time; JSON supports all lists. Titles with line breaks/surrounding whitespace, literal carriage returns in item text, and leading tab indentation cannot be exported losslessly and produce an explicit JSON-fallback error. Import creates new copies through the existing shared validation/transaction path. Full JSON portability remains available independently.
 
 ### Scale verification and revised limit
 

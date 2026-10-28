@@ -114,6 +114,10 @@ Use transactional migrations where supported. SQLite table rebuilds or changes r
 
 Before release, verify migration from an empty database and upgrade from the previous supported schema with representative data. Check row counts, owner/list isolation, parent constraints, completion checks, revisions, and `PRAGMA foreign_key_check`. Verify a failed migration cannot result in serving a partially upgraded database. Run `PRAGMA integrity_check` and a restore check on the backup as appropriate for the upgrade.
 
+## Item tags — M8
+
+[The additive M8 migration](../backend/migrations/20261028000500_item_tags.sql) adds `items.tags TEXT NOT NULL DEFAULT '[]'`. Rust independently validates array count, names and duplicates, then stores compact JSON through ordinary owned-list row-diff transactions. Tags inherit ownership from their item/list; no global tag registry or shared IDs are introduced. Existing notes/content IDs/revisions and saved view metadata are unchanged. JSON v3 preserves tags; older inputs cannot silently carry unknown tag fields.
+
 ## Item notes — M7
 
 [The additive M7 migration](../backend/migrations/20261027000400_item_notes.sql) adds `items.note TEXT NOT NULL DEFAULT ''`. Existing items retain their content and receive empty notes. Notes use existing owned-list snapshot transactions, row-diff updates, content revisions and deletion cascade. They have a 64 KiB UTF-8 validation bound; view-preference metadata and revision are independent.

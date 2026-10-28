@@ -8,6 +8,7 @@ fn node(text: &str, children: Vec<Item>) -> Item {
     Item {
         id: Uuid::new_v4().to_string(),
         note: String::new(),
+        tags: vec![],
         kind: "item".into(),
         text: text.into(),
         completed: false,

@@ -25,7 +25,7 @@ function validateDraft(value: Draft, scope: string): Draft {
     !Number.isFinite(value.updatedAt)
   )
     throw new Error('Invalid local draft. Stored data was kept.');
-  validatePortable({ schemaVersion: 2, lists: [value.document] });
+  validatePortable({ schemaVersion: 3, lists: [value.document] });
   return value;
 }
 

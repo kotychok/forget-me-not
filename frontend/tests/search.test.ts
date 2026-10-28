@@ -57,3 +57,16 @@ test('note hits are distinct from title/text hits and preserve item identity and
   assert.equal(results.hits[1].itemId, item.id);
   assert.deepEqual(results.hits[1].ancestors, ['Needle item']);
 });
+
+test('tag hits are separate, scoped to item identity, and keep item context', () => {
+  const item = createItem('A task');
+  item.tags = ['work', 'Київ'];
+  const results = searchDocuments(
+    [{ id: crypto.randomUUID(), title: 'List', nodes: [item] }],
+    'київ',
+  );
+  assert.equal(results.total, 1);
+  assert.equal(results.hits[0].field, 'tag');
+  assert.equal(results.hits[0].itemId, item.id);
+  assert.deepEqual(results.hits[0].ancestors, ['A task']);
+});

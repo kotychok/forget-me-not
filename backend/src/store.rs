@@ -37,6 +37,7 @@ struct ItemRow {
     kind: String,
     text: String,
     note: String,
+    tags: String,
     completed: bool,
 }
 fn build_tree(rows: Vec<ItemRow>) -> Result<Vec<Item>> {
@@ -66,6 +67,8 @@ fn build_tree(rows: Vec<ItemRow>) -> Result<Vec<Item>> {
                 kind: row.kind,
                 text: row.text,
                 note: row.note,
+                tags: serde_json::from_str(&row.tags)
+                    .map_err(|_| AppError::Corrupt("Invalid stored tags"))?,
                 completed: row.completed,
                 children: nodes,
             });
@@ -153,7 +156,7 @@ impl Store {
                 .fetch_optional(&mut *tx)
                 .await?
                 .ok_or(AppError::NotFound)?;
-        let items = sqlx::query_as::<_,ItemRow>("SELECT id,parent_id,position,kind,text,note,completed FROM items WHERE list_id=? ORDER BY position,id").bind(id).fetch_all(&mut *tx).await?;
+        let items = sqlx::query_as::<_,ItemRow>("SELECT id,parent_id,position,kind,text,note,tags,completed FROM items WHERE list_id=? ORDER BY position,id").bind(id).fetch_all(&mut *tx).await?;
         tx.commit().await?;
         Ok(ListDocument {
             id: row.id,
@@ -187,7 +190,7 @@ impl Store {
             });
         }
         let old: Vec<ItemRow> = sqlx::query_as(
-            "SELECT id,parent_id,position,kind,text,note,completed FROM items WHERE list_id=?",
+            "SELECT id,parent_id,position,kind,text,note,tags,completed FROM items WHERE list_id=?",
         )
         .bind(id)
         .fetch_all(&mut *tx)
@@ -198,9 +201,9 @@ impl Store {
         let writes: Result<()> = async {
             for row in &flat {
                 if let Some(before) = old.get(&row.id) {
-                    if before.parent_id != row.parent_id || before.position != row.position || before.kind != row.kind || before.text != row.text || before.note != row.note || before.completed != row.completed {
-                        sqlx::query("UPDATE items SET parent_id=?,position=?,kind=?,text=?,note=?,completed=?,updated_at=? WHERE id=? AND list_id=?")
-                            .bind(&row.parent_id).bind(row.position).bind(&row.kind).bind(&row.text).bind(&row.note).bind(row.completed).bind(time).bind(&row.id).bind(id).execute(&mut *tx).await?;
+                    if before.parent_id != row.parent_id || before.position != row.position || before.kind != row.kind || before.text != row.text || before.note != row.note || before.tags != row.tags || before.completed != row.completed {
+                        sqlx::query("UPDATE items SET parent_id=?,position=?,kind=?,text=?,note=?,tags=?,completed=?,updated_at=? WHERE id=? AND list_id=?")
+                            .bind(&row.parent_id).bind(row.position).bind(&row.kind).bind(&row.text).bind(&row.note).bind(&row.tags).bind(row.completed).bind(time).bind(&row.id).bind(id).execute(&mut *tx).await?;
                     }
                 } else {
                     let collision: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM items WHERE id=?)").bind(&row.id).fetch_one(&mut *tx).await?;
@@ -254,7 +257,7 @@ async fn insert_item(
     row: &crate::validation::FlatItem,
     time: i64,
 ) -> Result<()> {
-    sqlx::query("INSERT INTO items(id,list_id,parent_id,position,kind,text,note,completed,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
-        .bind(&row.id).bind(list_id).bind(&row.parent_id).bind(row.position).bind(&row.kind).bind(&row.text).bind(&row.note).bind(row.completed).bind(time).bind(time).execute(&mut **tx).await?;
+    sqlx::query("INSERT INTO items(id,list_id,parent_id,position,kind,text,note,tags,completed,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+        .bind(&row.id).bind(list_id).bind(&row.parent_id).bind(row.position).bind(&row.kind).bind(&row.text).bind(&row.note).bind(&row.tags).bind(row.completed).bind(time).bind(time).execute(&mut **tx).await?;
     Ok(())
 }

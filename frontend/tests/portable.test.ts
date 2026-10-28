@@ -29,7 +29,7 @@ test('unknown fields, unsupported versions, and duplicate IDs have actionable pa
   let source: unknown = fixture();
   (source as Record<string, unknown>).ownerId = 'untrusted';
   assert.throws(() => validatePortable(source), /\$\.ownerId: Unknown field/);
-  source = { ...fixture(), schemaVersion: 3 };
+  source = { ...fixture(), schemaVersion: 4 };
   assert.throws(() => validatePortable(source), /\$\.schemaVersion/);
   const duplicate = fixture();
   duplicate.lists[1].nodes = [structuredClone(duplicate.lists[0].nodes[0])];
@@ -98,14 +98,14 @@ test('5000-item documents remain portable and the next item is rejected', () => 
   assert.throws(() => validatePortable(doc), /5000 per list/);
 });
 
-test('schema v1 upgrades to v2; only v2 accepts bounded literal notes', () => {
+test('legacy schemas upgrade to current; notes are supported from v2', () => {
   const old = JSON.parse(
     readFileSync(
       new URL('../../fixtures/portable-v1.json', import.meta.url),
       'utf8',
     ),
   );
-  assert.equal(validatePortable(old).schemaVersion, 2);
+  assert.equal(validatePortable(old).schemaVersion, 3);
   old.lists[0].nodes[0].note = 'A note';
   assert.throws(() => validatePortable(old), /Unknown field/);
   old.schemaVersion = 2;
@@ -123,9 +123,25 @@ test('shared v2 fixture carries notes through portable export', () => {
       'utf8',
     ),
   );
-  assert.equal(source.schemaVersion, 2);
+  assert.equal(source.schemaVersion, 3);
   assert.equal(
     parsePortable(serializePortable(source)).lists[0].nodes[0].note,
     '**Trip details**\nBring the itinerary. ✈️',
   );
+});
+
+test('shared v3 fixture preserves tags and rejects tags in older versions', () => {
+  const source = JSON.parse(
+    readFileSync(
+      new URL('../../fixtures/portable-v3.json', import.meta.url),
+      'utf8',
+    ),
+  );
+  assert.deepEqual(
+    parsePortable(serializePortable(validatePortable(source))).lists[0].nodes[0]
+      .tags,
+    ['travel', 'planning'],
+  );
+  source.schemaVersion = 2;
+  assert.throws(() => validatePortable(source), /Unknown field/);
 });

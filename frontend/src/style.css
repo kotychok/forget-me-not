@@ -870,3 +870,60 @@ mark {
   font-size: 11px;
   white-space: pre-wrap;
 }
+
+.tags-dialog {
+  width: min(600px, calc(100vw - 32px));
+}
+.tags-dialog input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  font: inherit;
+  border: 1px solid #cbd5c5;
+  background: #fcfcf8;
+  color: inherit;
+  border-radius: 5px;
+}
+.tag-suggestions,
+.item-tags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin: 5px 0;
+}
+.tag-suggestions button,
+.item-tags button {
+  font-size: 11px;
+  padding: 3px 7px;
+  background: #e5ecdf;
+  border: 1px solid #d5dfcc;
+  overflow-wrap: anywhere;
+}
+.item-tags .tag-selected {
+  background: #cbdcbb;
+}
+.tag-filter-bar {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  padding-top: 8px;
+}
+.tag-filter-bar select {
+  max-width: 100%;
+  font: inherit;
+  color: inherit;
+  padding: 5px;
+  border: 1px solid #cbd5c5;
+  border-radius: 4px;
+  background: #fcfcf8;
+}
+.tag-context-label {
+  font-size: 10px;
+  color: #899381;
+}
+.filter-context .item-text {
+  color: #7c8778;
+}

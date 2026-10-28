@@ -73,7 +73,7 @@ Drafts protect against failures; they do not provide full offline support. Do no
 | `GET /api/export` | Consistent JSON export of owned saved lists; optional listId filter |
 | `POST /api/transfer/decode` | Read-only format decoding and preview model with warnings |
 | `POST /api/transfer/encode` | Read-only encoding of a validated snapshot |
-| `POST /api/import` | Validate a schema-v1/v2 envelope (normalize to v2); create new copies atomically |
+| `POST /api/import` | Validate a schema-v1/v2/v3 envelope (normalize to v3); create new copies atomically |
 
 Export and import preview can run in the browser; the server validates the result when saving. Implemented validation/storage errors use an `error` message; conflicts return 409, missing or non-owned lists return 404, invalid documents return 422, and oversized bodies return 413. Axum extraction errors can be plain text; the client handles both response forms. M3 implements a separate atomic workspace-import operation with an 8 MiB route limit; normal save routes retain the 1 MiB limit.
 

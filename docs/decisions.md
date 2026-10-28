@@ -76,4 +76,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D047 | 2026-10-27 | Authorized implementation / defaults | Proceed with M7 after M6b acceptance: separate literal item notes, modal Apply/Cancel and one undoable commit, 64 KiB limit, ordinary content revision/autosave/recovery and note search. Additive item-column migration and JSON v2 preserve notes; read v1 without notes. Refuse outline-Markdown export containing notes rather than dropping them. Rendering remains M9 |
 
+| D048 | 2026-10-28 | Authorized implementation / defaults | Proceed with M8 after M7 acceptance: exact case-sensitive tag names within owned item data, 12/item and 40 Unicode characters/name, one-command modal edits, single-tag current-list projection with ancestor context, structural locks and explicit reset. Store tags atomically with content, preserve drafts/search, and export JSON v3 while reading v1/v2. Markdown refuses tags rather than dropping them; filter state is not stored as content/view preferences |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

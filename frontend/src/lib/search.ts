@@ -5,7 +5,7 @@ export type SearchHit = {
   listId: string;
   title: string;
   itemId: string | null;
-  field?: 'note';
+  field?: 'note' | 'tag';
   text: string;
   ancestors: string[];
 };
@@ -68,6 +68,14 @@ export function searchDocuments(
             text: item.note!,
             ancestors: [...ancestors, item.text || 'Empty item'],
             field: 'note',
+          });
+        if (item.tags?.some((tag) => matches(tag, query)))
+          add({
+            ...base,
+            itemId: item.id,
+            text: item.tags.join(', '),
+            ancestors: [...ancestors, item.text || 'Empty item'],
+            field: 'tag',
           });
         visit(item.children, [...ancestors, item.text || 'Empty item']);
       }

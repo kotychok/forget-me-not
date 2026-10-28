@@ -4,6 +4,8 @@
   import type { Editor, Item, Command } from '../lib/editor';
   import { textLinks, compactUrl } from '../lib/links';
   import { autoSize } from '../lib/auto-size';
+  import TagsDialog from './TagsDialog.svelte';
+  import { tagNames, taggedItems } from '../lib/tags';
   import NoteDialog from './NoteDialog.svelte';
   import MarkedText from './MarkedText.svelte';
   let {
@@ -46,6 +48,46 @@
   onDestroy(() => {
     initial.collapsed = new Set(collapsed);
   });
+  let tagFilter = $state('');
+  let tagItem = $state<{ id: string; text: string; tags: string[] } | null>(
+    null,
+  );
+  async function openTags(id: string) {
+    const item = locate(editor.state.nodes, id)?.item;
+    if (!item) return;
+    editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
+    await render();
+    tagItem = { id, text: item.text, tags: [...(item.tags ?? [])] };
+  }
+  function setFilter(tag: string, preferredId?: string, restoreFocus = false) {
+    capture();
+    tagFilter = tag;
+    if (!tag) {
+      const next = new Set(collapsed);
+      for (
+        let at = locate(
+          editor.state.nodes,
+          preferredId ?? editor.state.focus.id,
+        );
+        at?.parent;
+        at = locate(editor.state.nodes, at.parent.id)
+      )
+        next.delete(at.parent.id);
+      collapsed = next;
+    }
+    const candidates = tag
+      ? taggedItems(editor.state.nodes, tag)
+      : visibleItems(editor.state.nodes, collapsed);
+    const id =
+      candidates.find(
+        ({ item }) => item.id === (preferredId ?? editor.state.focus.id),
+      )?.item.id ??
+      candidates.find(({ item }) => item.tags?.includes(tag))?.item.id ??
+      candidates[0]?.item.id ??
+      null;
+    editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
+    void render(restoreFocus);
+  }
   let noteItem = $state<{ id: string; text: string; note: string } | null>(
     null,
   );
@@ -57,6 +99,7 @@
     noteItem = { id, text: item.text, note: item.note ?? '' };
   }
   let view = $state(editor.state);
+  const availableTags = $derived(tagNames(view.nodes));
   let collapsed = $state<Set<string>>(
     new Set(untrack(() => preferences?.collapsedItemIds) ?? initial.collapsed),
   );
@@ -100,6 +143,7 @@
       });
   });
   async function revealItem(id: string, note = false) {
+    tagFilter = '';
     editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
     await render();
     outline
@@ -107,7 +151,11 @@
       ?.scrollIntoView({ block: 'center' });
     if (note) await openNote(id);
   }
-  const rows = $derived(visibleItems(view.nodes, collapsed));
+  const rows = $derived(
+    tagFilter
+      ? taggedItems(view.nodes, tagFilter)
+      : visibleItems(view.nodes, collapsed),
+  );
   const active = $derived(locate(view.nodes, view.focus.id));
   const total = $derived(visibleItems(view.nodes, new Set()).length);
   const canUndo = $derived.by(() => {
@@ -173,6 +221,10 @@
 
   function command(action: Command) {
     if (composing || disabled) return;
+    if (tagFilter && !['convert', 'complete'].includes(action)) {
+      announcement = 'Clear the tag filter before changing structure.';
+      return;
+    }
     capture();
     const parent =
       action === 'indent' && active && active.index > 0
@@ -195,6 +247,7 @@
   function history(redo = false) {
     if (composing || disabled) return;
     capture();
+    tagFilter = '';
     if (redo ? editor.redo() : editor.undo()) {
       announcement = redo ? 'Change redone.' : 'Change undone.';
       ondirty();
@@ -203,6 +256,7 @@
   }
 
   function collapse(id: string) {
+    if (tagFilter) return;
     const at = locate(editor.state.nodes, id);
     if (!at?.item.children.length) return;
     const next = new Set(collapsed);
@@ -301,7 +355,11 @@
       if (item) focusItem(item.id);
     } else if (event.key === 'Escape') {
       event.preventDefault();
-      addButton?.focus();
+      if (tagFilter) setFilter('', undefined, true);
+      else addButton?.focus();
+    } else if (event.key.toLowerCase() === 't') {
+      event.preventDefault();
+      void openTags(view.focus.id!);
     } else if (event.key.toLowerCase() === 'n') {
       event.preventDefault();
       void openNote(view.focus.id!);
@@ -324,12 +382,17 @@
       command('complete');
     } else if (event.key === 'ArrowLeft' && active) {
       event.preventDefault();
-      if (active.item.children.length && !collapsed.has(active.item.id))
+      if (tagFilter) {
+        if (active.parent) focusItem(active.parent.id);
+      } else if (active.item.children.length && !collapsed.has(active.item.id))
         collapse(active.item.id);
       else if (active.parent) focusItem(active.parent.id);
     } else if (event.key === 'ArrowRight' && active) {
       event.preventDefault();
-      if (collapsed.has(active.item.id)) collapse(active.item.id);
+      if (tagFilter) {
+        const child = rows[index + 1];
+        if (child && child.depth > rows[index].depth) focusItem(child.item.id);
+      } else if (collapsed.has(active.item.id)) collapse(active.item.id);
       else if (active.item.children[0]) focusItem(active.item.children[0].id);
     }
   }
@@ -364,8 +427,10 @@
           }}>Clear search</button
         >
       </div>{/if}
-    <button bind:this={addButton} onclick={() => command('add')}
-      >＋ Add item</button
+    <button
+      bind:this={addButton}
+      onclick={() => command('add')}
+      disabled={!!tagFilter}>＋ Add item</button
     >
     <span class="divider"></span>
     <button onclick={() => history()} disabled={!canUndo} aria-label="Undo"
@@ -377,25 +442,53 @@
     <span class="divider"></span>
     <button
       onclick={() => command('indent')}
-      disabled={!active || active.index === 0}>Indent →</button
+      disabled={!!tagFilter || !active || active.index === 0}>Indent →</button
     >
-    <button onclick={() => command('outdent')} disabled={!active?.parent}
-      >← Outdent</button
+    <button
+      onclick={() => command('outdent')}
+      disabled={!!tagFilter || !active?.parent}>← Outdent</button
     >
     <button
       onclick={() => command('up')}
-      disabled={!active || active.index === 0}
+      disabled={!!tagFilter || !active || active.index === 0}
       aria-label="Move branch up">↑</button
     >
     <button
       onclick={() => command('down')}
-      disabled={!active || active.index === active.siblings.length - 1}
+      disabled={!!tagFilter ||
+        !active ||
+        active.index === active.siblings.length - 1}
       aria-label="Move branch down">↓</button
     >
     <button
       disabled={!active}
       onclick={() => active && void openNote(active.item.id)}>Note</button
     >
+    <button
+      disabled={!active}
+      onclick={() => active && void openTags(active.item.id)}>Tags</button
+    >
+    {#if availableTags.length || tagFilter}<div class="tag-filter-bar">
+        <label
+          >Filter by tag <select
+            value={tagFilter}
+            onchange={(event) => setFilter(event.currentTarget.value)}
+          >
+            <option value="">All items</option>
+            {#if tagFilter && !availableTags.includes(tagFilter)}<option
+                value={tagFilter}>{tagFilter}</option
+              >{/if}
+            {#each availableTags as tag}<option value={tag}>{tag}</option
+              >{/each}
+          </select></label
+        >
+        {#if tagFilter}<span
+            >{rows.filter(({ item }) => item.tags?.includes(tagFilter)).length} matches
+            · ancestors shown · structure locked</span
+          ><button onclick={() => setFilter('', undefined, true)}
+            >Clear tag filter</button
+          >{/if}
+      </div>{/if}
   </div>
 
   <div
@@ -414,18 +507,20 @@
         class:active={view.focus.id === item.id}
         class:completed={item.completed}
         class:search-match={reveal?.id === item.id}
+        class:filter-context={!!tagFilter && !item.tags?.includes(tagFilter)}
         style:--depth={depth}
       >
         <button
           class="collapse"
+          disabled={!!tagFilter}
           class:invisible={!item.children.length}
           tabindex={item.children.length ? 0 : -1}
           aria-label={`${collapsed.has(item.id) ? 'Expand' : 'Collapse'} ${item.text || 'empty item'}`}
           aria-expanded={item.children.length
-            ? !collapsed.has(item.id)
+            ? !!tagFilter || !collapsed.has(item.id)
             : undefined}
           onclick={() => collapse(item.id)}
-          >{collapsed.has(item.id) ? '▸' : '▾'}</button
+          >{!tagFilter && collapsed.has(item.id) ? '▸' : '▾'}</button
         >
         {#if item.kind === 'task'}
           <input
@@ -494,6 +589,23 @@
                       query={reveal?.id === item.id ? reveal.query : ''}
                     />{/if}{/each}{:else}Empty item{/if}</button
             >
+            {#if item.tags?.length}<div
+                class="item-tags"
+                aria-label={`Tags for ${item.text || 'empty item'}`}
+              >
+                {#each item.tags as tag}<button
+                    class:tag-selected={tagFilter === tag}
+                    aria-label={`Filter by tag ${tag}`}
+                    onclick={() => setFilter(tag, item.id, true)}
+                    ><MarkedText
+                      text={tag}
+                      query={reveal?.id === item.id ? reveal.query : ''}
+                    /></button
+                  >{/each}
+              </div>{/if}
+            {#if tagFilter && !item.tags?.includes(tagFilter)}<span
+                class="tag-context-label">Context</span
+              >{/if}
             {#if links.length}
               <div class="item-links" aria-label="Item links">
                 {#each links as href}
@@ -515,6 +627,11 @@
             {/if}
           </div>
         {/if}
+        {#if item.tags?.length}<button
+            class="note-indicator"
+            aria-label={`Edit tags for ${item.text || 'empty item'}`}
+            onclick={() => void openTags(item.id)}>⌗</button
+          >{/if}
         {#if item.note}<button
             class="note-indicator"
             aria-label={`Edit note for ${item.text || 'empty item'}`}
@@ -523,7 +640,13 @@
           >{/if}
       </div>
     {/each}
-    {#if !rows.length}<div class="empty">
+    {#if tagFilter && !rows.length}<div class="empty">
+        <p>No items match this tag.</p>
+        <button onclick={() => setFilter('', undefined, true)}
+          >Clear tag filter</button
+        >
+      </div>
+    {:else if !rows.length}<div class="empty">
         <p>A clear page. What’s on your mind?</p>
         <button bind:this={emptyButton} onclick={() => command('add')}
           >＋ Add your first item</button
@@ -547,7 +670,7 @@
           : 'Make task'}</button
       ><button
         class="quiet danger"
-        disabled={!active}
+        disabled={!!tagFilter || !active}
         onclick={() => command('delete')}>Delete branch</button
       >
     </div>
@@ -571,6 +694,22 @@
   }}
   onclose={() => {
     noteItem = null;
+    void render();
+  }}
+/>
+
+<TagsDialog
+  item={tagItem}
+  suggestions={availableTags}
+  onapply={(id, tags) => {
+    if (editor.setTags(id, tags)) {
+      if (tagFilter && !tags.includes(tagFilter)) tagFilter = '';
+      ondirty();
+      void render(false);
+    }
+  }}
+  onclose={() => {
+    tagItem = null;
     void render();
   }}
 />

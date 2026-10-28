@@ -1,18 +1,18 @@
-# JSON data format — schema v3 with v1/v2 import compatibility
+# JSON data format — schema v4 with v1/v2/v3 import compatibility
 
-Implemented: JSON and constrained outline-Markdown file import/export through compiled Rust adapters (M6a). This supersedes the earlier exclusion of Markdown file transfer. Markdown rendering inside item text is deferred to M9; all text is currently literal.
+Implemented: JSON and constrained outline-Markdown file import/export through compiled Rust adapters (M6a). This supersedes the earlier exclusion of Markdown file transfer. M9 provides optional safe Markdown display; stored text remains original source.
 
 ## Portable model
 
-The envelope has exactly two fields: `schemaVersion: 3` and `lists`. V1/v2 are accepted and normalized to v3; readers limited to older schemas cannot read a v3 export. Each list has `id`, `title`, and `nodes`. Each nested item has `id`, `kind` (`item` or `task`), `text`, `completed`, and `children`, plus optional `note` from v2 and `tags` from v3. Notes are literal UTF-8 text (up to 64 KiB); missing or empty means no note, and empty notes are omitted on export. V1 rejects note fields and v1/v2 reject tag fields rather than silently dropping them. Tags are case-sensitive string arrays of at most 12 distinct names, each 1–40 Unicode characters without boundary whitespace, commas, controls or malformed Unicode. Missing/empty arrays mean no tags; empty arrays are omitted on export. Arrays preserve list and sibling order. Plain items must have `completed: false`.
+The envelope has exactly two fields: `schemaVersion: 4` and `lists`. V1/v2/v3 are accepted and normalized to v4; readers limited to older schemas cannot read a v4 export. Each list has `id`, `title`, and `nodes`. Each nested item has `id`, `kind` (`item` or `task`), `text`, `completed`, and `children`, plus optional `note` from v2 `tags` from v3, and `dueDate` from v4. Notes are literal UTF-8 text (up to 64 KiB); missing or empty means no note, and empty notes are omitted on export. V1 rejects note fields and v1/v2 reject tag fields rather than silently dropping them. Tags are case-sensitive string arrays of at most 12 distinct names, each 1–40 Unicode characters without boundary whitespace, commas, controls or malformed Unicode. Missing/empty arrays mean no tags; empty arrays are omitted on export. Arrays preserve list and sibling order. Plain items must have `completed: false`.
 
 IDs are canonical lowercase UUIDv4 strings. List IDs must be unique within a file; item IDs must be unique across all lists in the file. Database rows use parent references; portable files use nested arrays without duplicated parent IDs.
 
-See the [shared schema-v1 fixture](../fixtures/portable-v1.json) for a complete example with multiline Unicode text, literal formatting characters, nested tasks, and an empty list. Both frontend and backend test this legacy fixture and the [schema-v2 notes fixture](../fixtures/portable-v2.json) and [schema-v3 tags fixture](../fixtures/portable-v3.json).
+See the [shared schema-v1 fixture](../fixtures/portable-v1.json) for a complete example with multiline Unicode text, literal formatting characters, nested tasks, and an empty list. Both frontend and backend test this legacy fixture and the [schema-v2 notes fixture](../fixtures/portable-v2.json) [schema-v3 tags fixture](../fixtures/portable-v3.json), and [schema-v4 dates fixture](../fixtures/portable-v4.json).
 
 JSON is a complete portable copy of supported list content, not a backup of the whole installation. Owner identity, account data, server timestamps, revisions, collapse state, cursor/selection, drafts, and undo history are excluded. Database migration versions, list revisions, and `schemaVersion` are independent.
 
-Unknown fields and unsupported schema versions are rejected instead of silently discarded. A future schema migration must explicitly define how older files are read. Notes were added in v2/M7 and tags in v3/M8. Future dates require an explicit compatibility contract; they cannot be added as silently ignored fields.
+Unknown fields and unsupported schema versions are rejected instead of silently discarded. A future schema migration must explicitly define how older files are read. Notes were added in v2/M7 and tags in v3/M8. M10 adds dueDate in v4: an optional real Gregorian calendar string YYYY-MM-DD, years 0001–9999. Missing means no deadline; empty/null/timestamp/invalid dates are rejected. V1–v3 reject any dueDate field. Clearing omits it on export. Date-only strings never undergo timezone conversion.
 
 ## Export
 
@@ -86,3 +86,5 @@ Markdown does not carry internal item IDs, server metadata, or separate item not
 The user's largest current sample (about 284 KB, 2,976 list-marker lines plus prose) decoded and passed validation locally without database writes. Its final parsed count is not inferred from marker lines. The private file was removed from the repository at the user's request; tests use synthetic content only.
 
 The per-list limit is now 5,000 on both frontend and backend. A synthetic 5,000-item browser workflow passed import, render, indentation, undo, text edit, acknowledged save, search/reveal, JSON export, and reload, retaining one intact list under the 1 MiB save bound. The 5,001st item is rejected. File/list/depth/text/title limits otherwise remain unchanged. This verifies the tested local Chromium workflow, not a latency guarantee on all hardware or on every 5,000-item document. Large item text may reach the independent 1 MiB save limit first.
+
+Outline-Markdown export also refuses any list containing due dates, including descendants, and recommends JSON. Imports through that dialect have no dates; M10 does not add date syntax to item text.

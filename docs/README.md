@@ -11,7 +11,7 @@ Updated: 2026-10-28. The core direction is agreed. M1 was reviewed and committed
 - UUIDv4 IDs; normalized users/lists/items; SQLx migrations are required.
 - Initial save approach: whole-list snapshots with revision checks.
 - Navigation/edit modes and conversion between plain items and tasks.
-- Notes, tags, search, dates, and transfer-size optimization are later milestones.
+- Notes, tags, search, Markdown display and due dates extend the initial core; transfer-size optimization remains later work.
 - Plain items and tasks with checkboxes.
 - Enter creates a new item after the current branch without splitting text; Shift+Enter inserts a line break within the text.
 - Convenient keyboard editing with our own shortcuts.
@@ -32,6 +32,7 @@ Updated: 2026-10-28. The core direction is agreed. M1 was reviewed and committed
 - [Editor behavior](editor-behavior.md): focus, tree operations, commands, history.
 - [Database and migrations](database.md): identifiers, ownership, schema, ordering, and migration management.
 - [Tags and filtering](tags.md): tag identity, current-list projection, command guards, and portability.
+- [Due dates](dates.md): calendar semantics, editing, status, persistence and JSON compatibility.
 - [Markdown display](markdown-display.md): supported syntax, safe links, source editing, and limits.
 - [Item notes](notes.md): editing, persistence, search, and JSON compatibility.
 - [Search](search.md): cross-list results, navigation, local edits, and limits.
@@ -71,3 +72,5 @@ M7 adds plain-text item notes, note search and JSON v2 while retaining v1 import
 M8 adds item tags, safe current-list filtering, tag search and JSON v3 with v1/v2 input compatibility. It was reviewed and committed by the user.
 
 M9 adds optional Markdown display for items and note drafts, preserving source and JSON v3 without database changes. See [Markdown display](markdown-display.md).
+
+M9 was committed by the user. M10 implements the agreed single date-only deadline, with JSON v4 and an additive migration; implementation defaults await review.

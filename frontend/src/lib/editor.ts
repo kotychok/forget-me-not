@@ -1,3 +1,4 @@
+import { validDate } from './dates.ts';
 import { validateTags } from './tags.ts';
 export type Item = {
   id: string;
@@ -5,6 +6,7 @@ export type Item = {
   text: string;
   note?: string;
   tags?: string[];
+  dueDate?: string;
   completed: boolean;
   children: Item[];
 };
@@ -133,6 +135,21 @@ export class Editor {
     const item = locate(next.nodes, id)!.item;
     if (note) item.note = note;
     else delete item.note;
+    this.commit(next);
+    return true;
+  }
+
+  setDueDate(id: string, date: string) {
+    if (date && !validDate(date))
+      throw new Error('Expected a real calendar date YYYY-MM-DD');
+    const current = locate(this.state.nodes, id);
+    if (!current || (current.item.dueDate ?? '') === date) return false;
+    this.breakGroup();
+    this.pendingAdd = null;
+    const next = structuredClone(this.state);
+    const item = locate(next.nodes, id)!.item;
+    if (date) item.dueDate = date;
+    else delete item.dueDate;
     this.commit(next);
     return true;
   }

@@ -164,11 +164,13 @@
       >
         <span class="search-context"
           ><MarkedText text={hit.title} {query} />{hit.itemId
-            ? hit.field === 'note'
-              ? ' · Note'
-              : hit.field === 'tag'
-                ? ' · Tags'
-                : ' · Item'
+            ? hit.field === 'date'
+              ? ' · Due date'
+              : hit.field === 'note'
+                ? ' · Note'
+                : hit.field === 'tag'
+                  ? ' · Tags'
+                  : ' · Item'
             : ' · List title'}</span
         >
         {#if hit.ancestors.length}<span class="search-path"

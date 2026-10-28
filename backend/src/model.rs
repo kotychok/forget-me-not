@@ -11,6 +11,13 @@ pub struct Item {
     pub note: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
+    #[serde(
+        default,
+        rename = "dueDate",
+        deserialize_with = "deserialize_due_date",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub due_date: Option<String>,
     pub completed: bool,
     pub children: Vec<Item>,
 }
@@ -79,4 +86,10 @@ pub struct ViewChange {
 pub struct PatchView {
     pub base_revision: i64,
     pub changes: Vec<ViewChange>,
+}
+
+fn deserialize_due_date<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> std::result::Result<Option<String>, D::Error> {
+    String::deserialize(deserializer).map(Some)
 }

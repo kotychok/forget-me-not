@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { tick, untrack, onDestroy } from 'svelte';
+  import { tick, untrack, onDestroy, onMount } from 'svelte';
   import { locate, visibleItems } from '../lib/editor';
   import type { Editor, Item, Command } from '../lib/editor';
   import { textLinks, compactUrl } from '../lib/links';
   import { autoSize } from '../lib/auto-size';
   import MarkdownView from './MarkdownView.svelte';
   import { markdown } from '../lib/markdown';
+  import DateDialog from './DateDialog.svelte';
+  import { localToday, dueStatus } from '../lib/dates';
   import TagsDialog from './TagsDialog.svelte';
   import { tagNames, taggedItems } from '../lib/tags';
   import NoteDialog from './NoteDialog.svelte';
@@ -50,6 +52,30 @@
   onDestroy(() => {
     initial.collapsed = new Set(collapsed);
   });
+  let today = $state(localToday());
+  onMount(() => {
+    const refresh = () => {
+      today = localToday();
+    };
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  });
+  let dateItem = $state<{ id: string; text: string; dueDate: string } | null>(
+    null,
+  );
+  async function openDate(id: string) {
+    const item = locate(editor.state.nodes, id)?.item;
+    if (!item) return;
+    editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
+    await render();
+    dateItem = { id, text: item.text, dueDate: item.dueDate ?? '' };
+  }
   let markdownEnabled = $state(true);
   let tagFilter = $state('');
   let tagItem = $state<{ id: string; text: string; tags: string[] } | null>(
@@ -360,6 +386,9 @@
       event.preventDefault();
       if (tagFilter) setFilter('', undefined, true);
       else addButton?.focus();
+    } else if (event.key.toLowerCase() === 'd') {
+      event.preventDefault();
+      void openDate(view.focus.id!);
     } else if (event.key.toLowerCase() === 't') {
       event.preventDefault();
       void openTags(view.focus.id!);
@@ -470,6 +499,10 @@
     <button
       disabled={!active}
       onclick={() => active && void openTags(active.item.id)}>Tags</button
+    >
+    <button
+      disabled={!active}
+      onclick={() => active && void openDate(active.item.id)}>Date</button
     >
     <label class="markdown-toggle"
       ><input type="checkbox" bind:checked={markdownEnabled} /> Markdown preview</label
@@ -639,6 +672,29 @@
             {/if}
           </div>
         {/if}
+        {#if item.dueDate}
+          {@const status = dueStatus(item.dueDate, item.completed, today)}
+          <button
+            class="due-date"
+            class:due-overdue={status === 'overdue'}
+            class:due-today={status === 'today'}
+            class:due-done={status === 'done'}
+            aria-label={`Edit due date for ${item.text || 'empty item'}`}
+            onclick={() => void openDate(item.id)}
+            title="Edit due date"
+          >
+            <MarkedText
+              text={item.dueDate}
+              query={reveal?.id === item.id ? reveal.query : ''}
+            />{status === 'overdue'
+              ? ' · Overdue'
+              : status === 'today'
+                ? ' · Today'
+                : status === 'done'
+                  ? ' · Done'
+                  : ''}
+          </button>
+        {/if}
         {#if item.tags?.length}<button
             class="note-indicator"
             aria-label={`Edit tags for ${item.text || 'empty item'}`}
@@ -722,6 +778,20 @@
   }}
   onclose={() => {
     tagItem = null;
+    void render();
+  }}
+/>
+
+<DateDialog
+  item={dateItem}
+  onapply={(id, date) => {
+    if (editor.setDueDate(id, date)) {
+      ondirty();
+      void render(false);
+    }
+  }}
+  onclose={() => {
+    dateItem = null;
     void render();
   }}
 />

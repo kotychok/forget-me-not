@@ -24,6 +24,7 @@ pub(crate) struct FlatItem {
     pub text: String,
     pub note: String,
     pub tags: String,
+    pub due_date: Option<String>,
     pub completed: bool,
 }
 
@@ -58,6 +59,15 @@ pub(crate) fn flatten(document: &Document) -> Result<Vec<FlatItem>> {
             return Err(invalid("Item note exceeds 64 KiB"));
         }
         validate_tags(&item.tags)?;
+        if item
+            .due_date
+            .as_deref()
+            .is_some_and(|date| !valid_date(date))
+        {
+            return Err(invalid(
+                "Due date must be a real calendar date YYYY-MM-DD (0001–9999)",
+            ));
+        }
         output.push(FlatItem {
             id: item.id.clone(),
             parent_id: parent.map(str::to_owned),
@@ -66,6 +76,7 @@ pub(crate) fn flatten(document: &Document) -> Result<Vec<FlatItem>> {
             text: item.text.clone(),
             note: item.note.clone(),
             tags: serde_json::to_string(&item.tags).map_err(|_| invalid("Invalid tags"))?,
+            due_date: item.due_date.clone(),
             completed: item.completed,
         });
         pending.extend(
@@ -104,4 +115,41 @@ pub(crate) fn validate_tags(tags: &[String]) -> Result<()> {
         }
     }
     Ok(())
+}
+
+/// Date-only Gregorian validation, independent of server timezone.
+fn valid_date(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    if bytes.len() != 10
+        || bytes[4] != b'-'
+        || bytes[7] != b'-'
+        || !bytes
+            .iter()
+            .enumerate()
+            .all(|(i, ch)| i == 4 || i == 7 || ch.is_ascii_digit())
+    {
+        return false;
+    }
+    let year: u32 = value[..4].parse().unwrap_or(0);
+    let month: usize = value[5..7].parse().unwrap_or(0);
+    let day: u32 = value[8..].parse().unwrap_or(0);
+    let leap = year.is_multiple_of(4) && (!year.is_multiple_of(100) || year.is_multiple_of(400));
+    year >= 1
+        && (1..=12).contains(&month)
+        && day >= 1
+        && day
+            <= [
+                31,
+                if leap { 29 } else { 28 },
+                31,
+                30,
+                31,
+                30,
+                31,
+                31,
+                30,
+                31,
+                30,
+                31,
+            ][month - 1]
 }

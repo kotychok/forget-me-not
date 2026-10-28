@@ -46,6 +46,8 @@
       Edit active item tags in navigation. A tag filter locks structural
       commands; Escape clears it.
     </dd>
+    <dt>D</dt>
+    <dd>Edit the active item due date in navigation mode</dd>
     <dt>N</dt>
     <dd>Open the active item note in navigation mode</dd>
     <dt>L</dt>

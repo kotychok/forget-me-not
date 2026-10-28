@@ -178,8 +178,9 @@
       </select></label
     >
     {#if exportFormat === 'markdown'}<p>
-        Markdown omits IDs and normalizes bullets. Lists with separate notes
-        require JSON. Export one list at a time; use JSON for all lists.
+        Markdown omits IDs and normalizes bullets. Lists with due dates,
+        separate notes require JSON. Export one list at a time; use JSON for all
+        lists.
       </p>{/if}
     <div class="transfer-actions">
       <button

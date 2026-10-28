@@ -272,7 +272,7 @@
     />
     <div class="sidebar-bottom">
       <span class="local-dot"></span> Local only · no login
-      <span class="version">M9</span>
+      <span class="version">M10</span>
     </div>
   </aside>
 

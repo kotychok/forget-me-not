@@ -92,3 +92,7 @@ A floating Back to top button appears after scrolling more than 400 pixels. It r
 ## Tag filtering — M8
 
 T in navigation opens the active item's tag draft. Apply commits one undoable content command; Cancel/Escape discards it. A single-tag filter shows exact-name matches and ancestors without changing order or content. While filtered, structural commands/collapse are blocked; arrows use displayed paths, and Escape from navigation clears the filter. Undo/redo and search reveal clear it before acting. Removing the active tag clears it and restores item focus. Saved collapse preferences are not changed by required filter expansion. See [Tags and filtering](tags.md).
+
+## Due dates — M10
+
+Date or D in navigation opens the focused item deadline dialog. Apply is one undoable content command; Cancel/Escape keeps content unchanged and restores item focus. Clear date changes only the draft until Apply. Dates stay attached to branches and through item/task conversion; completion changes urgency display without deleting the date. Date input does not intercept ordinary item typing. See [Due dates](dates.md).

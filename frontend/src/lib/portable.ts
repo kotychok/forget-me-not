@@ -1,8 +1,9 @@
+import { validDate } from './dates.ts';
 import { validateTags } from './tags.ts';
 import type { Document } from './api.ts';
 import type { Item } from './editor.ts';
 
-export type Portable = { schemaVersion: 1 | 2 | 3; lists: Document[] };
+export type Portable = { schemaVersion: 1 | 2 | 3 | 4; lists: Document[] };
 export const MAX_FILE_BYTES = 8 * 1024 * 1024;
 export const MAX_LISTS = 100;
 export const MAX_TOTAL_ITEMS = 10_000;
@@ -58,9 +59,10 @@ export function validatePortable(value: unknown): Portable {
   if (
     root.schemaVersion !== 1 &&
     root.schemaVersion !== 2 &&
-    root.schemaVersion !== 3
+    root.schemaVersion !== 3 &&
+    root.schemaVersion !== 4
   )
-    fail('$.schemaVersion', 'Only schema versions 1, 2 and 3 are supported');
+    fail('$.schemaVersion', 'Only schema versions 1, 2, 3 and 4 are supported');
   const source = array(root.lists, '$.lists');
   if (!source.length || source.length > MAX_LISTS)
     fail('$.lists', `Expected 1–${MAX_LISTS} lists`);
@@ -86,11 +88,13 @@ export function validatePortable(value: unknown): Portable {
           value,
           ['id', 'kind', 'text', 'completed', 'children'],
           at,
-          root.schemaVersion === 3
-            ? ['note', 'tags']
-            : root.schemaVersion === 2
-              ? ['note']
-              : [],
+          root.schemaVersion === 4
+            ? ['note', 'tags', 'dueDate']
+            : root.schemaVersion === 3
+              ? ['note', 'tags']
+              : root.schemaVersion === 2
+                ? ['note']
+                : [],
         );
         if (depth > 32) fail(at, 'Maximum nesting is 32 levels');
         if (++count > 5000 || ++total > MAX_TOTAL_ITEMS)
@@ -119,6 +123,11 @@ export function validatePortable(value: unknown): Portable {
             encoder.encode(item.note).length > 65536)
         )
           fail(`${at}.note`, 'Expected note text up to 64 KiB');
+        if (Object.hasOwn(item, 'dueDate') && !validDate(item.dueDate))
+          fail(
+            `${at}.dueDate`,
+            'Expected a real calendar date YYYY-MM-DD (0001–9999)',
+          );
         let tags: string[] = [];
         if (Object.hasOwn(item, 'tags')) {
           try {
@@ -133,6 +142,7 @@ export function validatePortable(value: unknown): Portable {
             fail(`${at}.tags`, 'Invalid Unicode in tag');
         }
         return {
+          ...(item.dueDate ? { dueDate: item.dueDate as string } : {}),
           ...(tags.length ? { tags } : {}),
           ...(item.note ? { note: item.note as string } : {}),
           id: itemId,
@@ -156,7 +166,7 @@ export function validatePortable(value: unknown): Portable {
       fail(path, 'List exceeds the 1 MiB save limit');
     return document;
   });
-  const result: Portable = { schemaVersion: 3, lists };
+  const result: Portable = { schemaVersion: 4, lists };
   if (encoder.encode(JSON.stringify(result)).length > MAX_FILE_BYTES)
     fail('$', 'File exceeds 8 MiB');
   return result;

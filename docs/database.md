@@ -135,3 +135,7 @@ Owned GET returns current branch IDs with stale IDs filtered, defaulting to an e
 - [SQLite foreign keys](https://sqlite.org/foreignkeys.html) — composite keys, deferred constraints, connection configuration, and deletion actions.
 - [SQLx migrate macro](https://docs.rs/sqlx/latest/sqlx/macro.migrate.html) — embedded SQL files, rebuild tracking, and line endings.
 - [SQLx Migrator](https://docs.rs/sqlx/latest/sqlx/migrate/struct.Migrator.html) and [AppliedMigration](https://docs.rs/sqlx/latest/sqlx/migrate/struct.AppliedMigration.html) — migration execution and applied version/checksum tracking.
+
+## Due dates — M10
+
+`20261028000600_item_due_dates.sql` adds nullable `items.due_date TEXT`. Existing items receive NULL. The API/portable field is optional `dueDate`; both languages validate real Gregorian YYYY-MM-DD dates, years 0001–9999. Ordinary owned row-diff transactions update dates and content revision atomically. JSON v4 preserves dates; collapse preferences and their revisions remain independent.

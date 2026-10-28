@@ -80,4 +80,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D049 | 2026-10-28 | Authorized implementation / defaults | Begin M9 after user verification and commit of M8. Render an allowlisted Markdown subset without HTML injection or remote image loading; retain original source, JSON v3 and schema. Default item preview can be disabled, links open through separate checked controls, and notes have optional draft preview. These display defaults await user review |
 
+| D050 | 2026-10-28 | Authorized implementation / agreed semantics | Begin M10 after user commit of M9. User chose only a date-only deadline, without scheduled-start date or reminders. Defaults: optional dueDate on items/tasks, local-calendar badges, Apply/Cancel history, retained metadata on conversion, literal date search, additive migration and JSON v4 with older input support; defaults await user review |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

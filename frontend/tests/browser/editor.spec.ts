@@ -626,6 +626,7 @@ test('floating back-to-top control appears on long lists and restores heading fo
     },
   });
   await page.goto(`/?list=${list.id}`);
+  await expect(page.locator('.item-text')).toHaveCount(70);
   const button = page.getByRole('button', { name: 'Back to top', exact: true });
   await expect(button).toHaveCount(0);
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

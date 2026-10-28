@@ -174,6 +174,7 @@ pub(super) fn decode(text: &str) -> Result<Decoded> {
             id: Uuid::new_v4().to_string(),
             note: String::new(),
             tags: vec![],
+            due_date: None,
             kind: if checkbox.is_some() { "task" } else { "item" }.into(),
             completed: checkbox.is_some_and(|v| v.0),
             text: unescape(checkbox.map_or(content, |v| v.1)),
@@ -208,7 +209,7 @@ pub(super) fn decode(text: &str) -> Result<Decoded> {
     }
     Ok(Decoded {
         document: Portable {
-            schema_version: 3,
+            schema_version: 4,
             lists: vec![Document {
                 id: Uuid::new_v4().to_string(),
                 title: title.unwrap_or_else(|| "Imported outline".into()),
@@ -223,6 +224,14 @@ pub(super) fn encode(document: &Portable) -> Result<Encoded> {
         return Err(AppError::InvalidImport("Markdown exports one list at a time; choose the current list or use JSON for all lists".into()));
     }
     let list = &document.lists[0];
+    fn has_dates(items: &[Item]) -> bool {
+        items
+            .iter()
+            .any(|item| item.due_date.is_some() || has_dates(&item.children))
+    }
+    if has_dates(&list.nodes) {
+        return Err(AppError::InvalidImport("This list contains due dates. Export JSON to preserve them; outline Markdown does not represent dates.".into()));
+    }
     fn has_tags(items: &[Item]) -> bool {
         items
             .iter()

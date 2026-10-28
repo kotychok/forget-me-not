@@ -74,7 +74,7 @@ Open **Import / export** in the sidebar.
 - Import creates fresh list/item IDs and keeps existing lists unchanged. All lists in a file are written in one transaction; failure rolls back the entire batch.
 - If an import response is lost, the operation may already have completed. It is never automatically retried; use **Refresh list index** to check your lists without discarding local edits before selecting the file again.
 
-JSON format: `schemaVersion: 3` (legacy v1/v2 files are accepted) with a `lists` array. Limits are 8 MiB/file, 100 lists, and 10,000 total items, plus existing per-list limits. Unknown fields, newer versions, duplicate IDs, and invalid structures are rejected with explicit errors. See [JSON format](docs/data-formats.md) and the [example file](fixtures/portable-v1.json).
+JSON format: `schemaVersion: 4` (legacy v1/v2/v3 files are accepted) with a `lists` array. Limits are 8 MiB/file, 100 lists, and 10,000 total items, plus existing per-list limits. Unknown fields, newer versions, duplicate IDs, and invalid structures are rejected with explicit errors. See [JSON format](docs/data-formats.md) and the [example file](fixtures/portable-v1.json).
 
 Outline Markdown import/export is available through the Import / export dialog. Import `.md` files with preview, or select Markdown for current-list export. Top-level paragraphs become root items, indentation defines nesting, and explicit task markers preserve checkboxes. JSON is the full portable format and supports all-list export. Markdown-looking text is preserved literally in JSON; safe display rendering inside items is deferred to M9.
 
@@ -135,3 +135,5 @@ See the [documentation](docs/README.md), [milestones](docs/milestones.md), and [
 ## License
 
 Licensed under the [MIT License](LICENSE).
+
+M10 adds date-only deadlines through the Date action or D in navigation, with local Today/Overdue status and undoable changes. See [Due dates](docs/dates.md). Restart `make dev` after upgrading so the embedded additive migration runs.

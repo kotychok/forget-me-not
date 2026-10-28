@@ -36,7 +36,7 @@ test.beforeEach(async ({ page, request }) => {
   await page.goto(`/?list=${list.id}`);
 });
 
-test('tags Apply/Cancel, history, JSON v3 and global tag search preserve content', async ({
+test('tags Apply/Cancel, history, current JSON and global tag search preserve content', async ({
   page,
   request,
 }) => {
@@ -98,7 +98,7 @@ test('tags Apply/Cancel, history, JSON v3 and global tag search preserve content
   const data = JSON.parse(
     await readFile((await (await ready).path())!, 'utf8'),
   );
-  expect(data.schemaVersion).toBe(3);
+  expect(data.schemaVersion).toBe(4);
   expect(data.lists[0].nodes[2].tags).toEqual(['work', 'Київ', 'next']);
   await transfer.getByLabel('Export format').selectOption('markdown');
   await transfer

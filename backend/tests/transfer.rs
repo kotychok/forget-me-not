@@ -58,7 +58,7 @@ async fn import_creates_new_ids_and_preserves_content_without_overwriting_existi
     assert_eq!(store.lists().await.unwrap().len(), 3);
     let exported = store.export_json(Some(&copy.id)).await.unwrap();
     let again = serde_json::to_value(&exported).unwrap();
-    assert_eq!(again["schemaVersion"], 3);
+    assert_eq!(again["schemaVersion"], 4);
     assert!(again["lists"][0].get("revision").is_none());
     assert!(again["lists"][0].get("ownerId").is_none());
     assert_eq!(again["lists"][0]["nodes"][0]["id"], copy.nodes[0].id);
@@ -136,6 +136,7 @@ async fn import_route_accepts_a_valid_multi_list_file_larger_than_the_snapshot_b
                 id: Uuid::new_v4().to_string(),
                 note: String::new(),
                 tags: vec![],
+                due_date: None,
                 kind: "item".into(),
                 text: "x".repeat(24000),
                 completed: false,

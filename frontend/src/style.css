@@ -1017,3 +1017,32 @@ mark {
 .md-fallback {
   white-space: pre-wrap;
 }
+
+.date-dialog input {
+  max-width: 100%;
+}
+.due-date {
+  align-self: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #74806f;
+  background: transparent;
+  padding: 4px 6px;
+}
+.due-date.due-overdue {
+  color: #963f32;
+  background: #f6e8e3;
+}
+.due-date.due-today {
+  color: #74611c;
+  background: #f5efd8;
+}
+.due-date.due-done {
+  opacity: 0.65;
+}
+@media (max-width: 600px) {
+  .due-date {
+    flex-shrink: 1;
+    overflow-wrap: anywhere;
+  }
+}

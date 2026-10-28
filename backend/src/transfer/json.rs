@@ -10,7 +10,7 @@ pub(super) fn decode(text: &str) -> Result<Decoded> {
 pub(super) fn encode(document: &Portable) -> Result<Encoded> {
     Ok(Encoded {
         text: serde_json::to_string(&Portable {
-            schema_version: 3,
+            schema_version: 4,
             lists: document.lists.clone(),
         })
         .map_err(|_| AppError::Storage)?,

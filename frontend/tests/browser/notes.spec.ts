@@ -108,7 +108,7 @@ test('note Apply/Cancel and undo preserve literal content, persist, export curre
   const exported = JSON.parse(
     await readFile((await (await ready).path())!, 'utf8'),
   );
-  expect(exported.schemaVersion).toBe(3);
+  expect(exported.schemaVersion).toBe(4);
   expect(exported.lists[0].nodes[0].note).toBe(text);
   await transfer.getByLabel('Export format').selectOption('markdown');
   await transfer

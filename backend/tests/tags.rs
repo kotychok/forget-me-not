@@ -8,7 +8,7 @@ fn fixture() -> serde_json::Value {
     serde_json::from_str(include_str!("../../fixtures/portable-v2.json")).unwrap()
 }
 #[test]
-fn older_formats_upgrade_but_only_v3_accepts_valid_bounded_tags() {
+fn older_formats_upgrade_but_tags_require_v3_or_later() {
     let shared = Portable::from_value(
         serde_json::from_str(include_str!("../../fixtures/portable-v3.json")).unwrap(),
     )
@@ -17,7 +17,7 @@ fn older_formats_upgrade_but_only_v3_accepts_valid_bounded_tags() {
     let mut value = fixture();
     assert_eq!(
         Portable::from_value(value.clone()).unwrap().schema_version,
-        3
+        4
     );
     value["lists"][0]["nodes"][0]["tags"] = json!(["work"]);
     assert!(Portable::from_value(value.clone()).is_err());
@@ -36,7 +36,7 @@ fn older_formats_upgrade_but_only_v3_accepts_valid_bounded_tags() {
     }
     value["lists"][0]["nodes"][0]["tags"] = json!(["work", "Work", "Київ", "😀".repeat(40)]);
     assert!(Portable::from_value(value.clone()).is_ok());
-    value["schemaVersion"] = json!(4);
+    value["schemaVersion"] = json!(5);
     assert!(Portable::from_value(value).is_err());
 }
 #[tokio::test]
@@ -53,7 +53,7 @@ async fn tags_persist_and_copy_with_notes_and_are_never_silently_dropped_by_mark
     let document = store.get(&imported[0].id).await.unwrap();
     assert_eq!(document.nodes[0].tags, vec!["work", "Київ"]);
     let exported = store.export_json(Some(&document.id)).await.unwrap();
-    assert_eq!(exported.schema_version, 3);
+    assert_eq!(exported.schema_version, 4);
     assert!(transfer::encode(Format::Markdown, &exported).is_err());
     let copy = store
         .import_json(

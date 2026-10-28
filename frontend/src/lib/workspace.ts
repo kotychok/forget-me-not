@@ -320,7 +320,7 @@ export class Workspace {
     const session = this.current;
     if (!session || !this.selectedId) throw new Error('Choose a list first');
     return validatePortable({
-      schemaVersion: 3,
+      schemaVersion: 4,
       lists: [
         {
           id: this.selectedId,
@@ -339,7 +339,7 @@ export class Workspace {
         documents.set(id, structuredClone(this.document(id, session)));
     }
     return validatePortable({
-      schemaVersion: 3,
+      schemaVersion: 4,
       lists: [...documents.values()],
     }).lists;
   }
@@ -365,13 +365,15 @@ export class Workspace {
           'This item was removed locally. Refresh search results.',
         );
       const text = hit.itemId
-        ? hit.field === 'note'
-          ? (locate(target.editor.state.nodes, hit.itemId)!.item.note ?? '')
-          : hit.field === 'tag'
-            ? (locate(target.editor.state.nodes, hit.itemId)!.item.tags?.find(
-                (tag) => matches(tag, query),
-              ) ?? '')
-            : locate(target.editor.state.nodes, hit.itemId)!.item.text
+        ? hit.field === 'date'
+          ? (locate(target.editor.state.nodes, hit.itemId)!.item.dueDate ?? '')
+          : hit.field === 'note'
+            ? (locate(target.editor.state.nodes, hit.itemId)!.item.note ?? '')
+            : hit.field === 'tag'
+              ? (locate(target.editor.state.nodes, hit.itemId)!.item.tags?.find(
+                  (tag) => matches(tag, query),
+                ) ?? '')
+              : locate(target.editor.state.nodes, hit.itemId)!.item.text
         : target.title;
       if (!matches(text, query))
         throw new Error('This result changed. Refresh search results.');
@@ -526,7 +528,7 @@ export class Workspace {
     this.notify();
     try {
       const source = validatePortable({
-        schemaVersion: 3,
+        schemaVersion: 4,
         lists: [record.document],
       });
       source.lists[0].title =

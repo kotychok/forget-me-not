@@ -5,7 +5,7 @@ export type SearchHit = {
   listId: string;
   title: string;
   itemId: string | null;
-  field?: 'note' | 'tag';
+  field?: 'note' | 'tag' | 'date';
   text: string;
   ancestors: string[];
 };
@@ -61,6 +61,14 @@ export function searchDocuments(
       for (const item of nodes) {
         if (matches(item.text, query))
           add({ ...base, itemId: item.id, text: item.text, ancestors });
+        if (item.dueDate && matches(item.dueDate, query))
+          add({
+            ...base,
+            itemId: item.id,
+            text: item.dueDate,
+            ancestors: [...ancestors, item.text || 'Empty item'],
+            field: 'date',
+          });
         if (item.note && matches(item.note, query))
           add({
             ...base,

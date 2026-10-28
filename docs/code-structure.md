@@ -81,3 +81,7 @@ Implemented flow: read-only decode/preview → explicit confirmation → existin
 ## Markdown display — M9
 
 `lib/markdown.ts` converts Marked lexer tokens into a bounded allowlisted model, sharing `safeHttpUrl` with plain links. `MarkdownView.svelte` renders known elements through Svelte escaping; it never injects generated HTML. EditorPane owns the view-only preview toggle and separate link controls; NoteDialog can preview its unapplied draft. The tree, history, API, database and portable formats retain original source.
+
+## Due dates — M10
+
+`lib/dates.ts` owns pure calendar validation, local-date formatting and status comparison without timestamps. Editor.setDueDate commits one content-history change. DateDialog holds only the modal draft; EditorPane owns the Date/D action, badge and view-only clock refresh. Portable validation and backend flatten validation independently enforce the date contract; Store includes the nullable column in owned row diffs and new-copy import. No date framework or external service is required.

@@ -1,6 +1,6 @@
 # Milestones
 
-Updated: 2026-10-28. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing was reviewed and committed by the user; M6 search was reviewed and accepted by the user; M6a format adapters and review fixes were committed and verified by the user; M6b was verified and accepted by the user; M7 notes were verified and accepted by the user; M8 tags/filtering were reviewed and committed by the user; M9 Markdown display is implemented for review; later milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
+Updated: 2026-10-28. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing was reviewed and committed by the user; M6 search was reviewed and accepted by the user; M6a format adapters and review fixes were committed and verified by the user; M6b was verified and accepted by the user; M7 notes were verified and accepted by the user; M8 tags/filtering were reviewed and committed by the user; M9 Markdown display was committed by the user; M10 dates are implemented for review; later milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
 
 Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only for a detailed plan of a complex milestone when implementation begins. Mark a milestone complete only with actual verification evidence.
 
@@ -19,8 +19,8 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M6b | Remember collapsed and expanded branches | M4 | Complete (verified and accepted by user) |
 | M7 | Item notes | M4 | Complete (verified and accepted by user) |
 | M8 | Tags and filtering | M4 | Complete (reviewed and committed by user) |
-| M9 | Render Markdown inside item text | M5 | Implemented and verified; awaiting user review |
-| M10 | Task dates | M4 | Planned |
+| M9 | Render Markdown inside item text | M5 | Complete (committed by user) |
+| M10 | Task dates | M4 | Implemented and verified; awaiting user review |
 | M11 | Deploy and recover a protected installation | M3, M4; hosting decision | Deferred: hosting undecided |
 | M12 | Capture items through Telegram Inbox | M11 | Deferred |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
@@ -186,7 +186,7 @@ Outcome: optional Markdown display with unchanged source editing, storage and JS
 
 ### M10 — Task dates
 
-Outcome: task date metadata. Decide due-date versus scheduled-date semantics, date-only versus timestamp values, and timezone behavior first. Acceptance: dates survive migrations and JSON round-trip without timezone shifts; JSON portability includes the chosen date semantics. Reminders and recurrence are not implicitly included.
+Outcome: one date-only deadline, as selected by the user. Implemented defaults: Date/D modal Apply/Cancel, clear and undo/redo, local-calendar Today/Overdue/Done badges, literal date search, owned snapshot persistence and JSON v4 with v1–v3 input compatibility. Dates remain attached when converting plain items/tasks. No reminders, recurrence or scheduled-start field. See [Due dates](dates.md) and [implementation record](plans/m10-task-dates.md).
 
 ### M11 — Deployment and recovery
 

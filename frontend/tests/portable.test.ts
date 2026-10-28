@@ -29,7 +29,7 @@ test('unknown fields, unsupported versions, and duplicate IDs have actionable pa
   let source: unknown = fixture();
   (source as Record<string, unknown>).ownerId = 'untrusted';
   assert.throws(() => validatePortable(source), /\$\.ownerId: Unknown field/);
-  source = { ...fixture(), schemaVersion: 4 };
+  source = { ...fixture(), schemaVersion: 5 };
   assert.throws(() => validatePortable(source), /\$\.schemaVersion/);
   const duplicate = fixture();
   duplicate.lists[1].nodes = [structuredClone(duplicate.lists[0].nodes[0])];
@@ -105,7 +105,7 @@ test('legacy schemas upgrade to current; notes are supported from v2', () => {
       'utf8',
     ),
   );
-  assert.equal(validatePortable(old).schemaVersion, 3);
+  assert.equal(validatePortable(old).schemaVersion, 4);
   old.lists[0].nodes[0].note = 'A note';
   assert.throws(() => validatePortable(old), /Unknown field/);
   old.schemaVersion = 2;
@@ -123,7 +123,7 @@ test('shared v2 fixture carries notes through portable export', () => {
       'utf8',
     ),
   );
-  assert.equal(source.schemaVersion, 3);
+  assert.equal(source.schemaVersion, 4);
   assert.equal(
     parsePortable(serializePortable(source)).lists[0].nodes[0].note,
     '**Trip details**\nBring the itinerary. ✈️',

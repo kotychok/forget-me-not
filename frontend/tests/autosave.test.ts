@@ -259,3 +259,45 @@ test('lost-response reconciliation distinguishes tags even when text and note ma
     queue.dispose();
   }
 });
+
+test('lost-response reconciliation distinguishes due dates even when other content matches', async () => {
+  const document: Document = {
+    id: 'list',
+    title: 'Tags',
+    nodes: [
+      {
+        id: 'item',
+        kind: 'item',
+        text: 'Same text',
+        dueDate: '2026-10-28',
+        completed: false,
+        children: [],
+      },
+    ],
+  };
+  const queue = new Autosave(
+    0,
+    () => document,
+    {
+      save: async () => {
+        throw new Error('Lost response');
+      },
+      get: async () => ({
+        ...structuredClone(document),
+        revision: 1,
+        nodes: [{ ...document.nodes[0], dueDate: '2026-10-29' }],
+      }),
+    },
+    () => {},
+    100000,
+  );
+  try {
+    queue.markDirty();
+    await queue.flush();
+    await queue.retry();
+    assert.equal(queue.status, 'conflict');
+    assert.equal(document.nodes[0].dueDate, '2026-10-28');
+  } finally {
+    queue.dispose();
+  }
+});

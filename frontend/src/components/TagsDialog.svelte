@@ -15,7 +15,7 @@
   let dialog = $state<HTMLDialogElement>();
   let input = $state<HTMLInputElement>();
   let draft = $state('');
-  let original = '';
+  let original = $state('');
   const parsed = $derived.by(() => {
     try {
       return { tags: parseTags(draft), error: '' };
@@ -44,7 +44,7 @@
   }
   onMount(() => {
     const warn = (event: BeforeUnloadEvent) => {
-      if (dialog?.open && draft !== original) {
+      if (item && draft !== original) {
         event.preventDefault();
         event.returnValue = '';
       }
@@ -55,6 +55,7 @@
 </script>
 
 <dialog
+  data-draft-dirty={!!item && draft !== original}
   class="guide tags-dialog"
   bind:this={dialog}
   aria-labelledby="tags-title"

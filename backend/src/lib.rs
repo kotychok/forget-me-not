@@ -11,3 +11,6 @@ pub use store::{MIGRATOR, Store};
 pub mod portable;
 
 pub mod transfer;
+
+pub mod auth;
+pub use http::authenticated_app;

@@ -139,3 +139,7 @@ Owned GET returns current branch IDs with stale IDs filtered, defaulting to an e
 ## Due dates — M10
 
 `20261028000600_item_due_dates.sql` adds nullable `items.due_date TEXT`. Existing items receive NULL. The API/portable field is optional `dueDate`; both languages validate real Gregorian YYYY-MM-DD dates, years 0001–9999. Ordinary owned row-diff transactions update dates and content revision atomically. JSON v4 preserves dates; collapse preferences and their revisions remain independent.
+
+## Accounts and sessions — M11
+
+`20261028000700_authentication.sql` adds `auth_accounts` keyed by existing users, library-compatible `tower_sessions` records, owned `auth_grants` with auth version/idle/absolute lifecycle, and bounded durable `auth_attempts`. It changes no existing content rows or owner IDs. Password reset/version changes and grant revocation are transactional. Library schema creation is integrated in SQLx migration history, not run through an independent `migrate()` method. Account credentials, session records and attempt buckets are excluded from content JSON; installation backups contain them. See [Authentication](authentication.md).

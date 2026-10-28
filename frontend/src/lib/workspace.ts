@@ -547,6 +547,63 @@ export class Workspace {
   async discardDraft(record: Draft) {
     await this.drafts?.discard(record);
   }
+  async pauseForAuthentication() {
+    await Promise.all(
+      [...this.sessions.values()].map((session) => session.sync.pause()),
+    );
+  }
+  async resumeAfterAuthentication() {
+    if (!this.sessions.size) {
+      await this.load(this.selectedId);
+      return;
+    }
+    for (const session of this.sessions.values()) {
+      session.sync.resume();
+      if (session.sync.status === 'error') await session.sync.retry();
+      else if (session.sync.dirty) await session.sync.flush();
+      await session.outline?.retry();
+    }
+  }
+  async prepareLogout(keepDrafts = false) {
+    for (const [id, session] of this.sessions) {
+      if (!keepDrafts && session.sync.dirty && !(await session.sync.flush()))
+        throw new Error(
+          'Some edits could not be saved. Download local edits or keep browser drafts before signing out.',
+        );
+      if (!keepDrafts) {
+        await session.outline?.flush();
+        if (session.outline?.dirty)
+          throw new Error(
+            'Outline preferences are not saved. Retry or explicitly keep local drafts and sign out.',
+          );
+      }
+      await session.sync.pause();
+      if (session.sync.dirty) {
+        if (!this.drafts)
+          throw new Error(
+            'Local draft storage is unavailable. Download your edits first.',
+          );
+        await this.drafts.preserve(
+          this.document(id, session),
+          session.sync.revision,
+        );
+      }
+    }
+  }
+  localEdits(): Portable {
+    const dirty = [...this.sessions].filter(
+      ([, session]) => session.sync.dirty,
+    );
+    const source = dirty.length
+      ? dirty
+      : this.current && this.selectedId
+        ? [[this.selectedId, this.current] as const]
+        : [];
+    return validatePortable({
+      schemaVersion: 4,
+      lists: source.map(([id, session]) => this.document(id, session)),
+    });
+  }
   dispose() {
     this.sessions.forEach((session) => {
       session.sync.dispose();

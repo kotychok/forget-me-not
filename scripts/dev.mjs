@@ -5,11 +5,14 @@ import { join } from 'node:path';
 import { createServer } from 'node:net';
 
 const testing = process.argv.includes('--test');
+const authTesting = process.argv.includes('--auth');
+if (authTesting && !testing) throw new Error('--auth is supported only with --test and a disposable database');
 const temp = testing ? await mkdtemp(join(tmpdir(), 'forget-me-not-tests-')) : undefined;
 const backendPort = testing ? '3002' : process.env.FMN_PORT ?? '3001';
 const frontendPort = testing ? '5174' : process.env.FMN_FRONTEND_PORT ?? '5173';
 const env = {
   ...process.env,
+  FMN_AUTH_MODE: testing ? (authTesting ? 'password' : 'local') : process.env.FMN_AUTH_MODE ?? 'password',
   FMN_PORT: backendPort,
   FMN_FRONTEND_PORT: frontendPort,
   ...(temp ? { FMN_DB_PATH: join(temp, 'test.sqlite') } : {}),
@@ -53,6 +56,11 @@ async function checkPort(port) {
 try { await checkPort(backendPort); await checkPort(frontendPort); }
 catch (error) { console.error(`Local port unavailable: ${error.message}`); await stop(1); }
 
+if (authTesting) {
+  const { spawnSync } = await import('node:child_process');
+  const bootstrap = spawnSync(process.env.CARGO ?? 'cargo', ['run', '--locked', '--manifest-path', 'backend/Cargo.toml', '--', '--bootstrap-local-admin', 'owner', '--password-stdin'], { env, input: 'Synthetic password for browser tests!\n', encoding: 'utf8' });
+  if (bootstrap.status !== 0) { console.error('Test administrator bootstrap failed:', bootstrap.stderr); await stop(1); }
+}
 start(process.env.CARGO ?? 'cargo', ['run', '--locked', '--manifest-path', 'backend/Cargo.toml']);
 let ready = false;
 for (let attempt = 0; attempt < 240 && !stopping; attempt++) {

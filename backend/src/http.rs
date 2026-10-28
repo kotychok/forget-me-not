@@ -5,7 +5,7 @@ use crate::{
     store::Store,
 };
 use axum::{
-    Json, Router,
+    Extension, Json, Router,
     extract::{DefaultBodyLimit, Path, Query, State},
     http::{HeaderMap, StatusCode},
     middleware::{self, Next},
@@ -43,13 +43,31 @@ struct AppState {
     store: Store,
     origins: Vec<String>,
     authorities: Vec<String>,
+    authenticated: bool,
 }
 async fn local_only(
     State(state): State<AppState>,
     headers: HeaderMap,
-    request: axum::extract::Request,
+    mut request: axum::extract::Request,
     next: Next,
 ) -> Response {
+    if !state.authenticated {
+        match crate::auth::configured(&state.store.pool).await {
+            Ok(false) => {}
+            Ok(_) => {
+                return http_error(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Accounts are configured; restart in password mode",
+                );
+            }
+            Err(_) => {
+                return http_error(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Access configuration unavailable",
+                );
+            }
+        }
+    }
     let host = headers.get("host").and_then(|value| value.to_str().ok());
     if !host.is_some_and(|host| state.authorities.iter().any(|allowed| allowed == host)) {
         return http_error(StatusCode::FORBIDDEN, "Only local access is supported");
@@ -62,9 +80,63 @@ async fn local_only(
     {
         return http_error(StatusCode::FORBIDDEN, "Origin is not allowed");
     }
-    next.run(request).await
+    if state.authenticated
+        && !matches!(
+            *request.method(),
+            axum::http::Method::GET | axum::http::Method::HEAD | axum::http::Method::OPTIONS
+        )
+        && headers.get("x-fmn-request").and_then(|v| v.to_str().ok()) != Some("1")
+    {
+        return http_error(
+            StatusCode::FORBIDDEN,
+            "Same-origin application request required",
+        );
+    }
+    if headers.get("sec-fetch-site").and_then(|v| v.to_str().ok()) == Some("cross-site") {
+        return http_error(StatusCode::FORBIDDEN, "Cross-site request rejected");
+    }
+    if !state.authenticated {
+        request.extensions_mut().insert(state.store.clone());
+    }
+    let mut response = next.run(request).await;
+    response.headers_mut().insert(
+        "cache-control",
+        axum::http::HeaderValue::from_static("no-store"),
+    );
+    response.headers_mut().insert(
+        "referrer-policy",
+        axum::http::HeaderValue::from_static("no-referrer"),
+    );
+    response
 }
+/// Explicit legacy local-only app, used by isolated editor tests and opt-in development mode.
 pub fn app(store: Store, backend_port: u16, frontend_port: u16, assets: &FsPath) -> Router {
+    build(store, backend_port, frontend_port, assets, None)
+}
+pub async fn authenticated_app(
+    store: Store,
+    backend_port: u16,
+    frontend_port: u16,
+    assets: &FsPath,
+) -> Result<Router> {
+    let backend = crate::auth::Backend::new(store.pool.clone())
+        .await
+        .map_err(|_| AppError::Storage)?;
+    Ok(build(
+        store,
+        backend_port,
+        frontend_port,
+        assets,
+        Some(backend),
+    ))
+}
+fn build(
+    store: Store,
+    backend_port: u16,
+    frontend_port: u16,
+    assets: &FsPath,
+    auth: Option<crate::auth::Backend>,
+) -> Router {
     let authorities: Vec<String> = [backend_port, frontend_port]
         .iter()
         .flat_map(|port| [format!("127.0.0.1:{port}"), format!("localhost:{port}")])
@@ -76,12 +148,9 @@ pub fn app(store: Store, backend_port: u16, frontend_port: u16, assets: &FsPath)
             .map(|host| format!("http://{host}"))
             .collect(),
         authorities,
+        authenticated: auth.is_some(),
     };
-    let api = Router::new()
-        .route(
-            "/health",
-            get(|| async { Json(serde_json::json!({"mode":"local-only"})) }),
-        )
+    let mut api = Router::new()
         .route("/session", get(client_identity))
         .route("/export", get(export_json))
         .route(
@@ -107,48 +176,78 @@ pub fn app(store: Store, backend_port: u16, frontend_port: u16, assets: &FsPath)
             get(get_list).put(save_list).delete(delete_list),
         )
         .fallback(|| async { http_error(StatusCode::NOT_FOUND, "API route not found") });
-    Router::new()
+    if auth.is_some() {
+        api = api.route_layer(middleware::from_fn(crate::auth::require_user));
+    }
+    let authenticated = auth.is_some();
+    api = api.route(
+        "/health",
+        get(move || async move {
+            Json(serde_json::json!({"mode":if authenticated {"password"} else {"local-only"}}))
+        }),
+    );
+    let mut router = Router::new()
         .nest("/api", api)
         .fallback_service(
             ServeDir::new(assets).not_found_service(ServeFile::new(assets.join("index.html"))),
         )
         .layer(DefaultBodyLimit::max(1024 * 1024))
-        .layer(middleware::from_fn_with_state(state.clone(), local_only))
-        .with_state(state)
+        .with_state(state.clone());
+    if let Some(backend) = auth {
+        let session_layer = tower_sessions::SessionManagerLayer::new(
+            tower_sessions_sqlx_store::SqliteStore::new(backend.pool.clone()),
+        )
+        .with_name("fmn.sid")
+        .with_http_only(true)
+        .with_secure(false)
+        .with_same_site(tower_sessions::cookie::SameSite::Strict)
+        .with_expiry(tower_sessions::Expiry::OnInactivity(
+            time::Duration::seconds(crate::auth::IDLE_SECONDS),
+        ));
+        router = router
+            .nest("/api/auth", crate::auth::router(backend.clone()))
+            .layer(axum_login::AuthManagerLayerBuilder::new(backend, session_layer).build());
+    } else {
+        router = router.route(
+            "/api/auth/status",
+            get(|| async { Json(serde_json::json!({"mode":"local","configured":true})) }),
+        );
+    }
+    router.layer(middleware::from_fn_with_state(state, local_only))
 }
-async fn list_all(State(state): State<AppState>) -> Result<Json<Vec<ListSummary>>> {
-    Ok(Json(state.store.lists().await?))
+async fn list_all(Extension(store): Extension<Store>) -> Result<Json<Vec<ListSummary>>> {
+    Ok(Json(store.lists().await?))
 }
 async fn create_list(
-    State(state): State<AppState>,
+    Extension(store): Extension<Store>,
     Json(request): Json<CreateList>,
 ) -> Result<(StatusCode, Json<ListDocument>)> {
     Ok((
         StatusCode::CREATED,
-        Json(state.store.create(request.title).await?),
+        Json(store.create(request.title).await?),
     ))
 }
 async fn get_list(
-    State(state): State<AppState>,
+    Extension(store): Extension<Store>,
     Path(id): Path<String>,
 ) -> Result<Json<ListDocument>> {
-    Ok(Json(state.store.get(&id).await?))
+    Ok(Json(store.get(&id).await?))
 }
 async fn save_list(
-    State(state): State<AppState>,
+    Extension(store): Extension<Store>,
     Path(id): Path<String>,
     Json(request): Json<SaveList>,
 ) -> Result<Json<serde_json::Value>> {
     Ok(Json(
-        serde_json::json!({"revision":state.store.save(&id,request).await?}),
+        serde_json::json!({"revision":store.save(&id,request).await?}),
     ))
 }
 async fn delete_list(
-    State(state): State<AppState>,
+    Extension(store): Extension<Store>,
     Path(id): Path<String>,
     Query(query): Query<DeleteList>,
 ) -> Result<StatusCode> {
-    state.store.delete(&id, query.base_revision).await?;
+    store.delete(&id, query.base_revision).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -158,26 +257,24 @@ struct ExportQuery {
     list_id: Option<String>,
 }
 async fn export_json(
-    State(state): State<AppState>,
+    Extension(store): Extension<Store>,
     Query(query): Query<ExportQuery>,
 ) -> Result<Json<Portable>> {
-    Ok(Json(
-        state.store.export_json(query.list_id.as_deref()).await?,
-    ))
+    Ok(Json(store.export_json(query.list_id.as_deref()).await?))
 }
 async fn import_json(
-    State(state): State<AppState>,
+    Extension(store): Extension<Store>,
     Json(value): Json<serde_json::Value>,
 ) -> Result<(StatusCode, Json<Vec<ListSummary>>)> {
     let document = Portable::from_value(value)?;
     Ok((
         StatusCode::CREATED,
-        Json(state.store.import_json(document).await?),
+        Json(store.import_json(document).await?),
     ))
 }
 
-async fn client_identity(State(state): State<AppState>) -> Result<Json<ClientIdentity>> {
-    Ok(Json(state.store.identity().await?))
+async fn client_identity(Extension(store): Extension<Store>) -> Result<Json<ClientIdentity>> {
+    Ok(Json(store.identity().await?))
 }
 
 #[derive(serde::Deserialize)]
@@ -206,15 +303,15 @@ async fn encode_file(Json(request): Json<EncodeFile>) -> Result<Json<crate::tran
 }
 
 async fn get_outline_view(
-    State(state): State<AppState>,
+    Extension(store): Extension<Store>,
     Path(id): Path<String>,
 ) -> Result<Json<OutlineView>> {
-    Ok(Json(state.store.outline_view(&id).await?))
+    Ok(Json(store.outline_view(&id).await?))
 }
 async fn patch_outline_view(
-    State(state): State<AppState>,
+    Extension(store): Extension<Store>,
     Path(id): Path<String>,
     Json(request): Json<PatchView>,
 ) -> Result<Json<OutlineView>> {
-    Ok(Json(state.store.patch_outline_view(&id, request).await?))
+    Ok(Json(store.patch_outline_view(&id, request).await?))
 }

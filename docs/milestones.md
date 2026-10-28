@@ -21,7 +21,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M8 | Tags and filtering | M4 | Complete (reviewed and committed by user) |
 | M9 | Render Markdown inside item text | M5 | Complete (committed by user) |
 | M10 | Task dates | M4 | Implemented and verified; awaiting user review |
-| M11 | Accounts, login and browser sessions | M4; access design | Next: design before implementation |
+| M11 | Accounts, login and browser sessions | M4; access design | Implemented and verified; awaiting user review |
 | M11a | Admin-managed friends and account activation | M11 | Planned design |
 | M11b | Scoped personal API tokens | M11; integration requirements | Planned; independent of deployment |
 | M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Deferred: hosting undecided |
@@ -195,7 +195,7 @@ Outcome: one date-only deadline, as selected by the user. Implemented defaults: 
 
 Replanned on 2026-10-28 at the user's request: design access before deployment. No public self-registration. Proposed scope: explicit first-admin bootstrap preserving the existing user's ownership, password login/change, persistent cookie sessions, expiry/renewal/revocation and safe reauthentication with pending edits. Resolve the owner per authenticated request; replace the globally fixed local identity in authenticated mode. Verify isolation across all routes and browser caches/drafts.
 
-Rust candidates: axum-login, tower-sessions with a compatible SQLite store, and RustCrypto argon2. Exact dependencies and policies are not yet selected. See [Access-control design](access-control.md).
+Implemented with axum-login 0.18.0, tower-sessions 0.14.0, SQLx store 0.15.0 and Argon2id. Includes explicit existing-owner administrator bootstrap, browser login/session management, password change, expiry/revocation, request-scoped ownership and draft-safe same-owner reauthentication. See [Authentication](authentication.md) and [implementation record](plans/m11-authentication.md). Implementation defaults await user review; deployment remains M11c.
 
 ### M11a — Administrator-managed accounts
 

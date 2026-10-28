@@ -69,7 +69,7 @@ Drafts protect against failures; they do not provide full offline support. Do no
 | `DELETE /api/lists/:id` | Delete with a revision check |
 | `GET /api/lists/:id/view` | Owned manual collapse preferences and independent revision |
 | `PATCH /api/lists/:id/view` | Revision-checked per-item view changes, separate from content |
-| `GET /api/session` | Installation and server-resolved owner identity for local draft scope |
+| `GET /api/session` | Installation and authenticated (or explicit local-mode) owner identity for draft scope |
 | `GET /api/export` | Consistent JSON export of owned saved lists; optional listId filter |
 | `POST /api/transfer/decode` | Read-only format decoding and preview model with warnings |
 | `POST /api/transfer/encode` | Read-only encoding of a validated snapshot |
@@ -83,7 +83,7 @@ Agreed: deploy with Docker; native local execution without Docker is also suppor
 
 Proposal: one container with the server and frontend assets; Docker Compose for startup and volume configuration; SQLite in a persistent volume; HTTPS through a reverse proxy. Do not place SQLite on a network filesystem without separate verification. Do not run multiple replicas with independent database files.
 
-Each list belongs to a user, and each user can have multiple lists. The schema can support multiple accounts. M2 uses one server-resolved local user without login, restricted to local operation. Access design is M11 (accounts/sessions) and M11a (administrator-managed accounts), before M11c deployment. Public self-registration is excluded for now. The proposed request-scoped identity and token lifecycle are described in [Access control](access-control.md). Before public deployment, choose application authentication or a verified auth proxy/VPN. Trust identity headers only from a restricted proxy. Cookie authentication needs CSRF protection and secure cookies.
+Each list belongs to a user, and each user can have multiple lists. The schema can support multiple accounts. M2 uses one server-resolved local user without login, restricted to local operation. Access design is M11 (accounts/sessions) and M11a (administrator-managed accounts), before M11c deployment. Public self-registration is excluded for now. M11 now supplies password login and persistent sessions with a request-scoped principal/Store; see [Authentication](authentication.md). Further account/integration lifecycle is tracked in [Access control](access-control.md). Before public deployment, choose application authentication or a verified auth proxy/VPN. Trust identity headers only from a restricted proxy. Cookie authentication needs CSRF protection and secure cookies.
 
 Markdown is untrusted text: disable or sanitize raw HTML, disallow unsafe URLs, and keep secrets and list content out of logs. Validate import and depth limits on the server as well.
 
@@ -92,3 +92,5 @@ Backups: use a consistent SQLite backup operation rather than copying only the m
 ## Code organization
 
 The implemented module map and extension rules are documented in [Code structure](code-structure.md). Keep direct concrete boundaries: UI → Workspace/Editor/Autosave/API on the client, HTTP → Store/validation on the server.
+
+M11 defaults to password mode; the explicit local bypass cannot run once accounts exist. The authentication gate mounts WorkspaceApp only after identity verification, retains same-owner edits across expiry, and resets Workspace state after logout. It does not make the loopback server a deployment configuration.

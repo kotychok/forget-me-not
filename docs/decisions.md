@@ -84,4 +84,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D051 | 2026-10-28 | Requested replan / design direction | Design access before deployment; no public self-registration for now, administrator page preferred for adding friends. Split M11 accounts/sessions, M11a account administration, M11b integration tokens and M11c deployment, preserving M12–M15. Access mechanisms, library choices, activation flow and expiry/rotation defaults in access-control.md remain proposals; no auth implementation or deployment is authorized by this design discussion |
 
+| D052 | 2026-10-28 | Authorized implementation / defaults | User requested M11 after discussing JWT; use server-side browser sessions. Implement password-mode default, explicit existing-owner administrator bootstrap/recovery, request-scoped principal, Argon2id and persistent SQLite-backed sessions with expiry/revocation, CSRF custom-header/origin checks, and draft-safe same-owner reauthentication. Defaults are documented for review; friends/admin UI, personal API tokens and deployment remain M11a/M11b/M11c |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

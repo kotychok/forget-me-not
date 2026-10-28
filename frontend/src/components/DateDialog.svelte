@@ -13,7 +13,7 @@
   let dialog = $state<HTMLDialogElement>();
   let input = $state<HTMLInputElement>();
   let draft = $state('');
-  let original = '';
+  let original = $state('');
   const error = $derived(
     draft && !validDate(draft)
       ? 'Choose a real calendar date between 0001 and 9999.'
@@ -37,7 +37,7 @@
   }
   onMount(() => {
     const warn = (event: BeforeUnloadEvent) => {
-      if (dialog?.open && draft !== original) {
+      if (item && draft !== original) {
         event.preventDefault();
         event.returnValue = '';
       }
@@ -48,6 +48,7 @@
 </script>
 
 <dialog
+  data-draft-dirty={!!item && draft !== original}
   class="guide date-dialog"
   bind:this={dialog}
   aria-labelledby="date-title"
@@ -80,8 +81,10 @@
       bind:value={draft}
     />
     {#if error}<p class="error-message" role="alert">{error}</p>{/if}
-    <div class="transfer-actions">
-      <button type="submit" disabled={!!error}>Apply date</button>
+    <div class="transfer-actions date-actions">
+      <button class="date-apply" type="submit" disabled={!!error}
+        >Apply date</button
+      >
       <button
         type="button"
         onclick={() => {
@@ -89,7 +92,7 @@
           input?.focus();
         }}>Clear date</button
       >
-      <button type="button" onclick={close}>Cancel</button>
+      <button class="date-cancel" type="button" onclick={close}>Cancel</button>
     </div>
   </form>
 </dialog>

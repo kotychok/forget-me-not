@@ -17,13 +17,36 @@ export class ApiError extends Error {
     this.status = status;
   }
 }
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+let expectedOwner: string | null = null;
+let suspended = false;
+export function setApiOwner(owner: string | null) {
+  expectedOwner = owner;
+}
+export function suspendApi(value: boolean) {
+  suspended = value;
+}
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  if (suspended && !path.startsWith('/auth/'))
+    throw new ApiError(401, 'Sign in to continue; local changes are kept');
   const response = await fetch(`/api${path}`, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-FMN-Request': '1',
+      ...(expectedOwner ? { 'X-FMN-Owner': expectedOwner } : {}),
+      ...init?.headers,
+    },
     signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok) {
+    if (
+      response.status === 401 &&
+      !path.startsWith('/auth/') &&
+      typeof window !== 'undefined'
+    ) {
+      suspended = true;
+      window.dispatchEvent(new Event('fmn:unauthorized'));
+    }
     const error = await response.json().catch(() => null);
     throw new ApiError(
       response.status,

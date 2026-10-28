@@ -5,13 +5,20 @@ edition = "2024"
 license = "MIT"
 
 [dependencies]
+argon2 = "=0.5.3"
 axum = "0.8.9"
+axum-login = "=0.18.0"
+rand_core = { version = "0.6", features = ["getrandom"] }
+rpassword = "7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_path_to_error = "0.1"
 sqlx = { version = "0.8.6", default-features = false, features = ["runtime-tokio", "sqlite", "migrate", "macros"] }
+time = "0.3"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal"] }
 tower-http = { version = "0.6", features = ["fs"] }
+tower-sessions = "=0.14.0"
+tower-sessions-sqlx-store = { version = "=0.15.0", features = ["sqlite"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 
 [dev-dependencies]

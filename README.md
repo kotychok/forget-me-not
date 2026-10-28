@@ -10,6 +10,7 @@ From the repository root:
 
 ```sh
 make install
+make auth-bootstrap LOGIN=your-login
 make dev
 ```
 
@@ -17,7 +18,7 @@ Open http://127.0.0.1:5173. `make dev` starts the Rust API, applies embedded mig
 
 The default SQLite file is `data/forget-me-not.sqlite`, excluded from Git. A local user is provisioned once and reused across restarts. New installations start with no lists; choose **New list** to begin. Each list supports a plain-text heading rename, items, tasks, and autosave after a short pause.
 
-**Local use only:** the API binds to IPv4 loopback and checks request Host/Origin. There is no login. Production authentication and Docker deployment are planned for M11.
+**Loopback use:** password login and persistent browser sessions are enabled by default. Bootstrap attaches credentials to the existing local owner and preserves their lists. Stop an older dev process before upgrading. Account manages sessions and password changes. Admin-managed friends remain M11a; deployment/HTTPS remain M11c. See [Authentication](docs/authentication.md).
 
 ## Tags and filtering
 
@@ -121,6 +122,7 @@ Export variables in the shell; `.env` files are not loaded automatically.
 | `FMN_DB_PATH` | `data/forget-me-not.sqlite` | SQLite file path, relative to the working directory |
 | `FMN_PORT` | `3001` | Loopback API / built-app port |
 | `FMN_FRONTEND_PORT` | `5173` | Vite development port and allowed frontend origin |
+| `FMN_AUTH_MODE` | `password` | Password sessions; explicit `local` bypass only before any account exists |
 | `FMN_ASSETS_PATH` | `frontend/dist` | Built frontend directory |
 | `CARGO`, `PNPM` | `cargo`, `pnpm` | Makefile tool overrides |
 

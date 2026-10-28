@@ -27,6 +27,7 @@ Updated: 2026-10-28. The core direction is agreed. M1 was reviewed and committed
 
 ## Guide
 
+- [Authentication](authentication.md): implemented login, bootstrap, sessions, expiry and local recovery.
 - [Access control](access-control.md): proposed accounts, sessions, administrator invitations and token lifecycle.
 - [Milestones](milestones.md): outcomes, dependencies, acceptance criteria, and remaining decisions.
 - [Code structure](code-structure.md): module responsibilities, dependencies, and extension points.
@@ -77,4 +78,4 @@ M9 adds optional Markdown display for items and note drafts, preserving source a
 
 M9 was committed by the user. M10 implements the agreed single date-only deadline, with JSON v4 and an additive migration; implementation defaults await review.
 
-Access-first replan: M11 accounts/login/sessions → M11a admin-managed friends → M11c deployment. M11b API tokens are separate integration work, not required for cookie login. No access implementation is included in this documentation change.
+Access-first replan: M11 accounts/login/sessions → M11a admin-managed friends → M11c deployment. M11b API tokens are separate integration work, not required for cookie login. M11 authentication is now implemented for review; M11a/M11b/M11c remain separate.

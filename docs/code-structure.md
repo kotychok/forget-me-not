@@ -5,7 +5,8 @@ The application uses small modules with direct calls. There is one frontend and 
 ## Frontend
 
 ```text
-App.svelte — composes the page, URL selection, rename input, and browser dialogs
+App.svelte — authentication gate and account controls
+  └── WorkspaceApp.svelte — page, URL selection, rename input and editor dialogs
   ├── Workspace — list/session lifecycle and API coordination
   │     ├── Editor — tree commands and session undo/redo
   │     ├── OutlineState — manual view preferences, independent revision/queue/retry
@@ -32,7 +33,7 @@ App.svelte — composes the page, URL selection, rename input, and browser dialo
 - `lib/api.ts` owns URLs, request timeouts, JSON, and HTTP errors.
 - `lib/workspace.ts` owns list metadata and cached editor sessions. It coordinates the concrete API and queues, exposes ordinary state, and notifies the UI through one callback. It knows nothing about Svelte, URL history, focus, or confirmation dialogs.
 - `components/EditorPane.svelte` renders one session. It signals content edits through `ondirty`; it does not fetch or decide when to save. A keyed component instance follows a selected list; the cached Editor and collapse state survive list switching.
-- `App.svelte` connects these modules and owns browser-level behavior such as URL selection, unload warnings, rename focus, and deletion confirmation. Raw session objects stay outside Svelte's deep proxies so model snapshots remain cloneable.
+- `WorkspaceApp.svelte` connects these modules and owns browser-level behavior such as URL selection, unload warnings, rename focus, and deletion confirmation. Raw session objects stay outside Svelte's deep proxies so model snapshots remain cloneable.
 
 There is no second authoritative tree in the UI. The Editor owns content/history; the pane publishes a reactive display copy. Sidebar metadata is a projection of the corresponding session/API result, not another editable tree.
 
@@ -85,3 +86,7 @@ Implemented flow: read-only decode/preview → explicit confirmation → existin
 ## Due dates — M10
 
 `lib/dates.ts` owns pure calendar validation, local-date formatting and status comparison without timestamps. Editor.setDueDate commits one content-history change. DateDialog holds only the modal draft; EditorPane owns the Date/D action, badge and view-only clock refresh. Portable validation and backend flatten validation independently enforce the date contract; Store includes the nullable column in owned row diffs and new-copy import. No date framework or external service is required.
+
+## Authentication — M11
+
+`auth/mod.rs` owns principal/account types, credential validation, bounded blocking password hashing and axum-login backend integration; `auth/store.rs` owns SQL/transactions and library-store cleanup; `auth/routes.rs` owns extraction/status/route protection. HTTP middleware supplies a fresh owner-scoped Store as a request extension. Local-only test construction remains explicit and refuses accounts at request time. `App.svelte` gates/mounts the editor shell, `lib/auth.ts` provides credential/session transport, and `AccountDialog` owns transient account controls. Workspace pause/logout/reconcile methods stay free of DOM/cookie/Svelte dependencies. API transport carries an expected owner to prevent account-switch replay.

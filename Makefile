@@ -1,12 +1,15 @@
 PNPM ?= pnpm
 CARGO ?= cargo
 
-.PHONY: help install dev build run check format test test-browser browser-install db-migrate
+.PHONY: help install dev build run check format test test-browser browser-install db-migrate auth-bootstrap auth-reset test-browser-auth
 help:
 	@echo "install         Install locked frontend and backend dependencies"
 	@echo "dev             Run frontend and backend locally (no Docker)"
 	@echo "build           Build frontend and backend"
 	@echo "run             Serve the built application on localhost:3001"
+	@echo "auth-bootstrap LOGIN=name Create the first local administrator (hidden password prompt)"
+	@echo "auth-reset LOGIN=name     Recover the local administrator password and revoke sessions"
+	@echo "test-browser-auth         Run isolated authenticated browser tests"
 	@echo "db-migrate      Apply embedded migrations to FMN_DB_PATH"
 	@echo "check           Check Rust formatting/clippy, Svelte/TypeScript, and formatting"
 	@echo "format          Format frontend and backend files"
@@ -39,3 +42,11 @@ browser-install:
 	$(PNPM) --dir frontend exec playwright install chromium
 db-migrate:
 	$(CARGO) run --locked --manifest-path backend/Cargo.toml -- --migrate
+
+# Passwords are read from the terminal, never passed as command arguments.
+auth-bootstrap:
+	$(CARGO) run --locked --manifest-path backend/Cargo.toml -- --bootstrap-local-admin "$(LOGIN)"
+auth-reset:
+	$(CARGO) run --locked --manifest-path backend/Cargo.toml -- --reset-admin-password "$(LOGIN)"
+test-browser-auth:
+	$(PNPM) --dir frontend exec playwright test --config playwright.auth.config.ts

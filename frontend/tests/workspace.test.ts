@@ -311,3 +311,59 @@ test('search can activate a list created after the sidebar was loaded and reject
     workspace.dispose();
   }
 });
+
+test('authentication pause preserves history and same-owner retry reconciles before saving', async () => {
+  const f = fakeApi();
+  let authenticated = false;
+  const save = f.transport.save;
+  f.transport.save = async (...args) => {
+    if (!authenticated) throw new ApiError(401, 'Sign in');
+    return save(...args);
+  };
+  const workspace = new Workspace(() => {}, f.transport, new MemoryStorage());
+  try {
+    await workspace.load(f.first.id);
+    const session = workspace.current!;
+    session.editor.edit('Pending login', 0, 0);
+    session.sync.markDirty();
+    await session.sync.flush();
+    assert.equal(session.sync.status, 'error');
+    const history = structuredClone(session.editor.past);
+    await workspace.pauseForAuthentication();
+    assert.equal(await session.sync.flush(), false);
+    assert.equal(
+      workspace.localEdits().lists[0].nodes[0].text,
+      'Pending login',
+    );
+    authenticated = true;
+    await workspace.resumeAfterAuthentication();
+    assert.equal(session.sync.status, 'saved');
+    assert.equal(f.documents.get(f.first.id)!.nodes[0].text, 'Pending login');
+    assert.deepEqual(session.editor.past, history);
+  } finally {
+    workspace.dispose();
+  }
+});
+
+test('explicit draft-preserving logout waits for durable drafts and blocks on storage failure', async () => {
+  const f = fakeApi();
+  const storage = new MemoryStorage();
+  const workspace = new Workspace(() => {}, f.transport, storage);
+  try {
+    await workspace.load(f.first.id);
+    const session = workspace.current!;
+    session.editor.edit('Keep for this owner', 0, 0);
+    session.sync.markDirty();
+    await workspace.prepareLogout(true);
+    assert.ok(workspace.drafts?.isDurable(f.first.id));
+    assert.equal(session.sync.dirty, true);
+    assert.equal(f.documents.get(f.first.id)!.nodes[0].text, 'Original');
+    storage.fail = true;
+    session.editor.edit('New pending text', 0, 0);
+    session.sync.markDirty();
+    await assert.rejects(workspace.prepareLogout(true));
+    assert.equal(session.editor.state.nodes[0].text, 'New pending text');
+  } finally {
+    workspace.dispose();
+  }
+});

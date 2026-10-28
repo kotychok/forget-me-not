@@ -14,7 +14,7 @@
   let input = $state<HTMLTextAreaElement>();
   let draft = $state('');
   let preview = $state(false);
-  let original = '';
+  let original = $state('');
   const bytes = $derived(new TextEncoder().encode(draft).length);
   $effect(() => {
     if (!item || !dialog) return;
@@ -30,7 +30,7 @@
   }
   onMount(() => {
     const warn = (event: BeforeUnloadEvent) => {
-      if (dialog?.open && draft !== original) {
+      if (item && draft !== original) {
         event.preventDefault();
         event.returnValue = '';
       }
@@ -41,6 +41,7 @@
 </script>
 
 <dialog
+  data-draft-dirty={!!item && draft !== original}
   class="guide note-dialog"
   bind:this={dialog}
   aria-labelledby="note-title"

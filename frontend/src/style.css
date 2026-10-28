@@ -1018,8 +1018,65 @@ mark {
   white-space: pre-wrap;
 }
 
+dialog.date-dialog {
+  width: min(440px, calc(100vw - 36px));
+}
+.date-dialog .guide-intro {
+  line-height: 1.6;
+}
+.date-dialog form {
+  display: grid;
+  gap: 8px;
+}
+.date-dialog label {
+  color: #52664c;
+  font-size: 12px;
+  font-weight: 600;
+}
 .date-dialog input {
-  max-width: 100%;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #cbd6c3;
+  border-radius: 6px;
+  background: #fcfcf8;
+  color: #303b35;
+  font: inherit;
+  color-scheme: light;
+}
+.date-dialog input:focus-visible {
+  outline: 2px solid #719269;
+  outline-offset: 2px;
+}
+.date-dialog .error-message {
+  margin: 4px 0;
+}
+.date-actions {
+  margin-top: 16px;
+  padding-top: 18px;
+  border-top: 1px solid #dfe5d8;
+  align-items: center;
+}
+.date-actions button {
+  min-height: 38px;
+  border-radius: 5px;
+}
+.date-actions .date-apply {
+  background: #55764e;
+  border-color: #55764e;
+  color: #fff;
+}
+.date-actions .date-apply:hover:not(:disabled) {
+  background: #45633e;
+  border-color: #45633e;
+}
+.date-actions .date-cancel {
+  margin-left: auto;
+  background: transparent;
+  border-color: transparent;
+  color: #72806c;
 }
 .due-date {
   align-self: center;
@@ -1044,5 +1101,183 @@ mark {
   .due-date {
     flex-shrink: 1;
     overflow-wrap: anywhere;
+  }
+}
+
+.access-page {
+  width: min(440px, calc(100% - 40px));
+  margin: 12vh auto;
+}
+.access-page form,
+.account-dialog form {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+}
+.access-page input,
+.account-dialog input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px;
+  font: inherit;
+}
+.access-page button,
+.account-dialog form button {
+  padding: 9px 12px;
+  background: #e2ebdc;
+  margin: 4px;
+}
+.access-page code {
+  overflow-wrap: anywhere;
+}
+.access-message {
+  text-align: center;
+  padding: 40px;
+}
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 60px;
+}
+.sidebar-footer .sidebar-bottom {
+  margin-top: 0;
+  padding-top: 0;
+}
+.sidebar-footer.has-account .sidebar-bottom {
+  padding-top: 20px;
+}
+.account-bar {
+  display: grid;
+  gap: 10px;
+  padding: 18px 0;
+  border-top: 1px solid #dce3d5;
+  border-bottom: 1px solid #dce3d5;
+  font-size: 12px;
+}
+.account-identity {
+  color: #52664c;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-actions {
+  display: flex;
+  gap: 8px;
+}
+.account-actions .quiet {
+  border: 1px solid #d4decc;
+  border-radius: 5px;
+  padding: 7px 12px;
+  background: #e7eddf;
+  color: #48613e;
+  font-size: 12px;
+}
+.account-actions .quiet:hover {
+  background: #dce6d2;
+}
+.account-draft-exit.quiet {
+  justify-self: start;
+  text-align: left;
+  padding: 3px 0;
+  font-size: 11px;
+  color: #7a8574;
+}
+.account-draft-exit.quiet:hover {
+  color: #48613e;
+  background: transparent;
+  text-decoration: underline;
+}
+@media (max-width: 620px) {
+  .sidebar-footer {
+    padding-top: 12px;
+  }
+  .sidebar-footer:not(.has-account) {
+    display: none;
+  }
+  .account-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 12px 0 0;
+    border-bottom: 0;
+    gap: 8px;
+  }
+  .account-actions .quiet {
+    padding: 6px 10px;
+  }
+  .account-draft-exit {
+    grid-column: 1 / -1;
+  }
+}
+.account-sessions {
+  padding-left: 20px;
+}
+.account-sessions li {
+  margin: 14px 0;
+  overflow-wrap: anywhere;
+}
+.account-sessions button {
+  text-decoration: underline;
+}
+.access-error {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 50;
+  max-width: min(500px, 90vw);
+  background: #f6e8e3;
+  padding: 16px;
+}
+
+@media (min-width: 621px) {
+  .shell > aside {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100dvh;
+  }
+  .shell > aside > :not(nav) {
+    flex-shrink: 0;
+  }
+  .shell > aside nav {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-shrink: 1;
+    padding-right: 6px;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: #bac6b2 transparent;
+    overscroll-behavior-y: contain;
+    scroll-padding-block: 6px 52px;
+  }
+  .shell > aside nav::-webkit-scrollbar {
+    width: 6px;
+  }
+  .shell > aside nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .shell > aside nav::-webkit-scrollbar-thumb {
+    background: #bac6b2;
+    border-radius: 10px;
+  }
+  .shell > aside nav:hover {
+    scrollbar-color: #94a58a transparent;
+  }
+  .shell > aside nav:hover::-webkit-scrollbar-thumb {
+    background: #94a58a;
+  }
+  .shell > aside nav .new-list {
+    position: sticky;
+    bottom: 0;
+    background: #f0f2eb;
+    border-top: 1px solid #e0e6d9;
+    border-radius: 0;
+    box-shadow: 0 -6px 12px #f0f2eb;
+  }
+  .shell > aside nav .new-list:hover {
+    background: #e5ecdf;
+  }
+  .sidebar-footer {
+    padding-top: 24px;
   }
 }

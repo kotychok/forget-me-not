@@ -114,11 +114,11 @@ pub(super) async fn bootstrap_account(
 ) -> Result<(), String> {
     let mut tx = store.pool.begin().await.map_err(|_| "Storage failed")?;
     let changed = if reset {
-        sqlx::query("UPDATE auth_accounts SET password_hash=?,auth_version=?,updated_at=?,status='active' WHERE login=? AND user_id=? AND role='admin'")
+        sqlx::query("UPDATE auth_accounts SET password_hash=?,auth_version=?,updated_at=?,status='active',disabled_by_admin=0,activated_at=COALESCE(activated_at,updated_at) WHERE login=? AND user_id=? AND role='admin'")
             .bind(hash).bind(Uuid::new_v4().to_string()).bind(now()).bind(login).bind(&store.owner_id).execute(&mut *tx).await
     } else {
-        sqlx::query("INSERT INTO auth_accounts(user_id,login,password_hash,role,status,auth_version,updated_at) SELECT ?,?,?,'admin','active',?,? WHERE NOT EXISTS(SELECT 1 FROM auth_accounts)")
-            .bind(&store.owner_id).bind(login).bind(hash).bind(Uuid::new_v4().to_string()).bind(now()).execute(&mut *tx).await
+        sqlx::query("INSERT INTO auth_accounts(user_id,login,password_hash,role,status,auth_version,updated_at,activated_at) SELECT ?,?,?,'admin','active',?,?,? WHERE NOT EXISTS(SELECT 1 FROM auth_accounts)")
+            .bind(&store.owner_id).bind(login).bind(hash).bind(Uuid::new_v4().to_string()).bind(now()).bind(now()).execute(&mut *tx).await
     }.map_err(|_| "Account could not be configured")?.rows_affected();
     if changed != 1 {
         return Err("Bootstrap requires no existing accounts; reset requires the existing local administrator login".into());

@@ -143,3 +143,7 @@ Owned GET returns current branch IDs with stale IDs filtered, defaulting to an e
 ## Accounts and sessions — M11
 
 `20261028000700_authentication.sql` adds `auth_accounts` keyed by existing users, library-compatible `tower_sessions` records, owned `auth_grants` with auth version/idle/absolute lifecycle, and bounded durable `auth_attempts`. It changes no existing content rows or owner IDs. Password reset/version changes and grant revocation are transactional. Library schema creation is integrated in SQLx migration history, not run through an independent `migrate()` method. Account credentials, session records and attempt buckets are excluded from content JSON; installation backups contain them. See [Authentication](authentication.md).
+
+## Account administration — M11a
+
+`20261029000800_account_administration.sql` preserves existing credentials/grants while adding activated_at and disabled_by_admin metadata, digest-only purpose/version-bound account_tokens, and actor/target account_audit rows. Pending credentials use an empty hash and disabled authentication state until atomic redemption. Disabling/reissue/reset/revocation change the account version and invalidate grants/links in the same transaction. These tables are not portable content JSON. See [Account administration](account-administration.md).

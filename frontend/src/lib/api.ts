@@ -26,7 +26,8 @@ export function suspendApi(value: boolean) {
   suspended = value;
 }
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  if (suspended && !path.startsWith('/auth/'))
+  const administrative = path.startsWith('/auth/admin/');
+  if (suspended && (!path.startsWith('/auth/') || administrative))
     throw new ApiError(401, 'Sign in to continue; local changes are kept');
   const response = await fetch(`/api${path}`, {
     ...init,
@@ -41,7 +42,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     if (
       response.status === 401 &&
-      !path.startsWith('/auth/') &&
+      (!path.startsWith('/auth/') || administrative) &&
       typeof window !== 'undefined'
     ) {
       suspended = true;

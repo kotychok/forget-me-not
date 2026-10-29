@@ -327,7 +327,7 @@ async fn independent_principals_and_expected_owner_prevent_cross_tab_account_rep
         .await
         .unwrap();
     let hash = auth::hash_password(PASSWORD.into()).await.unwrap();
-    sqlx::query("INSERT INTO auth_accounts VALUES (?,'friend',?,'user','active',?,0)")
+    sqlx::query("INSERT INTO auth_accounts(user_id,login,password_hash,role,status,auth_version,updated_at) VALUES (?,'friend',?,'user','active',?,0)")
         .bind(&other_id)
         .bind(hash)
         .bind(Uuid::new_v4().to_string())

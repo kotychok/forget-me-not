@@ -86,4 +86,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D052 | 2026-10-28 | Authorized implementation / defaults | User requested M11 after discussing JWT; use server-side browser sessions. Implement password-mode default, explicit existing-owner administrator bootstrap/recovery, request-scoped principal, Argon2id and persistent SQLite-backed sessions with expiry/revocation, CSRF custom-header/origin checks, and draft-safe same-owner reauthentication. Defaults are documented for review; friends/admin UI, personal API tokens and deployment remain M11a/M11b/M11c |
 
+| D053 | 2026-10-29 | Agreed sequence / authorized implementation | Proceed with M11a admin-created friends and access lifecycle, then release-readiness verification and remaining UX polish while Railway/deployment are pending. Defaults: separate /admin, user-role friends only, manual single-use 24-hour activation/reset links, explicit privileged reset invalidation, disable/reactivate and revocation, private content isolation, version-bound digest-only tokens and transactional audit. No public registration, account deletion, role promotion, deployment or commits are included |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

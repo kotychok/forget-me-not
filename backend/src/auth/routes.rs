@@ -239,6 +239,7 @@ async fn password(
 }
 pub fn router(backend: Backend) -> Router {
     let protected = Router::new()
+        .nest("/admin", crate::accounts::admin_router())
         .route("/me", get(me))
         .route("/sessions", get(sessions))
         .route("/sessions/{id}", axum::routing::delete(revoke))
@@ -248,6 +249,7 @@ pub fn router(backend: Backend) -> Router {
         .route_layer(middleware::from_fn(require_user));
     Router::new()
         .merge(protected)
+        .merge(crate::accounts::public_router())
         .route("/status", get(status))
         .route("/login", post(login))
         .layer(axum::extract::DefaultBodyLimit::max(8 * 1024))

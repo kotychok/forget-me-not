@@ -1,6 +1,6 @@
 # Documentation
 
-Updated: 2026-10-28. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 was reviewed and committed; M4 draft recovery was reviewed and accepted by the user; M5 links and long-text editing was reviewed and committed; M6 search is implemented for local review; deployment is deferred to M11c while access is designed in M11/M11a and hosting is undecided. Remaining design details are tracked by milestone.
+Updated: 2026-10-29. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 was reviewed and committed; M4 draft recovery was reviewed and accepted by the user; M5 links and long-text editing was reviewed and committed; M6 search is implemented for local review; deployment is deferred to M11c while access is designed in M11/M11a and hosting is undecided. Remaining design details are tracked by milestone.
 
 ## Agreed with the user
 
@@ -27,6 +27,7 @@ Updated: 2026-10-28. The core direction is agreed. M1 was reviewed and committed
 
 ## Guide
 
+- [Account administration](account-administration.md): friend creation, activation/reset links, blocking and revocation.
 - [Authentication](authentication.md): implemented login, bootstrap, sessions, expiry and local recovery.
 - [Access control](access-control.md): proposed accounts, sessions, administrator invitations and token lifecycle.
 - [Milestones](milestones.md): outcomes, dependencies, acceptance criteria, and remaining decisions.
@@ -79,3 +80,5 @@ M9 adds optional Markdown display for items and note drafts, preserving source a
 M9 was committed by the user. M10 implements the agreed single date-only deadline, with JSON v4 and an additive migration; implementation defaults await review.
 
 Access-first replan: M11 accounts/login/sessions → M11a admin-managed friends → M11c deployment. M11b API tokens are separate integration work, not required for cookie login. M11 authentication is now implemented for review; M11a/M11b/M11c remain separate.
+
+M11a is implemented for local review following the agreed 2026-10-29 sequence. Release-readiness checks (including backup restoration) and remaining polish follow; Railway does not block local work.

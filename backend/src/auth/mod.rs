@@ -23,7 +23,7 @@ pub struct User {
     pub login: String,
     pub role: String,
     password_hash: String,
-    auth_version: String,
+    pub(crate) auth_version: String,
 }
 impl std::fmt::Debug for User {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

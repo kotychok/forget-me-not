@@ -1281,3 +1281,211 @@ dialog.date-dialog {
     padding-top: 24px;
   }
 }
+
+.admin-open.quiet {
+  justify-self: start;
+  padding: 3px 0;
+  font-size: 12px;
+  color: #48613e;
+}
+.admin-page {
+  width: min(1000px, 100%);
+  margin: 0 auto;
+  padding: 44px 36px 80px;
+}
+.admin-header {
+  height: auto;
+  padding: 0;
+  border: 0;
+  gap: 24px;
+  align-items: center;
+}
+.admin-header h1 {
+  color: #303b35;
+  margin: 10px 0 0;
+  font-size: 36px;
+}
+.admin-intro {
+  color: #72806c;
+  line-height: 1.7;
+  margin: 20px 0 32px;
+}
+.admin-create,
+.admin-account {
+  border: 1px solid #dce4d4;
+  border-radius: 8px;
+  padding: 24px;
+  background: #f3f6ee;
+}
+.admin-create h2,
+.admin-users h2 {
+  font-size: 18px;
+  margin: 0 0 18px;
+}
+.admin-create form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.admin-create form > button {
+  justify-self: start;
+  grid-column: 1 / -1;
+}
+.admin-create label,
+.invite-dialog label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #52664c;
+  font-weight: 600;
+}
+.admin-create input,
+.invite-dialog input {
+  width: 100%;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #cbd6c3;
+  border-radius: 6px;
+  background: #fcfcf8;
+  color: inherit;
+  font: inherit;
+}
+.admin-create small {
+  display: block;
+  margin-top: 8px;
+  color: #72806c;
+  font-size: 11px;
+}
+.admin-primary,
+.primary-link {
+  background: #55764e;
+  color: white;
+  border: 1px solid #55764e;
+  padding: 10px 14px;
+  border-radius: 5px;
+  font-size: 12px;
+}
+.admin-primary:hover:not(:disabled),
+.primary-link:hover {
+  background: #45633e;
+}
+.admin-secondary {
+  padding: 8px 12px;
+  border: 1px solid #ccd7c4;
+  background: #e7eee0;
+  font-size: 12px;
+}
+.admin-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 32px 0 18px;
+  gap: 12px;
+}
+.admin-section-heading h2 {
+  margin: 0;
+}
+.admin-section-heading h2 span {
+  color: #7a8574;
+  font-weight: 400;
+}
+.admin-account-list {
+  display: grid;
+  gap: 14px;
+}
+.admin-account-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.admin-account h3 {
+  margin: 0 0 5px;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.admin-login,
+.admin-account-meta,
+.admin-self-hint {
+  color: #72806c;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.account-state {
+  background: #e2ebd9;
+  color: #4b6845;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+.account-state.account-disabled {
+  color: #934d3d;
+  background: #f1e5df;
+}
+.admin-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.invite-dialog p {
+  line-height: 1.6;
+  color: #72806c;
+  font-size: 13px;
+}
+.invite-dialog input {
+  font-size: 12px;
+}
+.activation-page h1 {
+  font-size: 34px;
+  line-height: 1.2;
+}
+.activation-page p {
+  color: #72806c;
+  line-height: 1.7;
+}
+.primary-link {
+  display: inline-block;
+  margin-top: 12px;
+}
+@media (max-width: 620px) {
+  .admin-page {
+    padding: 28px 18px 50px;
+  }
+  .admin-header {
+    flex-wrap: wrap;
+  }
+  .admin-create form {
+    grid-template-columns: 1fr;
+  }
+  .admin-create,
+  .admin-account {
+    padding: 18px;
+  }
+  .admin-account-heading {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+.activation-page label {
+  color: #52664c;
+  font-size: 12px;
+  font-weight: 600;
+}
+.activation-page input {
+  border: 1px solid #cbd6c3;
+  border-radius: 6px;
+  background: #fcfcf8;
+  color: #303b35;
+  padding: 11px;
+}
+.activation-page form button {
+  background: #55764e;
+  color: white;
+  border: 1px solid #55764e;
+}
+.activation-page form button:hover:not(:disabled) {
+  background: #45633e;
+}

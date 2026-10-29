@@ -1,6 +1,6 @@
 # Milestones
 
-Updated: 2026-10-28. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing was reviewed and committed by the user; M6 search was reviewed and accepted by the user; M6a format adapters and review fixes were committed and verified by the user; M6b was verified and accepted by the user; M7 notes were verified and accepted by the user; M8 tags/filtering were reviewed and committed by the user; M9 Markdown display was committed by the user; M10 dates are implemented for review; later milestones have not started; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
+Updated: 2026-10-29. The core direction and later feature milestones are agreed; detailed acceptance criteria remain a working plan. M1 was reviewed and committed by the user. M2 is implemented and verified; M3 JSON transfer was reviewed and committed by the user. M4 recovery was verified and accepted by the user; M5 links and long-text editing was reviewed and committed by the user; M6 search was reviewed and accepted by the user; M6a format adapters and review fixes were committed and verified by the user; M6b was verified and accepted by the user; M7 notes were verified and accepted by the user; M8 tags/filtering were reviewed and committed by the user; M9 Markdown display was committed by the user; M10 dates are implemented for review; M11 authentication and M11a account administration are implemented for local review; deployment remains deferred; the roadmap was reordered after M4 review because hosting is undecided. No dates or effort estimates are committed. Agreed requirements are recorded in [Decisions](decisions.md); a milestone does not approve its underlying proposals.
 
 Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only for a detailed plan of a complex milestone when implementation begins. Mark a milestone complete only with actual verification evidence.
 
@@ -22,7 +22,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M9 | Render Markdown inside item text | M5 | Complete (committed by user) |
 | M10 | Task dates | M4 | Implemented and verified; awaiting user review |
 | M11 | Accounts, login and browser sessions | M4; access design | Implemented and verified; awaiting user review |
-| M11a | Admin-managed friends and account activation | M11 | Planned design |
+| M11a | Admin-managed friends and account activation | M11 | Implemented and verified; awaiting user review |
 | M11b | Scoped personal API tokens | M11; integration requirements | Planned; independent of deployment |
 | M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Deferred: hosting undecided |
 | M12 | Capture items through Telegram Inbox | M11c | Deferred |
@@ -199,7 +199,7 @@ Implemented with axum-login 0.18.0, tower-sessions 0.14.0, SQLx store 0.15.0 and
 
 ### M11a — Administrator-managed accounts
 
-Requested direction: a separate admin page to add friends when needed. Proposed scope: pending-account creation, single-use activation/password-reset links delivered manually, disable/reactivate, session revocation, last-admin protection and local recovery. Admin privileges manage accounts, not automatic access to private lists. No public sign-up or initial SMTP requirement. Detailed design awaits review.
+Implemented after authorization on 2026-10-29: separate /admin page, friend-only user creation, single-use 24-hour activation/reset links delivered manually, disable/reactivate, revocation, last-admin protection and existing local recovery. Private content remains owner-scoped. No public sign-up, SMTP, role promotion or account deletion. See [Account administration](account-administration.md) and [implementation record](plans/m11a-account-administration.md). Implementation defaults await review.
 
 ### M11b — Personal API tokens
 
@@ -295,3 +295,7 @@ M0–M4 are unchanged. Earlier decision entries retain the milestone numbers use
 ## Access-first replan — 2026-10-28
 
 The user requested account/token design and admin-created friends before deployment, without public self-registration. M11 now covers identity/sessions; M11a administration; M11b optional integration credentials; former deployment work becomes M11c. Detailed mechanisms in [Access control](access-control.md) are proposals, not implementation approval. M10 date assignment/display was reviewed positively; its full acceptance status is unchanged.
+
+## First-release sequence — 2026-10-29
+
+Agreed: finish M11a locally, then run a release-readiness pass (reauthentication/drafts, two-user isolation, database upgrade and backup restoration), followed by remaining small UI/error/empty-state polish. Railway availability does not block this work. API tokens/integrations can follow; deployment remains M11c and is not authorized by this implementation request.

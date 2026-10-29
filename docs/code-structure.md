@@ -90,3 +90,7 @@ Implemented flow: read-only decode/preview → explicit confirmation → existin
 ## Authentication — M11
 
 `auth/mod.rs` owns principal/account types, credential validation, bounded blocking password hashing and axum-login backend integration; `auth/store.rs` owns SQL/transactions and library-store cleanup; `auth/routes.rs` owns extraction/status/route protection. HTTP middleware supplies a fresh owner-scoped Store as a request extension. Local-only test construction remains explicit and refuses accounts at request time. `App.svelte` gates/mounts the editor shell, `lib/auth.ts` provides credential/session transport, and `AccountDialog` owns transient account controls. Workspace pause/logout/reconcile methods stay free of DOM/cookie/Svelte dependencies. API transport carries an expected owner to prevent account-switch replay.
+
+## Account administration — M11a
+
+`accounts/mod.rs` defines lifecycle/response types and standard OS randomness/digest primitives; `accounts/store.rs` owns authority checks, account changes, token redemption and audit transactions; `accounts/routes.rs` owns HTTP extraction/status and admin/public-link route boundaries. Admin routes nest behind M11 principal resolution; public link POSTs are explicit exceptions requiring token proof. `AdminPage`, `ActivationPage` and `lib/accounts.ts` remain separate from tree/history/Workspace modules. App preserves the editor instance across /admin navigation and protects same-owner reauthentication.

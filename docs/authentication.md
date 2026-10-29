@@ -1,6 +1,6 @@
 # Authentication and browser sessions — M11
 
-M11 is implemented for local review. No JWT, public registration, friend-management UI, activation links or personal API tokens are included. Those account/integration features remain M11a/M11b; deployment remains M11c. The server still binds to loopback and allows only the configured local Host/Origin values.
+M11 is implemented for local review. M11 supplies no JWT or public registration. M11a now adds the [friend-management UI and activation/reset links](account-administration.md); personal API tokens remain M11b and deployment M11c. The server still binds to loopback and allows only the configured local Host/Origin values.
 
 ## First administrator and recovery
 
@@ -33,7 +33,7 @@ An application grant binds the session to an owner/auth version and records crea
 
 Account offers session listing, individual revocation, sign out all sessions, and password change. Changing a password verifies the current password and revokes every session including this one. A disabled account is rejected on every request. Future M11a disable/reactivate operations must also rotate auth version and revoke grants transactionally. Requests already authorized before a concurrent revocation may finish; subsequent authorization fails. Expired grant/library rows are cleaned on successful login; no periodic cleanup worker is included.
 
-Sign-in and password-change attempts share durable limits: 10 attempts per normalized login and 100 globally per 15-minute fixed window, including successful attempts. Expired buckets are removed before reservation; the global cap bounds unknown-login bucket growth. Account password checks, global rate policy and hash concurrency are enforced server-side. The global limit is conservative for a small private installation and is not a distributed/per-IP production policy. Unknown valid login names do dummy Argon2 verification and receive the same credential error.
+Sign-in, password-change and M11a access-link attempts share durable limits: 10 attempts per normalized login (or public access-link bucket) and 100 globally per 15-minute fixed window, including successful attempts. Expired buckets are removed before reservation; the global cap bounds unknown-login bucket growth. Account password checks, global rate policy and hash concurrency are enforced server-side. The global limit is conservative for a small private installation and is not a distributed/per-IP production policy. Unknown valid login names do dummy Argon2 verification and receive the same credential error.
 
 ## Browser state and expired access
 

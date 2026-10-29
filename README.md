@@ -18,7 +18,7 @@ Open http://127.0.0.1:5173. `make dev` starts the Rust API, applies embedded mig
 
 The default SQLite file is `data/forget-me-not.sqlite`, excluded from Git. A local user is provisioned once and reused across restarts. New installations start with no lists; choose **New list** to begin. Each list supports a plain-text heading rename, items, tasks, and autosave after a short pause.
 
-**Loopback use:** password login and persistent browser sessions are enabled by default. Bootstrap attaches credentials to the existing local owner and preserves their lists. Stop an older dev process before upgrading. Account manages sessions and password changes. Admin-managed friends remain M11a; deployment/HTTPS remain M11c. See [Authentication](docs/authentication.md).
+**Loopback use:** password login and persistent browser sessions are enabled by default. Bootstrap attaches credentials to the existing local owner and preserves their lists. Stop an older dev process before upgrading. Account manages sessions and password changes. Administrators can use Manage people to add friends through single-use activation links; deployment/HTTPS remain M11c. See [Authentication](docs/authentication.md).
 
 ## Tags and filtering
 
@@ -139,3 +139,5 @@ See the [documentation](docs/README.md), [milestones](docs/milestones.md), and [
 Licensed under the [MIT License](LICENSE).
 
 M10 adds date-only deadlines through the Date action or D in navigation, with local Today/Overdue status and undoable changes. See [Due dates](docs/dates.md). Restart `make dev` after upgrading so the embedded additive migration runs.
+
+Account administration: open **Manage people** after administrator login. New friends set their own password through a single-use 24-hour link, with no public registration or SMTP requirement. See [Account administration](docs/account-administration.md). Restart the backend for the M11a additive migration; existing accounts do not need bootstrapping again.

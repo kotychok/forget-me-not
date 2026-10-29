@@ -1,6 +1,6 @@
 # Access control — roadmap and design
 
-Updated: 2026-10-28. The user requested access design before deployment, no public self-registration for now, and an administration page for adding friends. The user subsequently authorized M11 implementation and chose server-side sessions over JWT. Its implemented defaults are recorded in [Authentication](authentication.md); the remaining administration/integration/deployment details below remain proposals. M10 assignment/display was checked by the user; its remaining acceptance is unchanged.
+Updated: 2026-10-29. The user requested access design before deployment, no public self-registration for now, and an administration page for adding friends. The user subsequently authorized M11 implementation and chose server-side sessions over JWT. Its implemented defaults are recorded in [Authentication](authentication.md); M11a was subsequently authorized on 2026-10-29 and is documented in [Account administration](account-administration.md). Integration/deployment details below remain proposals. M10 assignment/display was checked by the user; its remaining acceptance is unchanged.
 
 ## Proposed delivery order
 

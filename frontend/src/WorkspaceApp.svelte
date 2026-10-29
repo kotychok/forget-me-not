@@ -338,7 +338,8 @@
             bind:this={titleButton}
             aria-label="Rename list"
             disabled={!selectedId || busy}
-            onclick={beginRename}>{title}</button
+            onclick={beginRename}
+            >{loadError && !selectedId ? 'Could not load lists' : title}</button
           ><span>.</span>
         </h1>
       {/if}
@@ -353,7 +354,8 @@
         role="status"
         aria-label="Save status"
       >
-        {#if loading}Loading lists…{:else if selectedId}
+        {#if loading}Loading lists…{:else if loadError && !selectedId}Lists
+          could not be loaded.{:else if selectedId}
           {saveStatus === 'saved'
             ? 'Saved'
             : saveStatus === 'saving'
@@ -429,9 +431,13 @@
             />
           {/key}
         {/if}
-      {:else if !loading}
-        <div class="empty">
-          <p>A clear space for your next thought.</p>
+      {:else if !loading && !loadError}
+        <div class="empty workspace-empty">
+          <h2>Your space starts here</h2>
+          <p>
+            Create a list for your thoughts, tasks or links. You can add more
+            lists whenever you need them.
+          </p>
           <button disabled={busy} onclick={newList}
             >＋ Create your first list</button
           >

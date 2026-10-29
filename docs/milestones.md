@@ -23,7 +23,8 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M10 | Task dates | M4 | Implemented and verified; awaiting user review |
 | M11 | Accounts, login and browser sessions | M4; access design | Implemented and verified; awaiting user review |
 | M11a | Admin-managed friends and account activation | M11 | Complete (accepted and committed by user) |
-| R1 | Local release-readiness and backup restoration | M11a | Implemented and verified; awaiting user review |
+| R1 | Local release-readiness and backup restoration | M11a | Verified; user tested backup successfully |
+| R2 | Pre-release UX polish | R1 | Implemented and verified; awaiting user review |
 | M11b | Scoped personal API tokens | M11; integration requirements | Planned; independent of deployment |
 | M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Deferred: hosting undecided |
 | M12 | Capture items through Telegram Inbox | M11c | Deferred |
@@ -304,3 +305,7 @@ Agreed: finish M11a locally, then run a release-readiness pass (reauthentication
 ## R1 — Local release-readiness
 
 Authorized after user acceptance/commit of M11a. Adds consistent SQLite backup/verification, restore to a fresh file with candidate-only upgrades and access invalidation, plus a browser installation-identity guard. Verify source/target safety, migration compatibility, restored content/ownership/view metadata, sessions/links and draft scope. See [backup/restore](backup-restore.md) and [readiness record](plans/r1-release-readiness.md). Hosting and remaining UI polish remain separate.
+
+## R2 — Pre-release UX polish
+
+Authorized after the user successfully tested backup and agreed to the next UX pass. Scope: consistent form/action hierarchy and accessible validation for existing dialogs, useful empty-search/list states, readable transport errors, and separating initial-load failure from a genuinely empty workspace. Preserve keyboard/history, uncertain-write handling, owner/installation scope and all data formats. See [UX implementation record](plans/r2-ux-polish.md).

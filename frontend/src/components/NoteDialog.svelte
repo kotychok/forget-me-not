@@ -69,17 +69,26 @@
       <MarkdownView text={draft} interactive />
     </div>{/if}
   <label for="item-note">Note text</label>
-  <textarea id="item-note" bind:this={input} bind:value={draft} rows="12"
-  ></textarea>
-  <p class:error-message={bytes > 65536}>{bytes} / 65536 bytes</p>
+  <textarea
+    aria-describedby="note-size"
+    aria-invalid={bytes > 65536}
+    placeholder="Add details, context or links…"
+    id="item-note"
+    bind:this={input}
+    bind:value={draft}
+    rows="12"></textarea>
+  <p id="note-size" class="field-hint" class:error-message={bytes > 65536}>
+    {bytes} / 65536 bytes
+  </p>
   <div class="transfer-actions">
     <button
+      class="dialog-primary"
       disabled={bytes > 65536}
       onclick={() => {
         if (!item) return;
         onapply(item.id, draft);
         close();
       }}>Apply note</button
-    ><button onclick={close}>Cancel</button>
+    ><button class="dialog-cancel" onclick={close}>Cancel</button>
   </div>
 </dialog>

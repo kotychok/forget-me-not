@@ -31,19 +31,32 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const administrative = path.startsWith('/auth/admin/');
   if (suspended && (!path.startsWith('/auth/') || administrative))
     throw new ApiError(401, 'Sign in to continue; local changes are kept');
-  const response = await fetch(`/api${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-FMN-Request': '1',
-      ...(expectedInstallation
-        ? { 'X-FMN-Installation': expectedInstallation }
-        : {}),
-      ...(expectedOwner ? { 'X-FMN-Owner': expectedOwner } : {}),
-      ...init?.headers,
-    },
-    signal: AbortSignal.timeout(15_000),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`/api${path}`, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-FMN-Request': '1',
+        ...(expectedInstallation
+          ? { 'X-FMN-Installation': expectedInstallation }
+          : {}),
+        ...(expectedOwner ? { 'X-FMN-Owner': expectedOwner } : {}),
+        ...init?.headers,
+      },
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (error) {
+    const timedOut =
+      error instanceof Error &&
+      ['TimeoutError', 'AbortError'].includes(error.name);
+    // Remain a transport error: uncertain writes/imports must not be treated as rejected HTTP requests.
+    throw new Error(
+      timedOut
+        ? 'The request timed out. The server did not respond in time.'
+        : 'Could not reach the server. Check your connection.',
+    );
+  }
   if (!response.ok) {
     if (
       response.status === 401 &&
@@ -59,7 +72,12 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
       error?.error ?? `Request failed (${response.status})`,
     );
   }
-  return response.status === 204 ? (undefined as T) : response.json();
+  if (response.status === 204) return undefined as T;
+  try {
+    return await response.json();
+  } catch {
+    throw new Error('The server returned an unreadable response.');
+  }
 }
 export type OutlineView = { collapsedItemIds: string[]; revision: number };
 export type ViewChange = { itemId: string; collapsed: boolean };

@@ -1489,3 +1489,133 @@ dialog.date-dialog {
 .activation-page form button:hover:not(:disabled) {
   background: #45633e;
 }
+
+/* Shared form rhythm and action hierarchy across editor/account dialogs. */
+.guide-intro {
+  line-height: 1.65;
+}
+.guide-header {
+  margin-bottom: 16px;
+}
+.guide-header h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.guide-header > .quiet {
+  flex-shrink: 0;
+  min-width: 32px;
+  min-height: 32px;
+}
+.guide label,
+.access-page label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #52664c;
+}
+.guide input:not([type='checkbox']):not([type='file']),
+.guide textarea,
+.access-page input {
+  border: 1px solid #cbd6c3;
+  border-radius: 6px;
+  background: #fcfcf8;
+  color: #303b35;
+  padding: 11px 12px;
+  min-width: 0;
+  font: inherit;
+}
+.guide input:focus-visible,
+.guide textarea:focus-visible,
+.access-page input:focus-visible {
+  outline: 2px solid #719269;
+  outline-offset: 2px;
+}
+.guide [aria-invalid='true'] {
+  border-color: #ae6550 !important;
+}
+.note-dialog > .quiet {
+  margin-bottom: 14px;
+  padding: 6px 0;
+  color: #58744d;
+}
+.field-hint {
+  display: block;
+  margin: 8px 0 14px;
+  color: #788570;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.guide .transfer-actions {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #dfe5d8;
+  align-items: center;
+}
+.guide .transfer-actions button {
+  border-radius: 5px;
+  min-height: 38px;
+}
+.guide .transfer-actions .dialog-primary,
+.access-page form button,
+.account-dialog form button {
+  background: #55764e;
+  color: white;
+  border: 1px solid #55764e;
+}
+.guide .transfer-actions .dialog-primary:hover:not(:disabled),
+.access-page form button:hover:not(:disabled),
+.account-dialog form button:hover:not(:disabled) {
+  background: #45633e;
+  border-color: #45633e;
+}
+.guide .transfer-actions .dialog-cancel {
+  margin-left: auto;
+  color: #72806c;
+  border-color: transparent;
+  background: transparent;
+}
+.dialog-empty {
+  padding: 22px;
+  margin: 12px 0;
+  border: 1px dashed #ccd8c1;
+  border-radius: 6px;
+  color: #52664c;
+}
+.dialog-empty p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 8px 0 0;
+  color: #72806c;
+}
+.workspace-empty {
+  border: 1px dashed #ccd8c1;
+  border-radius: 8px;
+  padding: 32px 24px;
+  margin-top: 24px;
+  text-align: center;
+}
+.workspace-empty h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  color: #48613e;
+}
+.workspace-empty p {
+  max-width: 400px;
+  margin: 0 auto 20px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #72806c;
+}
+.workspace-empty button {
+  padding: 10px 16px;
+  background: #e2ebdc;
+  color: #48613e;
+  border: 1px solid #ccd7c4;
+}
+.error-message {
+  overflow-wrap: anywhere;
+}
+.error-message .field-hint {
+  color: #8e6153;
+  margin-bottom: 0;
+}

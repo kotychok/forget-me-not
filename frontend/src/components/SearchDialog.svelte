@@ -123,13 +123,25 @@
     >Refresh search</button
   >
   {#if error}<p class="error-message" role="alert">
-      {error} Search uses the snapshot limits: 100 lists, 10,000 items, 8 MiB.
+      {error} Use Refresh search to try loading the results again.
+      <span class="field-hint"
+        >Search supports up to 100 lists, 10,000 items and 8 MiB.</span
+      >
     </p>{/if}
   <p role="status" aria-label="Search status">
     {#if loading}Loading search…{:else if !query.trim()}Enter text to search.{:else if !error}{results.total}
       results{#if results.total > results.hits.length}
         — showing first {results.hits.length}; refine your search{/if}{/if}
   </p>
+  {#if !loading && !error && query.trim() && results.total === 0}
+    <div class="dialog-empty">
+      <strong>No matches found</strong>
+      <p>
+        Try a shorter phrase or a different spelling. Search also includes
+        notes, tags and dates.
+      </p>
+    </div>
+  {/if}
   <div
     class="search-results"
     bind:this={resultList}

@@ -85,3 +85,5 @@ Access-first replan: M11 accounts/login/sessions → M11a admin-managed friends 
 M11a is implemented for local review following the agreed 2026-10-29 sequence. Release-readiness checks (including backup restoration) and remaining polish follow; Railway does not block local work.
 
 M11a was accepted and committed by the user. R1 implements the agreed local backup/restore and release verification stage; remaining UX polish and deployment follow separately.
+
+The user successfully tested backup. R2 now polishes existing dialogs, empty states and loading/network errors before the first release. See [UX polish](plans/r2-ux-polish.md); hosting remains M11c.

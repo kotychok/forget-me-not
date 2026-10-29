@@ -69,7 +69,7 @@
     <button class="quiet" aria-label="Close tags" onclick={close}>✕</button>
   </div>
   <p class="note-item-title">{item?.text || 'Empty item'}</p>
-  <p class="guide-intro">
+  <p class="guide-intro" id="tags-help">
     Case-sensitive names, separated by commas. Up to 12 tags, 40 characters
     each. Apply is one undoable change.
   </p>
@@ -81,11 +81,14 @@
   >
     <label for="item-tags">Tags</label><input
       id="item-tags"
+      aria-describedby={parsed.error ? 'tags-help tags-error' : 'tags-help'}
+      aria-invalid={!!parsed.error}
+      placeholder="work, personal, reading"
       bind:this={input}
       bind:value={draft}
       autocomplete="off"
     />
-    {#if parsed.error}<p class="error-message" role="alert">
+    {#if parsed.error}<p id="tags-error" class="error-message" role="alert">
         {parsed.error}
       </p>{/if}
     {#if suggestions.length}<div
@@ -102,9 +105,10 @@
           >{/each}
       </div>{/if}
     <div class="transfer-actions">
-      <button type="submit" disabled={!!parsed.error}>Apply tags</button><button
-        type="button"
-        onclick={close}>Cancel</button
+      <button class="dialog-primary" type="submit" disabled={!!parsed.error}
+        >Apply tags</button
+      ><button class="dialog-cancel" type="button" onclick={close}
+        >Cancel</button
       >
     </div>
   </form>

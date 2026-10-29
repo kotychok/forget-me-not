@@ -90,4 +90,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D054 | 2026-10-29 | Authorized release verification / defaults | Proceed after accepted/committed M11a with local backup/restore and release-readiness checks. Native consistent snapshots verify integrity/FKs and migration prefixes; restore publishes a fresh candidate only, applies pending migrations there and retires old sessions/links while changing installation identity. Cached edits must not replay across that identity change. Existing content IDs/owners stay intact; host-specific deployment and UX polish remain separate |
 
+| D055 | 2026-10-29 | Authorized UX pass | After successful user backup verification, polish existing dialogs/forms, empty states and actionable load/transport errors. Keep tree commands, history, formats and access isolation unchanged; transport failures must remain uncertain for import/save handling. No deployment or commit is included |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

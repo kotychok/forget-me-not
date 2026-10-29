@@ -110,7 +110,7 @@
           autocomplete="off"
         /><small>Letters, digits, dots, underscores or hyphens.</small>
       </div>
-      <button class="admin-primary" disabled={busy}
+      <button class="admin-primary dialog-primary" disabled={busy}
         >Create activation link</button
       >
     </form>
@@ -254,7 +254,7 @@
   </p>
   <div class="transfer-actions">
     <button
-      class="admin-primary"
+      class="admin-primary dialog-primary"
       onclick={async () => {
         try {
           await navigator.clipboard.writeText(link);

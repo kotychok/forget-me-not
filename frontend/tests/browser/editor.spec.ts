@@ -638,3 +638,22 @@ test('floating back-to-top control appears on long lists and restores heading fo
     page.getByRole('button', { name: 'Rename list', exact: true }),
   ).toBeFocused();
 });
+
+test('failed initial loading offers retry without a misleading first-list prompt', async ({
+  page,
+}) => {
+  await page.route('**/api/lists', (route) =>
+    route.request().method() === 'GET' ? route.abort() : route.continue(),
+  );
+  await page.reload();
+  await expect(page.getByRole('alert')).toContainText(
+    'Could not reach the server',
+  );
+  await expect(
+    page.getByRole('button', { name: 'Create your first list', exact: false }),
+  ).toHaveCount(0);
+  await page.unroute('**/api/lists');
+  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  await expect(page.locator('.item-text').first()).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});

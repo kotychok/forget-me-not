@@ -1,4 +1,4 @@
-use forget_me_not::{Store, app, authenticated_app};
+use forget_me_not::{Store, app, authenticated_app_with_access, server_config::HttpAccess};
 use std::path::PathBuf;
 
 #[tokio::main]
@@ -31,6 +31,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         println!("{}", serde_json::to_string(&report)?);
         return Ok(());
     }
+    // Validate serving configuration before opening/migrating a database. Maintenance
+    // commands deliberately remain usable when the HTTP configuration is broken.
+    let environment = std::env::var("FMN_ENV").unwrap_or_else(|_| "local".into());
+    let mode = std::env::var("FMN_AUTH_MODE").unwrap_or_else(|_| "password".into());
+    let port: u16 = std::env::var("FMN_PORT")
+        .unwrap_or_else(|_| "3001".into())
+        .parse()?;
+    let frontend_port: u16 = std::env::var("FMN_FRONTEND_PORT")
+        .unwrap_or_else(|_| "5173".into())
+        .parse()?;
+    let access = if args.is_empty() {
+        match environment.as_str() {
+            "production" => {
+                if mode != "password" {
+                    return Err("Production requires FMN_AUTH_MODE=password".into());
+                }
+                Some(HttpAccess::production(
+                    &std::env::var("FMN_PUBLIC_ORIGIN")
+                        .map_err(|_| "Production requires FMN_PUBLIC_ORIGIN")?,
+                )?)
+            }
+            "local" => {
+                if std::env::var_os("FMN_PUBLIC_ORIGIN").is_some() {
+                    return Err("FMN_PUBLIC_ORIGIN requires FMN_ENV=production".into());
+                }
+                Some(HttpAccess::local(port, frontend_port))
+            }
+            _ => return Err("FMN_ENV must be local or production".into()),
+        }
+    } else {
+        None
+    };
     let store = Store::open(&path).await?;
     if args
         .first()
@@ -85,17 +117,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     if !args.is_empty() {
         return Err("Unknown command arguments".into());
     }
-    let port: u16 = std::env::var("FMN_PORT")
-        .unwrap_or_else(|_| "3001".into())
-        .parse()?;
-    let frontend_port: u16 = std::env::var("FMN_FRONTEND_PORT")
-        .unwrap_or_else(|_| "5173".into())
-        .parse()?;
     let assets =
         PathBuf::from(std::env::var("FMN_ASSETS_PATH").unwrap_or_else(|_| "frontend/dist".into()));
-    let mode = std::env::var("FMN_AUTH_MODE").unwrap_or_else(|_| "password".into());
+    let access = access.ok_or("Missing HTTP configuration")?;
+    let production = access.is_production();
+    if production
+        && (!assets.join("index.html").is_file()
+            || !forget_me_not::auth::configured(&store.pool).await?)
+    {
+        return Err("Production requires built assets and a bootstrapped administrator".into());
+    }
     let router = match mode.as_str() {
-        "password" => authenticated_app(store.clone(), port, frontend_port, &assets)
+        "password" => authenticated_app_with_access(store.clone(), &assets, access)
             .await
             .map_err(|_| "Authentication initialization failed")?,
         "local" => {
@@ -110,10 +143,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         }
         _ => return Err("FMN_AUTH_MODE must be password or local".into()),
     };
-    let listener = tokio::net::TcpListener::bind((std::net::Ipv4Addr::LOCALHOST, port)).await?;
-    println!("Loopback server: http://127.0.0.1:{port} (access mode: {mode})");
+    let bind = if production {
+        std::net::Ipv4Addr::UNSPECIFIED
+    } else {
+        std::net::Ipv4Addr::LOCALHOST
+    };
+    let listener = tokio::net::TcpListener::bind((bind, port)).await?;
+    println!("Server: http://{bind}:{port} (environment: {environment}, access mode: {mode})");
     axum::serve(listener, router)
         .with_graceful_shutdown(async {
+            #[cfg(unix)]
+            {
+                let mut terminate =
+                    tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                        .expect("SIGTERM handler");
+                tokio::select! { _ = tokio::signal::ctrl_c() => {}, _ = terminate.recv() => {} }
+            }
+            #[cfg(not(unix))]
             let _ = tokio::signal::ctrl_c().await;
         })
         .await?;

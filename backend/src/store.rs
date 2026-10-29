@@ -91,6 +91,15 @@ pub struct Store {
     pub owner_id: String,
 }
 impl Store {
+    /// Readiness probe checks that the migrated database pool is still usable.
+    pub async fn ready(&self) -> crate::error::Result<()> {
+        sqlx::query_scalar::<_, i32>("SELECT 1")
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|_| crate::error::AppError::Storage)?;
+        Ok(())
+    }
+
     pub async fn open(
         path: &FsPath,
     ) -> std::result::Result<Self, Box<dyn std::error::Error + Send + Sync>> {

@@ -45,7 +45,7 @@ struct AppState {
     authorities: Vec<String>,
     authenticated: bool,
 }
-async fn local_only(
+async fn enforce_access(
     State(state): State<AppState>,
     headers: HeaderMap,
     mut request: axum::extract::Request,
@@ -70,7 +70,7 @@ async fn local_only(
     }
     let host = headers.get("host").and_then(|value| value.to_str().ok());
     if !host.is_some_and(|host| state.authorities.iter().any(|allowed| allowed == host)) {
-        return http_error(StatusCode::FORBIDDEN, "Only local access is supported");
+        return http_error(StatusCode::FORBIDDEN, "Host is not allowed");
     }
     if let Some(origin) = headers.get("origin")
         && !origin
@@ -111,7 +111,12 @@ async fn local_only(
 }
 /// Explicit legacy local-only app, used by isolated editor tests and opt-in development mode.
 pub fn app(store: Store, backend_port: u16, frontend_port: u16, assets: &FsPath) -> Router {
-    build(store, backend_port, frontend_port, assets, None)
+    build(
+        store,
+        assets,
+        None,
+        crate::server_config::HttpAccess::local(backend_port, frontend_port),
+    )
 }
 pub async fn authenticated_app(
     store: Store,
@@ -119,35 +124,34 @@ pub async fn authenticated_app(
     frontend_port: u16,
     assets: &FsPath,
 ) -> Result<Router> {
+    authenticated_app_with_access(
+        store,
+        assets,
+        crate::server_config::HttpAccess::local(backend_port, frontend_port),
+    )
+    .await
+}
+pub async fn authenticated_app_with_access(
+    store: Store,
+    assets: &FsPath,
+    access: crate::server_config::HttpAccess,
+) -> Result<Router> {
     let backend = crate::auth::Backend::new(store.pool.clone())
         .await
         .map_err(|_| AppError::Storage)?;
-    Ok(build(
-        store,
-        backend_port,
-        frontend_port,
-        assets,
-        Some(backend),
-    ))
+    Ok(build(store, assets, Some(backend), access))
 }
 fn build(
     store: Store,
-    backend_port: u16,
-    frontend_port: u16,
     assets: &FsPath,
     auth: Option<crate::auth::Backend>,
+    access: crate::server_config::HttpAccess,
 ) -> Router {
-    let authorities: Vec<String> = [backend_port, frontend_port]
-        .iter()
-        .flat_map(|port| [format!("127.0.0.1:{port}"), format!("localhost:{port}")])
-        .collect();
+    let secure = access.secure;
     let state = AppState {
         store,
-        origins: authorities
-            .iter()
-            .map(|host| format!("http://{host}"))
-            .collect(),
-        authorities,
+        origins: access.origins,
+        authorities: access.authorities,
         authenticated: auth.is_some(),
     };
     let mut api = Router::new()
@@ -180,10 +184,18 @@ fn build(
         api = api.route_layer(middleware::from_fn(crate::auth::require_user));
     }
     let authenticated = auth.is_some();
+    let health_store = state.store.clone();
     api = api.route(
         "/health",
-        get(move || async move {
-            Json(serde_json::json!({"mode":if authenticated {"password"} else {"local-only"}}))
+        get(move || {
+            let store = health_store.clone();
+            async move {
+                if store.ready().await.is_err() {
+                    return http_error(StatusCode::SERVICE_UNAVAILABLE, "Database unavailable");
+                }
+                Json(serde_json::json!({"mode":if authenticated {"password"} else {"local-only"}}))
+                    .into_response()
+            }
         }),
     );
     let mut router = Router::new()
@@ -197,9 +209,9 @@ fn build(
         let session_layer = tower_sessions::SessionManagerLayer::new(
             tower_sessions_sqlx_store::SqliteStore::new(backend.pool.clone()),
         )
-        .with_name("fmn.sid")
+        .with_name(if secure { "__Host-fmn.sid" } else { "fmn.sid" })
         .with_http_only(true)
-        .with_secure(false)
+        .with_secure(secure)
         .with_same_site(tower_sessions::cookie::SameSite::Strict)
         .with_expiry(tower_sessions::Expiry::OnInactivity(
             time::Duration::seconds(crate::auth::IDLE_SECONDS),
@@ -213,7 +225,7 @@ fn build(
             get(|| async { Json(serde_json::json!({"mode":"local","configured":true})) }),
         );
     }
-    router.layer(middleware::from_fn_with_state(state, local_only))
+    router.layer(middleware::from_fn_with_state(state, enforce_access))
 }
 async fn list_all(Extension(store): Extension<Store>) -> Result<Json<Vec<ListSummary>>> {
     Ok(Json(store.lists().await?))

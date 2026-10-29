@@ -7,6 +7,9 @@ help:
 	@echo "dev             Run frontend and backend locally (no Docker)"
 	@echo "build           Build frontend and backend"
 	@echo "run             Serve the built application on localhost:3001"
+	@echo "image-build     Build the runtime image locally (Docker required)"
+	@echo "test-container  Smoke-test IMAGE with disposable container data"
+	@echo "deploy-config / deploy-pull / deploy-up / deploy-logs   Use deploy/.env on this machine"
 	@echo "auth-bootstrap LOGIN=name Create the first local administrator (hidden password prompt)"
 	@echo "auth-reset LOGIN=name     Recover the local administrator password and revoke sessions"
 	@echo "test-browser-auth         Run isolated authenticated browser tests"
@@ -62,3 +65,20 @@ db-verify:
 	$(CARGO) run --locked --manifest-path backend/Cargo.toml -- --verify-backup
 db-restore:
 	$(CARGO) run --locked --manifest-path backend/Cargo.toml -- --restore-backup
+
+IMAGE ?= forget-me-not:local
+COMPOSE = docker compose --env-file deploy/.env -f deploy/compose.yaml
+.PHONY: image-build test-container deploy-config deploy-pull deploy-up deploy-logs
+image-build:
+	docker build --tag "$(IMAGE)" .
+test-container: export IMAGE := $(IMAGE)
+test-container:
+	node scripts/test-container.mjs
+deploy-config:
+	$(COMPOSE) config --quiet
+deploy-pull:
+	$(COMPOSE) pull
+deploy-up:
+	$(COMPOSE) up -d --wait
+deploy-logs:
+	$(COMPOSE) logs --tail=100 app

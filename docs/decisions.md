@@ -92,4 +92,8 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D055 | 2026-10-29 | Authorized UX pass | After successful user backup verification, polish existing dialogs/forms, empty states and actionable load/transport errors. Keep tree commands, history, formats and access isolation unchanged; transport failures must remain uncertain for import/save handling. No deployment or commit is included |
 
+| D056 | 2026-10-29 | Agreed hosting direction / authorized documentation | Plan DigitalOcean (1 vCPU / 1 GiB / 25 GiB), no VPS Coolify, shared Caddy for several small projects, GitHub Actions builds and GHCR image storage, with initial manual deployment. Supersedes the undecided hosting direction in D037; production mechanisms and configurations remain M11c work. Write the step-by-step guide without publishing or provisioning resources |
+
+| D057 | 2026-10-29 | Authorized release preparation / defaults | Prepare Docker, GitHub Actions and GHCR after VPS preparation. Production uses explicit HTTPS origin, password-only auth, host-only Secure cookies, strict Host/Origin checks and no forwarded identity trust. Version-tag publishing follows tests of the exact image; manual VPS deployment remains separate. Temporary sslip.io hosting is an option pending public verification; no real credentials or server changes are included |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

@@ -98,3 +98,7 @@ Implemented flow: read-only decode/preview → explicit confirmation → existin
 ## Local maintenance — R1
 
 `maintenance.rs` owns read-only SQLite verification, consistent snapshots, staging/publication and restored-access retirement. Main dispatches these CLI operations before Store::open; none are HTTP routes. Workspace retains its initialized identity and rechecks it before resuming authenticated content queues. The access gate keeps requests suspended on reauthentication failure. Neither maintenance filesystems nor cookies enter the tree/history model.
+
+## Deployment — M11c
+
+`server_config.rs` constructs explicit local/production HTTP access policy; `http.rs` applies Host/Origin/CSRF checks and cookie settings without trusting forwarded identity headers. Main validates production requirements, chooses container versus loopback binding and handles termination signals. Store owns readiness SQL. Dockerfile builds a non-root runtime with maintenance commands; deploy/ supplies independent application/edge Compose projects. CI checks and smoke-tests disposable container data before publishing the exact image on a version-tag push. Deployment mechanisms do not enter editor or content modules.

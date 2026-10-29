@@ -66,3 +66,7 @@ Implementation evidence: [M11 record](plans/m11-authentication.md). Library sour
 Database restoration through the R1 maintenance command retires browser sessions, grants and pending access links, rotates auth versions and assigns a new installation ID. Password/status state remains that of the snapshot; review restored accounts and use local recovery if needed. Old tabs require reload after preserving local edits; see [Backup and restore](backup-restore.md).
 
 R1 also pins the initialized installation ID in private API request headers. Server-side comparison rejects old-tab payloads even if another tab obtained a new same-owner cookie; normal reauthentication cannot change the pinned scope. Logout/reload initializes a fresh workspace.
+
+## Production transport — M11c
+
+Native local execution keeps its loopback policy and development cookie. FMN_ENV=production selects a container listener and requires one exact FMN_PUBLIC_ORIGIN HTTPS hostname and password authentication. It uses __Host-fmn.sid with Secure, HttpOnly, SameSite=Strict, Path=/ and no Domain. The proxy must preserve the original Host; X-Forwarded-Host/Proto and Forwarded never grant origin or identity trust. Existing CSRF and server-side grant/owner/installation checks remain in force. See [deployment guide](deployment.md); no public deployment has been verified yet.

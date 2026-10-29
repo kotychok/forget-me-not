@@ -26,7 +26,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | R1 | Local release-readiness and backup restoration | M11a | Verified; user tested backup successfully |
 | R2 | Pre-release UX polish | R1 | Implemented and verified; awaiting user review |
 | M11b | Scoped personal API tokens | M11; integration requirements | Planned; independent of deployment |
-| M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Deferred: hosting undecided |
+| M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Release image, production config and CI prepared; public deployment pending |
 | M12 | Capture items through Telegram Inbox | M11c | Deferred |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
 | M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Deferred |
@@ -209,7 +209,9 @@ Proposed separate milestone for integrations: scoped random bearer tokens, diges
 
 ### M11c — Deployment and recovery
 
-Former M11 deployment scope moves here; M12–M15 numbers stay unchanged. Hosting remains undecided. Prerequisites: M11 and M11a implemented and accepted; selected host/HTTPS/proxy configuration; backups and restore policy.
+Former M11 deployment scope moves here; M12–M15 numbers stay unchanged. Hosting direction is DigitalOcean (1 vCPU / 1 GiB / 25 GiB), Docker without Coolify, shared Caddy for multiple small projects, GitHub Actions and GHCR; initial deployments are manual. See the [step-by-step guide](deployment.md), including release configuration and pending public verification. Prerequisites: M11 and M11a implemented and accepted; selected host/HTTPS/proxy configuration; backups and restore policy.
+
+Implementation record: [M11c release preparation](plans/m11c-release-preparation.md). Public deployment remains unverified.
 
 Scope: Docker image/Compose if selected, native/container Makefile commands, persistent storage, migration startup, protected installation and operating instructions. Verify authentication/owner isolation in the deployed configuration, restart persistence, upgrade failure behavior and consistent SQLite backup restoration. Deployment must not enable the local development identity bypass. Publishing/modifying a real host requires a concrete deployment request.
 

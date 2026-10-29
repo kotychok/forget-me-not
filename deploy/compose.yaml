@@ -1,0 +1,40 @@
+name: forget-me-not
+services:
+  app:
+    image: ${FMN_IMAGE:?Set FMN_IMAGE to the reviewed GHCR image digest}
+    restart: "on-failure:3"
+    environment:
+      FMN_ENV: production
+      FMN_AUTH_MODE: password
+      FMN_PUBLIC_ORIGIN: https://${FMN_HOST:?Set FMN_HOST to the public hostname}
+      FMN_DB_PATH: /data/${FMN_DB_FILE:-forget-me-not.sqlite}
+    volumes:
+      - data:/data
+      - backups:/backups
+    networks:
+      edge:
+        aliases:
+          - forget-me-not
+    healthcheck:
+      test: [CMD-SHELL, 'curl --fail --silent --max-time 3 -H "Host: ${FMN_HOST:?Set FMN_HOST}" http://127.0.0.1:3001/api/health >/dev/null']
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  edge:
+    name: fmn-edge
+    external: true
+volumes:
+  data:
+  backups:

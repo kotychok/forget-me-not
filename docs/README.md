@@ -1,6 +1,6 @@
 # Documentation
 
-Updated: 2026-10-29. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 was reviewed and committed; M4 draft recovery was reviewed and accepted by the user; M5 links and long-text editing was reviewed and committed; M6 search is implemented for local review; deployment is deferred to M11c while access is designed in M11/M11a and hosting is undecided. Remaining design details are tracked by milestone.
+Updated: 2026-10-29. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 was reviewed and committed; M4 draft recovery was reviewed and accepted by the user; M5 links and long-text editing was reviewed and committed; M6 search is implemented for local review; deployment is deferred to M11c while access is designed in M11/M11a and the selected hosting direction is a small DigitalOcean VPS; see [deployment guide](deployment.md). Remaining design details are tracked by milestone.
 
 ## Agreed with the user
 
@@ -21,12 +21,13 @@ Updated: 2026-10-29. The core direction is agreed. M1 was reviewed and committed
 - Makefile is the common entry point for running, building, and checking.
 - M2 uses one local user without login; production authentication is M11/M11a before M11c deployment.
 - No public self-registration for now; design access before deployment, with an admin page for adding friends.
-- The hosting environment and detailed production authentication policies are still undecided.
+- Hosting direction: DigitalOcean (1 vCPU / 1 GiB / 25 GiB), Docker without Coolify, shared Caddy for multiple projects, GitHub Actions and GHCR. Production configuration remains M11c.
 - The user makes commits.
 - Repository content is in English; chat remains in Ukrainian.
 
 ## Guide
 
+- [VPS deployment guide](deployment.md): DigitalOcean preparation, GitHub Actions/GHCR, shared Caddy, release prerequisites and operations.
 - [Backup and restore](backup-restore.md): local snapshot commands, fresh-path restoration and access/draft behavior.
 - [Account administration](account-administration.md): friend creation, activation/reset links, blocking and revocation.
 - [Authentication](authentication.md): implemented login, bootstrap, sessions, expiry and local recovery.
@@ -87,3 +88,5 @@ M11a is implemented for local review following the agreed 2026-10-29 sequence. R
 M11a was accepted and committed by the user. R1 implements the agreed local backup/restore and release verification stage; remaining UX polish and deployment follow separately.
 
 The user successfully tested backup. R2 now polishes existing dialogs, empty states and loading/network errors before the first release. See [UX polish](plans/r2-ux-polish.md); hosting remains M11c.
+
+M11c release preparation is authorized and implemented for local verification: pinned Docker build and Actions publishing, explicit production HTTP policy, application/edge Compose files, and disposable container tests. Public HTTPS deployment and off-host recovery remain pending; see [deployment guide](deployment.md).

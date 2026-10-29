@@ -119,8 +119,10 @@ Export variables in the shell; `.env` files are not loaded automatically.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
+| `FMN_ENV` | `local` | `production` requires HTTPS origin and password auth; enables container binding and Secure cookies |
+| `FMN_PUBLIC_ORIGIN` | unset | Exact production HTTPS origin without port/path/trailing slash |
 | `FMN_DB_PATH` | `data/forget-me-not.sqlite` | SQLite file path, relative to the working directory |
-| `FMN_PORT` | `3001` | Loopback API / built-app port |
+| `FMN_PORT` | `3001` | API / built-app port; loopback locally, container interface in production |
 | `FMN_FRONTEND_PORT` | `5173` | Vite development port and allowed frontend origin |
 | `FMN_AUTH_MODE` | `password` | Password sessions; explicit `local` bypass only before any account exists |
 | `FMN_ASSETS_PATH` | `frontend/dist` | Built frontend directory |
@@ -145,3 +147,5 @@ Account administration: open **Manage people** after administrator login. New fr
 ## Installation backup
 
 `make db-backup FILE=path.sqlite` creates a verified live SQLite snapshot; `make db-verify FILE=path.sqlite` checks it. Restore only to a new file with `FMN_DB_PATH=data/restored.sqlite make db-restore FILE=path.sqlite`. Create destination directories first. Restore retires old sessions/access links and gives the installation a new draft scope. See [backup and restore](docs/backup-restore.md) for the full procedure and point-in-time credential behavior.
+
+Deployment planning: [DigitalOcean, GHCR and Caddy guide](docs/deployment.md). M11c Docker/runtime and CI configuration are prepared; public deployment remains unverified. Native development remains local-only.

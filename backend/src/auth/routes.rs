@@ -39,6 +39,22 @@ pub async fn require_user(mut auth: AuthSession, mut request: Request, next: Nex
             "Account changed; sign in again before continuing",
         );
     }
+    if let Some(expected) = request
+        .headers()
+        .get("x-fmn-installation")
+        .and_then(|value| value.to_str().ok())
+    {
+        match auth.backend.installation_id().await {
+            Ok(current) if current != expected => {
+                return error(
+                    StatusCode::UNAUTHORIZED,
+                    "Installation identity changed. Preserve local edits and reload before continuing.",
+                );
+            }
+            Ok(_) => {}
+            Err(_) => return storage(),
+        }
+    }
     let grant: Option<String> = match auth.session.get("grant").await {
         Ok(value) => value,
         Err(_) => return storage(),

@@ -62,7 +62,18 @@
       await action();
     } catch (e) {
       error = e instanceof Error ? e.message : 'Access operation failed';
-      if (ready && !locked) await app?.resumeAfterAuthentication();
+      if (ready && locked) suspendApi(true);
+      else if (ready) {
+        try {
+          await app?.resumeAfterAuthentication();
+        } catch (resumeError) {
+          await lock();
+          error =
+            resumeError instanceof Error
+              ? resumeError.message
+              : 'Could not resume workspace';
+        }
+      }
     } finally {
       busy = false;
     }

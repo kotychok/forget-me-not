@@ -147,3 +147,7 @@ Owned GET returns current branch IDs with stale IDs filtered, defaulting to an e
 ## Account administration — M11a
 
 `20261029000800_account_administration.sql` preserves existing credentials/grants while adding activated_at and disabled_by_admin metadata, digest-only purpose/version-bound account_tokens, and actor/target account_audit rows. Pending credentials use an empty hash and disabled authentication state until atomic redemption. Disabling/reissue/reset/revocation change the account version and invalidate grants/links in the same transaction. These tables are not portable content JSON. See [Account administration](account-administration.md).
+
+## Native backup and restoration — R1
+
+Maintenance opens source files read-only without Store::open. Verified VACUUM INTO candidates are published exclusively to fresh paths; restore applies supported migrations only to its candidate and rotates installation/authentication state before publication. No new schema migration is required. Existing applied SQL remains unchanged. See [Backup and restore](backup-restore.md).

@@ -141,3 +141,7 @@ Licensed under the [MIT License](LICENSE).
 M10 adds date-only deadlines through the Date action or D in navigation, with local Today/Overdue status and undoable changes. See [Due dates](docs/dates.md). Restart `make dev` after upgrading so the embedded additive migration runs.
 
 Account administration: open **Manage people** after administrator login. New friends set their own password through a single-use 24-hour link, with no public registration or SMTP requirement. See [Account administration](docs/account-administration.md). Restart the backend for the M11a additive migration; existing accounts do not need bootstrapping again.
+
+## Installation backup
+
+`make db-backup FILE=path.sqlite` creates a verified live SQLite snapshot; `make db-verify FILE=path.sqlite` checks it. Restore only to a new file with `FMN_DB_PATH=data/restored.sqlite make db-restore FILE=path.sqlite`. Create destination directories first. Restore retires old sessions/access links and gives the installation a new draft scope. See [backup and restore](docs/backup-restore.md) for the full procedure and point-in-time credential behavior.

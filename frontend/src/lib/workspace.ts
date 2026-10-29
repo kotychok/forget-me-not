@@ -37,6 +37,8 @@ export class Workspace {
   private notify: () => void;
   readonly drafts: Drafts | undefined;
   private draftIdentityReady = false;
+  private authenticatedIdentity:
+    { serverId: string; ownerId: string } | undefined;
 
   constructor(
     notify: () => void,
@@ -72,6 +74,7 @@ export class Workspace {
       const identity = await this.transport.session();
       if (!identity.serverId || !identity.ownerId)
         throw new Error('Missing server identity');
+      this.authenticatedIdentity = { ...identity };
       await this.drafts.initialize(identity.serverId, identity.ownerId);
       this.draftIdentityReady = true;
     } catch (error) {
@@ -553,6 +556,16 @@ export class Workspace {
     );
   }
   async resumeAfterAuthentication() {
+    if (this.authenticatedIdentity) {
+      const identity = await this.transport.session();
+      if (
+        identity.serverId !== this.authenticatedIdentity.serverId ||
+        identity.ownerId !== this.authenticatedIdentity.ownerId
+      )
+        throw new Error(
+          'Installation identity changed. Download local edits, then reload before continuing. Browser drafts remain in the previous installation scope.',
+        );
+    }
     if (!this.sessions.size) {
       await this.load(this.selectedId);
       return;

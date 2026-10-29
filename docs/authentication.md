@@ -62,3 +62,7 @@ Cookies deliberately have Secure=false for the current HTTP loopback workflow. T
 - `make test-browser-auth` bootstraps a synthetic administrator in a separate disposable DB and tests the login gate, session persistence/revocation, password change, draft retention and same-owner recovery. The synthetic credential is test-only; `scripts/dev.mjs --auth` refuses to run without `--test`.
 
 Implementation evidence: [M11 record](plans/m11-authentication.md). Library sources: [axum-login](https://docs.rs/axum-login/0.18.0/axum_login/), [tower-sessions](https://docs.rs/tower-sessions/0.14.0/tower_sessions/), [SQLx session store](https://docs.rs/tower-sessions-sqlx-store/0.15.0/tower_sessions_sqlx_store/), [Argon2](https://docs.rs/argon2/0.5.3/argon2/).
+
+Database restoration through the R1 maintenance command retires browser sessions, grants and pending access links, rotates auth versions and assigns a new installation ID. Password/status state remains that of the snapshot; review restored accounts and use local recovery if needed. Old tabs require reload after preserving local edits; see [Backup and restore](backup-restore.md).
+
+R1 also pins the initialized installation ID in private API request headers. Server-side comparison rejects old-tab payloads even if another tab obtained a new same-owner cookie; normal reauthentication cannot change the pinned scope. Logout/reload initializes a fresh workspace.

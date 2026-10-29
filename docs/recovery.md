@@ -51,3 +51,7 @@ HTTP retry reconciles a potentially committed snapshot before resending newer ed
 `draft-storage.ts` owns native IndexedDB transactions; `drafts.ts` owns scoped lifecycle, write ordering, and token cleanup; `documents.ts` compares content; Workspace coordinates sessions and recovery actions; RecoveryPanel owns browser UI. Editor commands remain independent of recovery and persistence.
 
 Unit/integration/browser tests cover ordering, scopes, token races, quota failures, reload recovery, two-tab conflicts, deleted sources, lost responses, and migration from the M3 database schema. See [M4 implementation](plans/m4-draft-recovery.md).
+
+## Restored installations — R1
+
+Database restoration creates a new installation identity and invalidates old sessions. A paused tab must not replay cached edits into that installation even if owner IDs and revisions match. Same-owner reauthentication checks the initialized identity first; on mismatch keep edits paused, offer local download and require reload. Browser drafts retain their original scope. See [Backup and restore](backup-restore.md).

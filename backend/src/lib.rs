@@ -16,3 +16,5 @@ pub mod auth;
 pub use http::authenticated_app;
 
 pub mod accounts;
+
+pub mod maintenance;

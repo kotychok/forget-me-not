@@ -1,7 +1,7 @@
 PNPM ?= pnpm
 CARGO ?= cargo
 
-.PHONY: help install dev build run check format test test-browser browser-install db-migrate auth-bootstrap auth-reset test-browser-auth
+.PHONY: db-backup db-verify db-restore help install dev build run check format test test-browser browser-install db-migrate auth-bootstrap auth-reset test-browser-auth
 help:
 	@echo "install         Install locked frontend and backend dependencies"
 	@echo "dev             Run frontend and backend locally (no Docker)"
@@ -10,6 +10,9 @@ help:
 	@echo "auth-bootstrap LOGIN=name Create the first local administrator (hidden password prompt)"
 	@echo "auth-reset LOGIN=name     Recover the local administrator password and revoke sessions"
 	@echo "test-browser-auth         Run isolated authenticated browser tests"
+	@echo "db-backup FILE=path       Create a verified SQLite snapshot without overwriting files"
+	@echo "db-verify FILE=path       Verify integrity and migration compatibility read-only"
+	@echo "db-restore FILE=path      Restore to a new FMN_DB_PATH and invalidate old sessions/links"
 	@echo "db-migrate      Apply embedded migrations to FMN_DB_PATH"
 	@echo "check           Check Rust formatting/clippy, Svelte/TypeScript, and formatting"
 	@echo "format          Format frontend and backend files"
@@ -50,3 +53,12 @@ auth-reset:
 	$(CARGO) run --locked --manifest-path backend/Cargo.toml -- --reset-admin-password "$(LOGIN)"
 test-browser-auth:
 	$(PNPM) --dir frontend exec playwright test --config playwright.auth.config.ts
+
+# Pass filenames through the environment, not shell command interpolation.
+db-backup db-verify db-restore: export FMN_BACKUP_FILE = $(FILE)
+db-backup:
+	$(CARGO) run --locked --manifest-path backend/Cargo.toml -- --backup
+db-verify:
+	$(CARGO) run --locked --manifest-path backend/Cargo.toml -- --verify-backup
+db-restore:
+	$(CARGO) run --locked --manifest-path backend/Cargo.toml -- --restore-backup

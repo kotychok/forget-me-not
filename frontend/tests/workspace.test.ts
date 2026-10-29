@@ -367,3 +367,32 @@ test('explicit draft-preserving logout waits for durable drafts and blocks on st
     workspace.dispose();
   }
 });
+
+test('a restored installation cannot replay cached edits even when owner and revision match', async () => {
+  const f = fakeApi();
+  let serverId = 'original-installation';
+  f.transport.session = async () => ({ serverId, ownerId: 'owner' });
+  const workspace = new Workspace(() => {}, f.transport, new MemoryStorage());
+  try {
+    await workspace.load(f.first.id);
+    const session = workspace.current!;
+    session.editor.edit('Old browser changes', 0, 0);
+    session.sync.markDirty();
+    await workspace.pauseForAuthentication();
+    serverId = 'restored-installation';
+    await assert.rejects(
+      workspace.resumeAfterAuthentication(),
+      /Installation identity changed/,
+    );
+    assert.equal(session.sync.dirty, true);
+    assert.equal(f.documents.get(f.first.id)!.nodes[0].text, 'Original');
+    assert.equal(
+      workspace.localEdits().lists[0].nodes[0].text,
+      'Old browser changes',
+    );
+    await workspace.prepareLogout(true);
+    assert.ok(workspace.drafts?.isDurable(f.first.id));
+  } finally {
+    workspace.dispose();
+  }
+});

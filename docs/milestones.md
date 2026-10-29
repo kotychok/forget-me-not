@@ -22,7 +22,8 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M9 | Render Markdown inside item text | M5 | Complete (committed by user) |
 | M10 | Task dates | M4 | Implemented and verified; awaiting user review |
 | M11 | Accounts, login and browser sessions | M4; access design | Implemented and verified; awaiting user review |
-| M11a | Admin-managed friends and account activation | M11 | Implemented and verified; awaiting user review |
+| M11a | Admin-managed friends and account activation | M11 | Complete (accepted and committed by user) |
+| R1 | Local release-readiness and backup restoration | M11a | Implemented and verified; awaiting user review |
 | M11b | Scoped personal API tokens | M11; integration requirements | Planned; independent of deployment |
 | M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Deferred: hosting undecided |
 | M12 | Capture items through Telegram Inbox | M11c | Deferred |
@@ -299,3 +300,7 @@ The user requested account/token design and admin-created friends before deploym
 ## First-release sequence — 2026-10-29
 
 Agreed: finish M11a locally, then run a release-readiness pass (reauthentication/drafts, two-user isolation, database upgrade and backup restoration), followed by remaining small UI/error/empty-state polish. Railway availability does not block this work. API tokens/integrations can follow; deployment remains M11c and is not authorized by this implementation request.
+
+## R1 — Local release-readiness
+
+Authorized after user acceptance/commit of M11a. Adds consistent SQLite backup/verification, restore to a fresh file with candidate-only upgrades and access invalidation, plus a browser installation-identity guard. Verify source/target safety, migration compatibility, restored content/ownership/view metadata, sessions/links and draft scope. See [backup/restore](backup-restore.md) and [readiness record](plans/r1-release-readiness.md). Hosting and remaining UI polish remain separate.

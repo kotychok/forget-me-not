@@ -12,6 +12,11 @@ pub async fn configured(pool: &SqlitePool) -> Result<bool, sqlx::Error> {
     )
 }
 impl Backend {
+    pub(super) async fn installation_id(&self) -> Result<String, sqlx::Error> {
+        sqlx::query_scalar("SELECT id FROM installation WHERE singleton=1")
+            .fetch_one(&self.pool)
+            .await
+    }
     // Reserve attempts durably before hashing. A global cap bounds unknown-login buckets too.
     pub async fn allow_attempt(&self, login: &str) -> Result<bool, sqlx::Error> {
         let time = now();

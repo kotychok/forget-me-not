@@ -88,4 +88,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D053 | 2026-10-29 | Agreed sequence / authorized implementation | Proceed with M11a admin-created friends and access lifecycle, then release-readiness verification and remaining UX polish while Railway/deployment are pending. Defaults: separate /admin, user-role friends only, manual single-use 24-hour activation/reset links, explicit privileged reset invalidation, disable/reactivate and revocation, private content isolation, version-bound digest-only tokens and transactional audit. No public registration, account deletion, role promotion, deployment or commits are included |
 
+| D054 | 2026-10-29 | Authorized release verification / defaults | Proceed after accepted/committed M11a with local backup/restore and release-readiness checks. Native consistent snapshots verify integrity/FKs and migration prefixes; restore publishes a fresh candidate only, applies pending migrations there and retires old sessions/links while changing installation identity. Cached edits must not replay across that identity change. Existing content IDs/owners stay intact; host-specific deployment and UX polish remain separate |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

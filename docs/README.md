@@ -27,6 +27,7 @@ Updated: 2026-10-29. The core direction is agreed. M1 was reviewed and committed
 
 ## Guide
 
+- [Backup and restore](backup-restore.md): local snapshot commands, fresh-path restoration and access/draft behavior.
 - [Account administration](account-administration.md): friend creation, activation/reset links, blocking and revocation.
 - [Authentication](authentication.md): implemented login, bootstrap, sessions, expiry and local recovery.
 - [Access control](access-control.md): proposed accounts, sessions, administrator invitations and token lifecycle.
@@ -82,3 +83,5 @@ M9 was committed by the user. M10 implements the agreed single date-only deadlin
 Access-first replan: M11 accounts/login/sessions → M11a admin-managed friends → M11c deployment. M11b API tokens are separate integration work, not required for cookie login. M11 authentication is now implemented for review; M11a/M11b/M11c remain separate.
 
 M11a is implemented for local review following the agreed 2026-10-29 sequence. Release-readiness checks (including backup restoration) and remaining polish follow; Railway does not block local work.
+
+M11a was accepted and committed by the user. R1 implements the agreed local backup/restore and release verification stage; remaining UX polish and deployment follow separately.

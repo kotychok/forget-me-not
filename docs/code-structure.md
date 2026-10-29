@@ -94,3 +94,7 @@ Implemented flow: read-only decode/preview → explicit confirmation → existin
 ## Account administration — M11a
 
 `accounts/mod.rs` defines lifecycle/response types and standard OS randomness/digest primitives; `accounts/store.rs` owns authority checks, account changes, token redemption and audit transactions; `accounts/routes.rs` owns HTTP extraction/status and admin/public-link route boundaries. Admin routes nest behind M11 principal resolution; public link POSTs are explicit exceptions requiring token proof. `AdminPage`, `ActivationPage` and `lib/accounts.ts` remain separate from tree/history/Workspace modules. App preserves the editor instance across /admin navigation and protects same-owner reauthentication.
+
+## Local maintenance — R1
+
+`maintenance.rs` owns read-only SQLite verification, consistent snapshots, staging/publication and restored-access retirement. Main dispatches these CLI operations before Store::open; none are HTTP routes. Workspace retains its initialized identity and rechecks it before resuming authenticated content queues. The access gate keeps requests suspended on reauthentication failure. Neither maintenance filesystems nor cookies enter the tree/history model.

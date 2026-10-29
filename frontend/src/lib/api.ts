@@ -18,8 +18,10 @@ export class ApiError extends Error {
   }
 }
 let expectedOwner: string | null = null;
+let expectedInstallation: string | null = null;
 let suspended = false;
 export function setApiOwner(owner: string | null) {
+  if (owner !== expectedOwner || owner === null) expectedInstallation = null;
   expectedOwner = owner;
 }
 export function suspendApi(value: boolean) {
@@ -34,6 +36,9 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: {
       'Content-Type': 'application/json',
       'X-FMN-Request': '1',
+      ...(expectedInstallation
+        ? { 'X-FMN-Installation': expectedInstallation }
+        : {}),
       ...(expectedOwner ? { 'X-FMN-Owner': expectedOwner } : {}),
       ...init?.headers,
     },
@@ -81,7 +86,14 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ format, document }),
     }),
-  session: () => request<{ serverId: string; ownerId: string }>('/session'),
+  session: async () => {
+    const identity = await request<{ serverId: string; ownerId: string }>(
+      '/session',
+    );
+    // Pin this workspace's installation; reauthentication must never retag old payloads.
+    expectedInstallation ??= identity.serverId;
+    return identity;
+  },
   exportJson: () => request<Portable>('/export'),
   importJson: (document: Portable) =>
     request<ListSummary[]>('/import', {

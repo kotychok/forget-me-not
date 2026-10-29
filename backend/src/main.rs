@@ -6,8 +6,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let path = PathBuf::from(
         std::env::var("FMN_DB_PATH").unwrap_or_else(|_| "data/forget-me-not.sqlite".into()),
     );
-    let store = Store::open(&path).await?;
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|arg| {
+        ["--backup", "--verify-backup", "--restore-backup"].contains(&arg.as_str())
+    }) {
+        if args.len() > 2 {
+            return Err("Expected one backup filename".into());
+        }
+        let file = args
+            .get(1)
+            .cloned()
+            .or_else(|| std::env::var("FMN_BACKUP_FILE").ok())
+            .filter(|value| !value.is_empty())
+            .ok_or("Provide FILE=path or a backup filename")?;
+        let report = match args[0].as_str() {
+            "--backup" => {
+                forget_me_not::maintenance::backup(&path, std::path::Path::new(&file)).await?
+            }
+            "--restore-backup" => {
+                forget_me_not::maintenance::restore(std::path::Path::new(&file), &path).await?
+            }
+            _ => forget_me_not::maintenance::verify(std::path::Path::new(&file)).await?,
+        };
+        println!("{}", serde_json::to_string(&report)?);
+        return Ok(());
+    }
+    let store = Store::open(&path).await?;
     if args
         .first()
         .is_some_and(|arg| arg == "--bootstrap-local-admin" || arg == "--reset-admin-password")

@@ -79,7 +79,7 @@ Export and import preview can run in the browser; the server validates the resul
 
 ## Access and deployment
 
-Agreed: deploy with Docker; native local execution without Docker is also supported. Makefile is the common entry point for running, building, and checking in both modes. The selected direction is a DigitalOcean VPS (1 vCPU / 1 GiB / 25 GiB), without Coolify, with GitHub Actions builds and GHCR images. Shared Caddy routes project hostnames to independent containers over per-project proxy networks. See [deployment guide](deployment.md); production runtime configuration and CI are prepared, while public deployment remains unverified.
+Agreed: deploy with Docker; native local execution without Docker is also supported. Makefile is the common entry point for running, building, and checking in both modes. The selected direction is a DigitalOcean VPS (1 vCPU / 1 GiB / 25 GiB), without Coolify, with GitHub Actions builds and GHCR images. Shared Caddy routes project hostnames to independent containers over per-project proxy networks. See [deployment guide](deployment.md); production runtime configuration and CI are implemented, and the user has verified public HTTPS deployment and the backup scenario.
 
 Proposal: one container with the server and frontend assets; Docker Compose for startup and volume configuration; SQLite in a persistent volume; HTTPS through a reverse proxy. Do not place SQLite on a network filesystem without separate verification. Do not run multiple replicas with independent database files.
 

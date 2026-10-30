@@ -148,6 +148,6 @@ Account administration: open **Manage people** after administrator login. New fr
 
 `make db-backup FILE=path.sqlite` creates a verified live SQLite snapshot; `make db-verify FILE=path.sqlite` checks it. Restore only to a new file with `FMN_DB_PATH=data/restored.sqlite make db-restore FILE=path.sqlite`. Create destination directories first. Restore retires old sessions/access links and gives the installation a new draft scope. See [backup and restore](docs/backup-restore.md) for the full procedure and point-in-time credential behavior.
 
-Deployment planning: [DigitalOcean, GHCR and Caddy guide](docs/deployment.md). M11c Docker/runtime and CI configuration are prepared; public deployment remains unverified. Native development remains local-only.
+Deployment planning: [DigitalOcean, GHCR and Caddy guide](docs/deployment.md). The user verified VPS HTTPS deployment and the backup scenario; recurring backup policy remains operational follow-up. Native development remains local-only.
 
 Visible tabs check for other-device list changes every 15 seconds and on return/online. Clean navigation sessions refresh with a new undo baseline; editing and modal drafts are kept for explicit conflict recovery. Mobile list navigation uses a vertical chooser. See [cross-device refresh](docs/remote-refresh.md).

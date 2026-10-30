@@ -2,14 +2,14 @@
 
 Updated: 2026-10-29. Agreed direction: DigitalOcean, 1 vCPU / 1 GiB RAM / 25 GiB disk; no Coolify on this VPS; GitHub Actions builds images, GHCR stores them, and Caddy provides shared HTTPS for several small projects. Initial deployments are manual over SSH.
 
-**Status: M11c release preparation implemented locally; public deployment is not yet verified.** Dockerfile, production Compose examples, a pinned Actions workflow and container smoke tests are provided. No image has been published and no server has been changed by this work.
+**Status: the user verified the manual VPS deployment and backup scenario on 2026-10-30.** The version-tag image is published in private GHCR, the production app is healthy, and Caddy HTTPS works. Recurring backup scheduling, destination/retention policy and resource measurements remain operational follow-up. This guide does not imply that the agent accessed the VPS or configured automated backups.
 
 ## 1. Review the release setup in the repository
 
 - `Dockerfile` builds frontend assets and a locked Rust release binary in separate stages. The runtime contains the binary, assets, certificate roots and curl for health checks; it runs as UID/GID 10001. `.dockerignore` allowlists build sources and excludes databases, credentials and personal files.
 - `FMN_ENV=production` requires `FMN_AUTH_MODE=password` and one `FMN_PUBLIC_ORIGIN=https://hostname` (lowercase DNS name, no port/path/trailing slash). It binds to 0.0.0.0 inside the container, requires built assets and configured accounts, and uses a host-only Secure/HttpOnly `__Host-fmn.sid` cookie. Host and Origin are checked against the configured address. Forwarded headers never choose trusted origin or identity. Native local mode remains loopback-only with its existing cookie.
 - `deploy/compose.yaml` persists data and backups, publishes no application ports, bounds logs, probes database readiness and handles SIGTERM gracefully. Failed startup exits visibly; retries are limited to three. An unhealthy running process is reported, not automatically repaired.
-- `.github/workflows/ci.yaml` runs checks, unit/integration tests and both disposable browser suites. A dependent job builds linux/amd64 and smoke-tests the image. Only a version-tag push publishes that exact tested image to GHCR, without rebuilding it. Pull requests and main-branch pushes do not publish. The job summary records the immutable image digest.
+- `.github/workflows/ci.yaml` runs checks, unit/integration tests and both disposable browser suites. A dependent job builds linux/amd64 and smoke-tests the image. Only a version-tag push publishes that exact tested image to GHCR, without rebuilding it. The workflow runs only on pushed v* tags, not on pull requests, branch pushes or manual dispatch. The job summary records the immutable image digest.
 - Actions and base images are pinned by commit/digest; pnpm is pinned to 11.25.0 and the Rust build uses 1.99. Review/update these pins periodically. The workflow uses `GITHUB_TOKEN` with package write permission only in the image job; no registry PAT is needed for CI. Checkout credentials are not persisted.
 
 Local commands (Docker required only for the last two):

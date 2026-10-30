@@ -26,8 +26,8 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | R1 | Local release-readiness and backup restoration | M11a | Verified; user tested backup successfully |
 | R2 | Pre-release UX polish | R1 | Implemented and verified; awaiting user review |
 | M11b | Scoped personal API tokens | M11; integration requirements | Planned; independent of deployment |
-| M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Release image, production config and CI prepared; public deployment pending |
-| R3 | Cross-device refresh and mobile list selection | M4, M11c | Implemented and verified; awaiting user review |
+| M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Deployment and backup/restore verified by user; backup operations policy open |
+| R3 | Cross-device refresh and mobile list selection | M4, M11c | Complete (verified and accepted by user, 2026-10-30) |
 | M12 | Capture items through Telegram Inbox | M11c | Deferred |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
 | M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Deferred |
@@ -210,9 +210,9 @@ Proposed separate milestone for integrations: scoped random bearer tokens, diges
 
 ### M11c — Deployment and recovery
 
-Former M11 deployment scope moves here; M12–M15 numbers stay unchanged. Hosting direction is DigitalOcean (1 vCPU / 1 GiB / 25 GiB), Docker without Coolify, shared Caddy for multiple small projects, GitHub Actions and GHCR; initial deployments are manual. See the [step-by-step guide](deployment.md), including release configuration and pending public verification. Prerequisites: M11 and M11a implemented and accepted; selected host/HTTPS/proxy configuration; backups and restore policy.
+Former M11 deployment scope moves here; M12–M15 numbers stay unchanged. Hosting direction is DigitalOcean (1 vCPU / 1 GiB / 25 GiB), Docker without Coolify, shared Caddy for multiple small projects, GitHub Actions and GHCR; initial deployments are manual. See the [step-by-step guide](deployment.md), including release configuration and verified manual deployment. Prerequisites: M11 and M11a implemented and accepted; selected host/HTTPS/proxy configuration; backups and restore policy.
 
-Implementation record: [M11c release preparation](plans/m11c-release-preparation.md). Public deployment remains unverified.
+Implementation record: [M11c release preparation](plans/m11c-release-preparation.md). The user confirmed successful public HTTPS deployment and the backup scenario; routine backup scheduling/retention remains an operational follow-up.
 
 Scope: Docker image/Compose if selected, native/container Makefile commands, persistent storage, migration startup, protected installation and operating instructions. Verify authentication/owner isolation in the deployed configuration, restart persistence, upgrade failure behavior and consistent SQLite backup restoration. Deployment must not enable the local development identity bypass. Publishing/modifying a real host requires a concrete deployment request.
 
@@ -316,3 +316,7 @@ Authorized after the user successfully tested backup and agreed to the next UX p
 ## R3 — Cross-device refresh and mobile list selection
 
 Authorized 2026-10-30 after first VPS use exposed stale cached lists across devices. Poll the owned list index every 15 seconds while visible and on focus/visibility/online, with no overlapping refreshes. Fetch changed cached documents only; new clean baselines clear undo/redo, preserve surviving navigation focus, collapse preferences and viewport. Never replace dirty/saving/error/conflict sessions, text editing, title drafts or item dialogs/filters; show a remote-change notice and retain explicit recovery choices. Remote deletions preserve cached versions for new-copy recovery. Mobile lists use a vertical modal selector rather than horizontal tabs. SSE, real-time collaboration and merging are outside this change. See [cross-device behavior](remote-refresh.md).
+
+### Acceptance update — 2026-10-30
+
+The user confirmed that the backup scenario works and accepted the latest cross-device refresh/mobile chooser fixes. R3 is complete. M11c public HTTPS startup, image publication/pull and the manual backup/restore scenario are user-verified; no agent-run VPS checks are implied. Backup destination/retention/scheduling and ongoing resource monitoring are not yet documented as configured, so keep that operating-policy follow-up explicit rather than claiming automated protection.

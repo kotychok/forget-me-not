@@ -98,4 +98,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D058 | 2026-10-30 | Authorized cross-device refresh and mobile navigation | Poll list summaries every 15 seconds while visible and on return/online; fetch only changed cached lists. Automatically accept only clean navigation sessions without modal/title/filter drafts, replacing undo/redo with a new baseline while preserving surviving focus/collapse and scroll. Keep local edits and existing conflict/new-copy recovery; no automatic merge or SSE. Replace mobile horizontal list tabs with an accessible vertical list-picker dialog |
 
+| D059 | 2026-10-30 | User verification / acceptance | The user confirmed that the backup scenario works as intended and accepted the latest cross-device refresh/mobile chooser fixes. Mark R3 complete and record user-verified manual deployment/recovery. Backup automation, operating retention/destination policy and measured VPS resource headroom are not implied by this report |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

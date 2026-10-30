@@ -1,6 +1,6 @@
 # Documentation
 
-Updated: 2026-10-29. The core direction is agreed. M1 was reviewed and committed by the user; M2 persistence is implemented; M3 was reviewed and committed; M4 draft recovery was reviewed and accepted by the user; M5 links and long-text editing was reviewed and committed; M6 search is implemented for local review; deployment is deferred to M11c while access is designed in M11/M11a and the selected hosting direction is a small DigitalOcean VPS; see [deployment guide](deployment.md). Remaining design details are tracked by milestone.
+Updated: 2026-10-30. The application is deployed on the user's DigitalOcean VPS behind Caddy HTTPS, using GitHub Actions and private GHCR images. The user verified the backup scenario and accepted R3 cross-device refresh/mobile list selection. Routine backup scheduling/retention and resource monitoring remain operating-policy follow-up. Historical implementation records and later features are tracked below and in [Milestones](milestones.md).
 
 ## Agreed with the user
 
@@ -91,4 +91,6 @@ M11a was accepted and committed by the user. R1 implements the agreed local back
 
 The user successfully tested backup. R2 now polishes existing dialogs, empty states and loading/network errors before the first release. See [UX polish](plans/r2-ux-polish.md); hosting remains M11c.
 
-M11c release preparation is authorized and implemented for local verification: pinned Docker build and Actions publishing, explicit production HTTP policy, application/edge Compose files, and disposable container tests. Public HTTPS deployment and off-host recovery remain pending; see [deployment guide](deployment.md).
+M11c release preparation is authorized and implemented for local verification: pinned Docker build and Actions publishing, explicit production HTTP policy, application/edge Compose files, and disposable container tests. The user has since verified public HTTPS deployment and the backup scenario; see [deployment guide](deployment.md).
+
+R3 was verified and accepted by the user on 2026-10-30; see [cross-device refresh](remote-refresh.md). No subsequent integration milestone is authorized by this acceptance.

@@ -17,6 +17,10 @@ Verification:
 - All 50 editor and 4 authenticated browser scenarios passed with disposable data.
 - The Docker image built successfully on local linux/arm64. Source context is approximately 418 KiB; local dependency/build directories are excluded. The final container smoke test passed, including a separate peer-container request, non-root execution, assets, secure login, restart persistence and snapshot verification/restoration. All synthetic containers, volumes and networks were removed.
 - Both Compose files parsed successfully, GitHub Actions YAML parsed, and the Caddyfile validated in the official Caddy image. No real certificate request was made.
-- CI targets linux/amd64 for the VPS; that CI run and actual GHCR publication are still pending the user's commit/push. The local ARM image is not presented as an already verified amd64 release.
+- Initial local image validation used linux/arm64; subsequent GitHub CI and the VPS deployment were reported successful by the user (see acceptance below).
 
-Public HTTPS, actual GHCR publication, VPS resource measurements and off-host restore remain pending deployment checks, so M11c is not complete.
+## User acceptance — 2026-10-30
+
+The user published the version-tag image, authenticated the VPS to the private GHCR package, started the healthy production app, and confirmed that Caddy HTTPS works. They subsequently confirmed the backup scenario works as intended. These are user-reported operational checks; the agent did not connect to or modify the VPS.
+
+Manual deployment and recovery are verified. The recurring backup destination, schedule, retention/key policy and production resource measurements have not been recorded as configured; retain them as operating-policy follow-up. Do not describe backups as automated or claim production load measurements.

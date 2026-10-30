@@ -27,6 +27,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | R2 | Pre-release UX polish | R1 | Implemented and verified; awaiting user review |
 | M11b | Scoped personal API tokens | M11; integration requirements | Planned; independent of deployment |
 | M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Release image, production config and CI prepared; public deployment pending |
+| R3 | Cross-device refresh and mobile list selection | M4, M11c | Implemented and verified; awaiting user review |
 | M12 | Capture items through Telegram Inbox | M11c | Deferred |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
 | M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Deferred |
@@ -311,3 +312,7 @@ Authorized after user acceptance/commit of M11a. Adds consistent SQLite backup/v
 ## R2 — Pre-release UX polish
 
 Authorized after the user successfully tested backup and agreed to the next UX pass. Scope: consistent form/action hierarchy and accessible validation for existing dialogs, useful empty-search/list states, readable transport errors, and separating initial-load failure from a genuinely empty workspace. Preserve keyboard/history, uncertain-write handling, owner/installation scope and all data formats. See [UX implementation record](plans/r2-ux-polish.md).
+
+## R3 — Cross-device refresh and mobile list selection
+
+Authorized 2026-10-30 after first VPS use exposed stale cached lists across devices. Poll the owned list index every 15 seconds while visible and on focus/visibility/online, with no overlapping refreshes. Fetch changed cached documents only; new clean baselines clear undo/redo, preserve surviving navigation focus, collapse preferences and viewport. Never replace dirty/saving/error/conflict sessions, text editing, title drafts or item dialogs/filters; show a remote-change notice and retain explicit recovery choices. Remote deletions preserve cached versions for new-copy recovery. Mobile lists use a vertical modal selector rather than horizontal tabs. SSE, real-time collaboration and merging are outside this change. See [cross-device behavior](remote-refresh.md).

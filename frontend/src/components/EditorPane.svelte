@@ -16,6 +16,7 @@
     session,
     disabled = false,
     ondirty,
+    oninteraction = () => {},
     reveal = null,
     searchQuery = '',
     onclearsearch = () => {},
@@ -24,9 +25,14 @@
     oncollapse = () => {},
     onretryview = () => {},
   }: {
-    session: { editor: Editor; collapsed: Set<string> };
+    session: {
+      editor: Editor;
+      collapsed: Set<string>;
+      interactionBlocked?: boolean;
+    };
     disabled?: boolean;
     ondirty: () => void;
+    oninteraction?: (blocked: boolean) => void;
     preferences?: {
       collapsedItemIds: string[];
       version: number;
@@ -72,6 +78,7 @@
   async function openDate(id: string) {
     const item = locate(editor.state.nodes, id)?.item;
     if (!item) return;
+    oninteraction(true);
     editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
     await render();
     dateItem = { id, text: item.text, dueDate: item.dueDate ?? '' };
@@ -84,6 +91,7 @@
   async function openTags(id: string) {
     const item = locate(editor.state.nodes, id)?.item;
     if (!item) return;
+    oninteraction(true);
     editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
     await render();
     tagItem = { id, text: item.text, tags: [...(item.tags ?? [])] };
@@ -91,6 +99,7 @@
   function setFilter(tag: string, preferredId?: string, restoreFocus = false) {
     capture();
     tagFilter = tag;
+    if (tag) oninteraction(true);
     if (!tag) {
       const next = new Set(collapsed);
       for (
@@ -123,15 +132,23 @@
   async function openNote(id: string) {
     const item = locate(editor.state.nodes, id)?.item;
     if (!item) return;
+    oninteraction(true);
     editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
     await render();
     noteItem = { id, text: item.text, note: item.note ?? '' };
   }
   let view = $state(editor.state);
   const availableTags = $derived(tagNames(view.nodes));
+  $effect(() => {
+    const blocked = !!noteItem || !!tagItem || !!dateItem || !!tagFilter;
+    untrack(() => oninteraction(blocked));
+  });
   let collapsed = $state<Set<string>>(
     new Set(untrack(() => preferences?.collapsedItemIds) ?? initial.collapsed),
   );
+  $effect(() => {
+    initial.collapsed = new Set(collapsed);
+  });
   let previousManual = new Set<string>();
   $effect(() => {
     const snapshot = preferences;

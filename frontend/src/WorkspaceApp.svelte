@@ -59,6 +59,10 @@
   let loadError = $state('');
   let saveStatus = $state<SaveStatus>('saved');
   let saveError = $state('');
+  let remoteChanged = $state(false);
+  let refreshError = $state('');
+  let picker = $state<HTMLDialogElement>();
+  let pickerOpen = $state(false);
   let savedNoticeVisible = $state(true);
   $effect(() => {
     // Restart only for status/list transitions, not every draft update.
@@ -78,7 +82,28 @@
   let titleButton = $state<HTMLButtonElement>();
   const workspace = new Workspace(
     () => {
+      const replacing =
+        current &&
+        workspace.current &&
+        current !== workspace.current &&
+        selectedId === workspace.selectedId;
+      const scroll = replacing ? window.scrollY : null;
+      const focusedItem =
+        replacing && document.activeElement instanceof HTMLElement
+          ? document.activeElement.closest<HTMLElement>('[data-item]')?.dataset
+              .item
+          : null;
       current = workspace.current;
+      if (scroll !== null)
+        void tick().then(() => {
+          if (focusedItem && current?.editor.state.focus.id === focusedItem)
+            document
+              .querySelector<HTMLElement>(`[data-item="${focusedItem}"]`)
+              ?.focus({ preventScroll: true });
+          window.scrollTo({ top: scroll, behavior: 'instant' });
+        });
+      remoteChanged = !!current?.remoteChanged;
+      refreshError = workspace.refreshError;
       const outline = current?.outline;
       outlinePreferences = outline
         ? {
@@ -129,7 +154,11 @@
   }
   async function openList(id: string) {
     finishRename();
-    if (await workspace.open(id)) updateUrl();
+    if (await workspace.open(id)) {
+      updateUrl();
+      picker?.close();
+      void workspace.refreshRemote();
+    }
   }
   async function loadLists() {
     await workspace.load(new URL(location.href).searchParams.get('list'));
@@ -147,6 +176,7 @@
     if (!current || busy) return;
     titleDraft = title;
     titleEditing = true;
+    current.titleEditing = true;
     await tick();
     titleInput?.focus();
     titleInput?.select();
@@ -154,6 +184,7 @@
   function finishRename(cancel = false, restoreFocus = false) {
     if (!titleEditing) return;
     titleEditing = false;
+    if (current) current.titleEditing = false;
     const next = titleDraft.trim();
     if (!cancel && next && next !== title && current) {
       workspace.rename(next);
@@ -187,14 +218,20 @@
     };
     trackScroll();
     const refreshView = () => {
-      if (document.visibilityState === 'visible')
+      if (document.visibilityState === 'visible') {
         void workspace.refreshOutline();
+        void workspace.refreshRemote();
+      }
     };
+    const poll = window.setInterval(refreshView, 15_000);
+    window.addEventListener('online', refreshView);
     window.addEventListener('focus', refreshView);
     document.addEventListener('visibilitychange', refreshView);
     window.addEventListener('scroll', trackScroll, { passive: true });
     window.addEventListener('beforeunload', warn);
     return () => {
+      clearInterval(poll);
+      window.removeEventListener('online', refreshView);
       window.removeEventListener('focus', refreshView);
       document.removeEventListener('visibilitychange', refreshView);
       window.removeEventListener('scroll', trackScroll);
@@ -219,7 +256,19 @@
       ></a
     >
     <div class="sidebar-section">YOUR SPACE</div>
-    <nav aria-label="Lists">
+    <button
+      class="mobile-list-picker"
+      aria-haspopup="dialog"
+      onclick={() => {
+        pickerOpen = true;
+        picker?.showModal();
+      }}
+    >
+      <span class="list-name">{selectedId ? title : 'Choose a list'}</span><span
+        >▾</span
+      >
+    </button>
+    <nav class="desktop-lists" aria-label="Lists">
       {#each lists as list (list.id)}
         <button
           class="list-link"
@@ -243,6 +292,46 @@
         >＋ New list</button
       >
     </nav>
+    <dialog
+      class="guide list-picker"
+      onclose={() => (pickerOpen = false)}
+      bind:this={picker}
+      aria-labelledby="list-picker-title"
+    >
+      <div class="guide-header">
+        <h2 id="list-picker-title">Choose a list</h2>
+        <button
+          class="quiet"
+          aria-label="Close list picker"
+          onclick={() => picker?.close()}>✕</button
+        >
+      </div>
+      <nav aria-label="Choose a list">
+        {#if pickerOpen}
+          {#each lists as list (list.id)}
+            <button
+              class="list-link"
+              class:selected={selectedId === list.id}
+              disabled={busy}
+              aria-current={selectedId === list.id ? 'page' : undefined}
+              onclick={() => openList(list.id)}
+            >
+              <span class="list-name">{list.title}</span><span class="count"
+                >{list.itemCount}</span
+              >
+            </button>
+          {/each}
+        {/if}
+      </nav>
+      <button
+        class="new-list"
+        disabled={busy || loading}
+        onclick={() => {
+          picker?.close();
+          void newList();
+        }}>＋ New list</button
+      >
+    </dialog>
     <SearchDialog
       bind:query={searchQuery}
       onreset={clearSearch}
@@ -374,11 +463,24 @@
             >Retry save</button
           >
         </p>{/if}
+      {#if remoteChanged}<p class="remote-notice" role="status">
+          This list changed on another device. Local editing is kept; finish
+          editing before loading the server version.
+        </p>{/if}
+      {#if refreshError}<p class="error-message" role="status">
+          Remote update check failed: {refreshError}
+          <button onclick={() => workspace.refreshRemote()}>Check again</button>
+        </p>{/if}
       <RecoveryPanel
         records={draftRecords}
         storageError={draftError}
-        conflict={saveStatus === 'conflict' || saveStatus === 'error'}
-        disabled={busy || loading}
+        conflict={remoteChanged ||
+          saveStatus === 'conflict' ||
+          saveStatus === 'error'}
+        disabled={busy ||
+          loading ||
+          !!current?.interactionBlocked ||
+          titleEditing}
         onrefresh={() => workspace.refreshDrafts()}
         onretry={() => workspace.retryDraftStorage()}
         ondiscard={(record) => workspace.discardDraft(record)}
@@ -415,6 +517,8 @@
             {@const session = current}
             <EditorPane
               {session}
+              oninteraction={(blocked) =>
+                workspace.setInteractionBlocked(session, blocked)}
               preferences={outlinePreferences}
               oncollapse={(id, collapsed) =>
                 session.outline?.set(id, collapsed)}

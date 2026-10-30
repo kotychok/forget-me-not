@@ -27,6 +27,8 @@ Updated: 2026-10-29. The core direction is agreed. M1 was reviewed and committed
 
 ## Guide
 
+- [Cross-device refresh](remote-refresh.md): revision polling, safe snapshots, undo baseline and mobile list selection.
+
 - [VPS deployment guide](deployment.md): DigitalOcean preparation, GitHub Actions/GHCR, shared Caddy, release prerequisites and operations.
 - [Backup and restore](backup-restore.md): local snapshot commands, fresh-path restoration and access/draft behavior.
 - [Account administration](account-administration.md): friend creation, activation/reset links, blocking and revocation.

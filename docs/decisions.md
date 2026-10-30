@@ -96,4 +96,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D057 | 2026-10-29 | Authorized release preparation / defaults | Prepare Docker, GitHub Actions and GHCR after VPS preparation. Production uses explicit HTTPS origin, password-only auth, host-only Secure cookies, strict Host/Origin checks and no forwarded identity trust. Version-tag publishing follows tests of the exact image; manual VPS deployment remains separate. Temporary sslip.io hosting is an option pending public verification; no real credentials or server changes are included |
 
+| D058 | 2026-10-30 | Authorized cross-device refresh and mobile navigation | Poll list summaries every 15 seconds while visible and on return/online; fetch only changed cached lists. Automatically accept only clean navigation sessions without modal/title/filter drafts, replacing undo/redo with a new baseline while preserving surviving focus/collapse and scroll. Keep local edits and existing conflict/new-copy recovery; no automatic merge or SSE. Replace mobile horizontal list tabs with an accessible vertical list-picker dialog |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

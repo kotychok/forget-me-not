@@ -1619,3 +1619,50 @@ dialog.date-dialog {
   color: #8e6153;
   margin-bottom: 0;
 }
+
+.mobile-list-picker {
+  display: none;
+}
+dialog.list-picker {
+  width: min(440px, calc(100vw - 32px));
+}
+.list-picker nav {
+  display: block;
+  max-height: 55dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.list-picker nav .list-link {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+.remote-notice {
+  padding: 12px;
+  background: #eef2e8;
+  border-radius: 5px;
+  color: #48613e;
+}
+@media (max-width: 620px) {
+  aside > nav.desktop-lists {
+    display: none;
+  }
+  .mobile-list-picker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 44px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid #cdd7c5;
+    border-radius: 6px;
+    background: #e6eddf;
+    color: #3c5335;
+    text-align: left;
+  }
+  .list-picker .new-list {
+    width: 100%;
+  }
+}

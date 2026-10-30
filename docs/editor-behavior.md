@@ -96,3 +96,7 @@ T in navigation opens the active item's tag draft. Apply commits one undoable co
 ## Due dates — M10
 
 Date or D in navigation opens the focused item deadline dialog. Apply is one undoable content command; Cancel/Escape keeps content unchanged and restores item focus. Clear date changes only the draft until Apply. Dates stay attached to branches and through item/task conversion; completion changes urgency display without deleting the date. Date input does not intercept ordinary item typing. See [Due dates](dates.md).
+
+## External snapshots
+
+Clean navigation sessions can accept remote content through revision polling. This starts a new undo/redo baseline; old local history never replays across an accepted external snapshot. Active editing and unapplied dialogs defer replacement. See [cross-device refresh](remote-refresh.md).

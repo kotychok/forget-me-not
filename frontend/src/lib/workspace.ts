@@ -18,6 +18,9 @@ export type Session = {
   sync: Autosave;
   collapsed: Set<string>;
   outline?: OutlineState;
+  interactionBlocked?: boolean;
+  titleEditing?: boolean;
+  remoteChanged?: boolean;
 };
 export type SidebarList = ListSummary & { saveStatus?: SaveStatus };
 
@@ -28,6 +31,11 @@ export class Workspace {
   loading = true;
   busy = false;
   error = '';
+  refreshError = '';
+  private refreshing = false;
+  private activity = 0;
+  private backgroundPaused = false;
+  private disposed = false;
   private sessions = new Map<string, Session>();
   private transport: Omit<
     typeof api,
@@ -186,6 +194,7 @@ export class Workspace {
     this.selectedId = id;
   }
   async load(preferred: string | null) {
+    this.activity++;
     this.loading = true;
     this.error = '';
     this.notify();
@@ -205,12 +214,123 @@ export class Workspace {
       this.notify();
     }
   }
+  setInteractionBlocked(session: Session, blocked: boolean) {
+    if (session.interactionBlocked === blocked) return;
+    session.interactionBlocked = blocked;
+    this.notify();
+  }
+  private canAcceptRemote(session: Session) {
+    return (
+      !session.sync.dirty &&
+      session.sync.status === 'saved' &&
+      session.editor.state.focus.mode !== 'edit' &&
+      !session.interactionBlocked &&
+      !session.titleEditing
+    );
+  }
+  /** Poll summaries, then fetch changed cached lists only. Never replay local history. */
+  async refreshRemote() {
+    if (
+      this.refreshing ||
+      this.busy ||
+      this.loading ||
+      this.backgroundPaused ||
+      this.disposed
+    )
+      return;
+    this.refreshing = true;
+    const activity = this.activity;
+    try {
+      const summaries = await this.transport.lists();
+      if (
+        this.busy ||
+        this.backgroundPaused ||
+        this.disposed ||
+        activity !== this.activity
+      )
+        return;
+      for (const [id, session] of this.sessions) {
+        if (
+          this.busy ||
+          this.backgroundPaused ||
+          this.disposed ||
+          activity !== this.activity
+        )
+          return;
+        const summary = summaries.find((list) => list.id === id);
+        if (summary && summary.revision <= session.sync.revision) {
+          session.remoteChanged = false;
+          continue;
+        }
+        session.remoteChanged = true;
+        if (!summary || !this.canAcceptRemote(session)) continue;
+        const revision = session.sync.revision;
+        const document = await this.transport.get(id);
+        if (
+          this.busy ||
+          this.backgroundPaused ||
+          this.disposed ||
+          activity !== this.activity
+        )
+          return;
+        if (
+          this.sessions.get(id) !== session ||
+          session.sync.revision !== revision ||
+          !this.canAcceptRemote(session)
+        )
+          continue;
+        const replacement = this.makeSession(document);
+        replacement.collapsed = new Set(session.collapsed);
+        const focus = session.editor.state.focus;
+        if (locate(document.nodes, focus.id))
+          replacement.editor.setFocus({ ...focus });
+        session.sync.dispose();
+        this.sessionChanged(id);
+        await this.drafts?.prune(document);
+      }
+      if (
+        this.busy ||
+        this.backgroundPaused ||
+        this.disposed ||
+        activity !== this.activity
+      )
+        return;
+      // Keep deleted cached lists available for explicit local-copy recovery.
+      const merged = [...summaries];
+      for (const [id, session] of this.sessions) {
+        const entry = {
+          id,
+          title: session.title,
+          revision: session.sync.revision,
+          position:
+            summaries.find((list) => list.id === id)?.position ?? merged.length,
+          itemCount: visibleItems(session.editor.state.nodes, new Set()).length,
+          saveStatus: session.sync.status,
+        };
+        const index = merged.findIndex((list) => list.id === id);
+        if (index >= 0) merged[index] = entry;
+        else merged.push(entry);
+      }
+      this.lists = merged;
+      this.refreshError = '';
+    } catch (error) {
+      if (!this.backgroundPaused && !this.disposed)
+        this.refreshError =
+          error instanceof Error
+            ? error.message
+            : 'Could not check for remote changes';
+    } finally {
+      this.refreshing = false;
+      if (!this.disposed) this.notify();
+    }
+  }
   async refreshOutline() {
     await this.current?.outline?.refresh();
   }
   async refreshIndex(): Promise<void> {
     if (this.busy) throw new Error('Another operation is in progress');
     this.busy = true;
+    this.activity++;
     this.notify();
     try {
       this.lists = (await this.transport.lists()).map((list) => {
@@ -234,6 +354,7 @@ export class Workspace {
   async open(id: string) {
     if (this.busy) return false;
     this.busy = true;
+    this.activity++;
     this.error = '';
     this.notify();
     try {
@@ -251,6 +372,7 @@ export class Workspace {
   async create() {
     if (this.busy) return false;
     this.busy = true;
+    this.activity++;
     this.error = '';
     this.notify();
     try {
@@ -289,6 +411,7 @@ export class Workspace {
     const id = this.selectedId;
     if (!session || !id || this.busy) return false;
     this.busy = true;
+    this.activity++;
     this.error = '';
     this.notify();
     try {
@@ -349,6 +472,7 @@ export class Workspace {
   async openSearchHit(hit: SearchHit, query: string) {
     if (this.busy) throw new Error('Another operation is in progress');
     this.busy = true;
+    this.activity++;
     this.notify();
     try {
       const session = this.sessions.get(hit.listId);
@@ -408,6 +532,7 @@ export class Workspace {
   async exportAll(): Promise<Portable> {
     if (this.busy) throw new Error('Another operation is in progress');
     this.busy = true;
+    this.activity++;
     this.notify();
     try {
       for (const session of this.sessions.values()) {
@@ -426,6 +551,7 @@ export class Workspace {
     if (this.busy) throw new Error('Another operation is in progress');
     const validated = validatePortable(document);
     this.busy = true;
+    this.activity++;
     this.error = '';
     this.notify();
     try {
@@ -449,6 +575,7 @@ export class Workspace {
     const id = this.selectedId;
     if (!session || !id || this.busy) return;
     this.busy = true;
+    this.activity++;
     this.error = '';
     this.notify();
     await session.sync.pause();
@@ -486,6 +613,7 @@ export class Workspace {
     const id = this.selectedId;
     if (!session || !id || this.busy) return;
     this.busy = true;
+    this.activity++;
     this.error = '';
     this.notify();
     await session.sync.pause();
@@ -527,6 +655,7 @@ export class Workspace {
       throw new Error('Refresh drafts before recovering this version.');
     if (this.busy) return;
     this.busy = true;
+    this.activity++;
     this.error = '';
     this.notify();
     try {
@@ -551,6 +680,8 @@ export class Workspace {
     await this.drafts?.discard(record);
   }
   async pauseForAuthentication() {
+    this.activity++;
+    this.backgroundPaused = true;
     await Promise.all(
       [...this.sessions.values()].map((session) => session.sync.pause()),
     );
@@ -566,6 +697,7 @@ export class Workspace {
           'Installation identity changed. Download local edits, then reload before continuing. Browser drafts remain in the previous installation scope.',
         );
     }
+    this.backgroundPaused = false;
     if (!this.sessions.size) {
       await this.load(this.selectedId);
       return;
@@ -618,6 +750,7 @@ export class Workspace {
     });
   }
   dispose() {
+    this.disposed = true;
     this.sessions.forEach((session) => {
       session.sync.dispose();
       session.outline?.dispose();

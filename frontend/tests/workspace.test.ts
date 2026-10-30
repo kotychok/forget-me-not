@@ -396,3 +396,140 @@ test('a restored installation cannot replay cached edits even when owner and rev
     workspace.dispose();
   }
 });
+
+test('remote polling replaces only clean navigation sessions and resets undo while preserving focus and collapse', async () => {
+  const f = fakeApi();
+  const w = new Workspace(() => {}, f.transport);
+  try {
+    await w.load(f.first.id);
+    const old = w.current!;
+    const id = old.editor.state.nodes[0].id;
+    old.editor.edit('Saved local history', 0, 0);
+    old.sync.markDirty();
+    await old.sync.flush();
+    old.editor.setFocus({ id, mode: 'navigate', start: 0, end: 0 });
+    old.collapsed.add(id);
+    const server = f.documents.get(f.first.id)!;
+    server.nodes[0].text = 'From phone';
+    server.revision++;
+    await w.refreshRemote();
+    assert.notEqual(w.current, old);
+    assert.equal(w.current!.editor.state.nodes[0].text, 'From phone');
+    assert.equal(w.current!.editor.state.focus.id, id);
+    assert.equal(w.current!.editor.past.length, 0);
+    assert.equal(w.current!.editor.future.length, 0);
+    assert.equal(w.current!.collapsed.has(id), true);
+    const gets = f.gets.length;
+    await w.refreshRemote();
+    assert.equal(f.gets.length, gets, 'unchanged revisions need no full fetch');
+  } finally {
+    w.dispose();
+  }
+});
+
+test('polling preserves dirty content, modal drafts and a deleted cached list', async () => {
+  const f = fakeApi();
+  const w = new Workspace(() => {}, f.transport);
+  try {
+    await w.load(f.first.id);
+    const local = w.current!;
+    w.setInteractionBlocked(local, true);
+    f.documents.get(f.first.id)!.revision++;
+    f.documents.get(f.first.id)!.nodes[0].text = 'Remote';
+    await w.refreshRemote();
+    assert.equal(w.current, local);
+    assert.equal(local.remoteChanged, true);
+    assert.equal(local.editor.state.nodes[0].text, 'Original');
+    w.setInteractionBlocked(local, false);
+    local.editor.edit('Local', 0, 0);
+    local.sync.markDirty();
+    await w.refreshRemote();
+    assert.equal(w.current, local);
+    assert.equal(local.editor.state.nodes[0].text, 'Local');
+    f.documents.delete(f.first.id);
+    await w.refreshRemote();
+    assert.equal(w.current, local);
+    assert.ok(w.lists.some((list) => list.id === f.first.id));
+    assert.equal(local.remoteChanged, true);
+  } finally {
+    w.dispose();
+  }
+});
+
+test('a local edit made during a remote fetch wins over background replacement', async () => {
+  const f = fakeApi();
+  const get = f.transport.get;
+  let release: (() => void) | undefined;
+  let fetching: (() => void) | undefined;
+  const started = new Promise<void>((resolve) => {
+    fetching = resolve;
+  });
+  const w = new Workspace(() => {}, f.transport);
+  try {
+    await w.load(f.first.id);
+    const local = w.current!;
+    f.documents.get(f.first.id)!.revision++;
+    f.transport.get = async (id) => {
+      fetching!();
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return get(id);
+    };
+    const polling = w.refreshRemote();
+    await started;
+    local.editor.edit('Typed while fetching', 0, 0);
+    local.sync.markDirty();
+    release!();
+    await polling;
+    assert.equal(w.current, local);
+    assert.equal(local.editor.state.nodes[0].text, 'Typed while fetching');
+    assert.equal(local.remoteChanged, true);
+  } finally {
+    w.dispose();
+  }
+});
+
+test('a delayed index cannot undo a completed workspace operation', async () => {
+  const f = fakeApi();
+  const w = new Workspace(() => {}, f.transport);
+  try {
+    await w.load(f.first.id);
+    const summaries = await f.transport.lists();
+    let release: ((value: typeof summaries) => void) | undefined;
+    f.transport.lists = () =>
+      new Promise((resolve) => {
+        release = resolve;
+      });
+    const polling = w.refreshRemote();
+    await w.create();
+    const created = w.selectedId;
+    release!(summaries);
+    await polling;
+    assert.ok(w.lists.some((list) => list.id === created));
+    assert.equal(w.selectedId, created);
+  } finally {
+    w.dispose();
+  }
+});
+
+test('an index older than our latest acknowledgement never resets local history', async () => {
+  const f = fakeApi();
+  const w = new Workspace(() => {}, f.transport);
+  try {
+    await w.load(f.first.id);
+    const stale = await f.transport.lists();
+    const session = w.current!;
+    session.editor.edit('Saved locally', 0, 0);
+    session.sync.markDirty();
+    await session.sync.flush();
+    const gets = f.gets.length;
+    f.transport.lists = async () => stale;
+    await w.refreshRemote();
+    assert.equal(w.current, session);
+    assert.equal(session.editor.past.length, 1);
+    assert.equal(f.gets.length, gets);
+  } finally {
+    w.dispose();
+  }
+});

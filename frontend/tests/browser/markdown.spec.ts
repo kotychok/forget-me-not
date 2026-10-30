@@ -39,7 +39,9 @@ test('Markdown preview and current export round-trip through shared new-copy imp
     .click();
   await expect(dialog.getByRole('status')).toContainText('Imported 1 list');
   await dialog.getByRole('button', { name: 'Close import and export' }).click();
+  await page.locator('.mobile-list-picker').click();
   await page
+    .getByRole('dialog', { name: 'Choose a list' })
     .getByRole('button', { name: 'Markdown demo', exact: false })
     .click();
   await expect(

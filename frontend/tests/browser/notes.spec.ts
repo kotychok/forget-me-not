@@ -142,7 +142,9 @@ test('unacknowledged notes survive draft recovery as a new copy', async ({
 }) => {
   const originalId = new URL(page.url()).searchParams.get('list')!;
   await page.route('**/api/lists/*', (route) =>
-    route.request().method() === 'PUT' ? route.abort() : route.continue(),
+    ['PUT', 'PATCH'].includes(route.request().method())
+      ? route.abort()
+      : route.continue(),
   );
   await page
     .getByRole('button', { name: 'Item with notes', exact: true })

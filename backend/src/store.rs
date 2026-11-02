@@ -1,4 +1,5 @@
 mod capture;
+mod incremental;
 mod transfer;
 mod view_state;
 use crate::{
@@ -140,6 +141,7 @@ impl Store {
             .await?;
         Ok(crate::model::ClientIdentity {
             save_encoding: "gzip".into(),
+            incremental_save_version: 1,
             server_id,
             owner_id: self.owner_id.clone(),
         })
@@ -182,20 +184,40 @@ impl Store {
         if id != request.document.id || request.base_revision < 0 {
             return Err(invalid("Invalid save identity or revision"));
         }
-        let flat = flatten(&request.document)?;
-        let time = now();
         let mut tx = self.pool.begin().await?;
+        match self
+            .write_document(&mut tx, id, &request.document, request.base_revision)
+            .await
+        {
+            Ok(revision) => {
+                tx.commit().await?;
+                Ok(revision)
+            }
+            Err(error) => {
+                tx.rollback().await?;
+                Err(error)
+            }
+        }
+    }
+    async fn write_document(
+        &self,
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+        id: &str,
+        document: &Document,
+        base_revision: i64,
+    ) -> Result<i64> {
+        let flat = flatten(document)?;
+        let time = now();
         // Acquire the write lock and check ownership/revision before reading item rows.
         let updated = sqlx::query("UPDATE lists SET title=?,revision=revision+1,updated_at=? WHERE id=? AND owner_id=? AND revision=?")
-            .bind(&request.document.title).bind(time).bind(id).bind(&self.owner_id).bind(request.base_revision).execute(&mut *tx).await?.rows_affected();
+            .bind(&document.title).bind(time).bind(id).bind(&self.owner_id).bind(base_revision).execute(&mut **tx).await?.rows_affected();
         if updated == 0 {
             let exists: bool =
                 sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM lists WHERE id=? AND owner_id=?)")
                     .bind(id)
                     .bind(&self.owner_id)
-                    .fetch_one(&mut *tx)
+                    .fetch_one(&mut **tx)
                     .await?;
-            tx.rollback().await?;
             return Err(if exists {
                 AppError::Conflict
             } else {
@@ -206,7 +228,7 @@ impl Store {
             "SELECT id,parent_id,position,kind,text,note,tags,due_date,completed FROM items WHERE list_id=?",
         )
         .bind(id)
-        .fetch_all(&mut *tx)
+        .fetch_all(&mut **tx)
         .await?;
         let old: HashMap<_, _> = old.into_iter().map(|row| (row.id.clone(), row)).collect();
         let ids: HashSet<_> = flat.iter().map(|row| row.id.as_str()).collect();
@@ -216,26 +238,21 @@ impl Store {
                 if let Some(before) = old.get(&row.id) {
                     if before.parent_id != row.parent_id || before.position != row.position || before.kind != row.kind || before.text != row.text || before.note != row.note || before.tags != row.tags || before.due_date != row.due_date || before.completed != row.completed {
                         sqlx::query("UPDATE items SET parent_id=?,position=?,kind=?,text=?,note=?,tags=?,due_date=?,completed=?,updated_at=? WHERE id=? AND list_id=?")
-                            .bind(&row.parent_id).bind(row.position).bind(&row.kind).bind(&row.text).bind(&row.note).bind(&row.tags).bind(&row.due_date).bind(row.completed).bind(time).bind(&row.id).bind(id).execute(&mut *tx).await?;
+                            .bind(&row.parent_id).bind(row.position).bind(&row.kind).bind(&row.text).bind(&row.note).bind(&row.tags).bind(&row.due_date).bind(row.completed).bind(time).bind(&row.id).bind(id).execute(&mut **tx).await?;
                     }
                 } else {
-                    let collision: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM items WHERE id=?)").bind(&row.id).fetch_one(&mut *tx).await?;
+                    let collision: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM items WHERE id=?)").bind(&row.id).fetch_one(&mut **tx).await?;
                     if collision { return Err(invalid("An item ID belongs to another list")); }
-                    insert_item(&mut tx, id, row, time).await?;
+                    insert_item(tx, id, row, time).await?;
                 }
             }
             for key in old.keys().filter(|key| !ids.contains(key.as_str())) {
-                sqlx::query("DELETE FROM items WHERE id=? AND list_id=?").bind(key).bind(id).execute(&mut *tx).await?;
+                sqlx::query("DELETE FROM items WHERE id=? AND list_id=?").bind(key).bind(id).execute(&mut **tx).await?;
             }
             Ok(())
         }.await;
-        if let Err(error) = writes {
-            tx.rollback().await?;
-            return Err(error);
-        }
-        // SQLx transaction Drop rolls back if COMMIT fails, including deferred FK errors.
-        tx.commit().await?;
-        Ok(request.base_revision + 1)
+        writes?;
+        Ok(base_revision + 1)
     }
     pub async fn delete(&self, id: &str, revision: i64) -> Result<()> {
         let mut tx = self.pool.begin().await?;

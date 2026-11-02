@@ -1,3 +1,5 @@
+import { planChanges } from './incremental.ts';
+import type { PreparedSave, SaveScope } from './save-request.ts';
 import { encodeSave } from './save-encoding.ts';
 import type { Portable } from './portable.ts';
 import type { Item } from './editor.ts';
@@ -13,20 +15,24 @@ export type ListSummary = {
 };
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  code?: string;
+  constructor(status: number, message: string, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 let expectedOwner: string | null = null;
 let identityEpoch = 0;
 let gzipSaves = false;
+let incrementalVersion = 0;
 let expectedInstallation: string | null = null;
 let suspended = false;
 export function setApiOwner(owner: string | null) {
   if (owner !== expectedOwner || owner === null) {
     expectedInstallation = null;
     gzipSaves = false;
+    incrementalVersion = 0;
     identityEpoch++;
   }
   expectedOwner = owner;
@@ -96,6 +102,7 @@ export async function request<T>(
     throw new ApiError(
       response.status,
       error?.error ?? `Request failed (${response.status})`,
+      typeof error?.code === 'string' ? error.code : undefined,
     );
   }
   if (response.status === 204) return undefined as T;
@@ -107,7 +114,89 @@ export async function request<T>(
 }
 export type OutlineView = { collapsedItemIds: string[]; revision: number };
 export type ViewChange = { itemId: string; collapsed: boolean };
+function assertScope(scope: SaveScope) {
+  if (
+    scope.epoch !== identityEpoch ||
+    scope.owner !== expectedOwner ||
+    scope.installation !== expectedInstallation ||
+    suspended
+  )
+    throw new ApiError(
+      401,
+      'Account or installation changed; local edits were kept',
+    );
+}
+async function prepareSave(
+  document: Document,
+  baseRevision: number,
+  baseline?: Document,
+  operationId: string = crypto.randomUUID(),
+): Promise<PreparedSave> {
+  const scope = {
+    epoch: identityEpoch,
+    owner: expectedOwner,
+    installation: expectedInstallation,
+  };
+  const compression = gzipSaves;
+  const snapshot = JSON.stringify({ document, baseRevision });
+  const size = (value: string | ArrayBuffer) =>
+    typeof value === 'string'
+      ? new TextEncoder().encode(value).byteLength
+      : value.byteLength;
+  if (size(snapshot) > 1024 * 1024)
+    throw new ApiError(413, 'List exceeds the snapshot save-size limit');
+  const encode = (json: string) =>
+    compression
+      ? encodeSave(json)
+      : Promise.resolve({ body: json, encoding: undefined });
+  const full = await encode(snapshot);
+  assertScope(scope);
+  if (incrementalVersion === 1 && baseline) {
+    const batch = planChanges(baseline, document, baseRevision, operationId);
+    if (batch) {
+      const json = JSON.stringify(batch);
+      if (size(json) <= 1024 * 1024) {
+        const delta = await encode(json);
+        assertScope(scope);
+        if (size(delta.body) < size(full.body))
+          return {
+            id: document.id,
+            method: 'PATCH',
+            ...delta,
+            baseRevision,
+            operationId,
+            scope,
+          };
+      }
+    }
+  }
+  return { id: document.id, method: 'PUT', ...full, baseRevision, scope };
+}
+async function sendSave(prepared: PreparedSave): Promise<{ revision: number }> {
+  assertScope(prepared.scope);
+  const ack = await request<{
+    revision: number;
+    protocolVersion?: number;
+    operationId?: string;
+  }>(`/lists/${encodeURIComponent(prepared.id)}`, {
+    method: prepared.method,
+    body: prepared.body,
+    headers: prepared.encoding
+      ? { 'Content-Encoding': prepared.encoding }
+      : undefined,
+  });
+  assertScope(prepared.scope);
+  if (
+    ack.revision !== prepared.baseRevision + 1 ||
+    (prepared.method === 'PATCH' &&
+      (ack.protocolVersion !== 1 || ack.operationId !== prepared.operationId))
+  )
+    throw new Error('Invalid save acknowledgement; local edits were kept');
+  return ack;
+}
 export const api = {
+  prepareSave,
+  sendSave,
   getView: (id: string) =>
     request<OutlineView>(`/lists/${encodeURIComponent(id)}/view`),
   patchView: (id: string, baseRevision: number, changes: ViewChange[]) =>
@@ -136,10 +225,12 @@ export const api = {
       serverId: string;
       ownerId: string;
       saveEncoding?: string;
+      incrementalSaveVersion?: number;
     }>('/session');
     if (epoch !== identityEpoch)
       throw new ApiError(401, 'Account changed while loading the session');
     gzipSaves = identity.saveEncoding === 'gzip';
+    incrementalVersion = identity.incrementalSaveVersion ?? 0;
     // Pin this workspace's installation; reauthentication must never retag old payloads.
     expectedInstallation ??= identity.serverId;
     return identity;

@@ -250,7 +250,9 @@ test('invalid tag drafts are blocked and applied tags survive an unacknowledged 
   await expect(dialog.getByRole('alert')).toContainText('Duplicate');
   await input.fill('recovered-tag');
   await page.route('**/api/lists/*', (route) =>
-    route.request().method() === 'PUT' ? route.abort() : route.continue(),
+    ['PUT', 'PATCH'].includes(route.request().method())
+      ? route.abort()
+      : route.continue(),
   );
   await dialog.getByRole('button', { name: 'Apply tags', exact: true }).click();
   await expect(

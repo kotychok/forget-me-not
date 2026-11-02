@@ -191,6 +191,7 @@ pub async fn restore(source: &Path, destination: &Path) -> Result<Report> {
         sqlx::query("DELETE FROM telegram_receipts").execute(&mut *tx).await?;
         sqlx::query("DELETE FROM telegram_rates").execute(&mut *tx).await?;
         sqlx::query("UPDATE telegram_pollers SET lease_owner='',lease_until=0").execute(&mut *tx).await?;
+        sqlx::query("DELETE FROM incremental_save_receipts").execute(&mut *tx).await?;
         sqlx::query("DELETE FROM auth_grants").execute(&mut *tx).await?;
         sqlx::query("DELETE FROM tower_sessions").execute(&mut *tx).await?;
         sqlx::query("DELETE FROM auth_attempts").execute(&mut *tx).await?;

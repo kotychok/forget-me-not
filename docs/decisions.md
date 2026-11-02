@@ -112,4 +112,8 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D065 | 2026-11-02 | Agreed M14b field/placement/baseline rules | Omitted fields remain unchanged; empty notes/tags and null due dates clear their values. Use parentId/afterId anchors, with null for root/first position. Derive batches from the acknowledged baseline and queue edits made in flight. Choose snapshot transport before sending when cheaper; reconcile uncertain writes before any fallback. Core behavior is agreed; exact envelope/validation details and implementation remain separate |
 
+| D066 | 2026-11-02 | M14b technical specification / proposed defaults | Continue the design phase with incremental-save-protocol.md: versioned PATCH envelope, typed ordered operations, canonical decoded-packet hashing, scoped atomic receipts, explicit errors, dual byte limits and bounded temporary/planner work. Core user-approved behavior is unchanged; exact technical defaults and the >=90% sparse-edit byte target are documented for implementation review, not recorded as separately user-approved or implemented |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.
+
+| D067 | 2026-11-02 | Authorized M14b implementation | The user explicitly requested implementation after the technical specification. Implement version-1 PATCH batches, acknowledged-baseline planning, frozen retries, atomic scoped receipts with bounded retention, cheaper-wire transport selection and an additive migration. Keep full local drafts, list-wide conflicts and safe snapshot reconciliation; no automatic merge or deployment |

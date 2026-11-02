@@ -7,7 +7,7 @@ use uuid::Uuid;
 pub const MAX_ITEMS: usize = 5000;
 pub const MAX_DEPTH: usize = 32;
 
-fn valid_id(id: &str) -> bool {
+pub(crate) fn valid_id(id: &str) -> bool {
     Uuid::parse_str(id).is_ok_and(|uuid| {
         uuid.get_version_num() == 4
             && uuid.get_variant() == uuid::Variant::RFC4122
@@ -118,7 +118,7 @@ pub(crate) fn validate_tags(tags: &[String]) -> Result<()> {
 }
 
 /// Date-only Gregorian validation, independent of server timezone.
-fn valid_date(value: &str) -> bool {
+pub(crate) fn valid_date(value: &str) -> bool {
     let bytes = value.as_bytes();
     if bytes.len() != 10
         || bytes[4] != b'-'

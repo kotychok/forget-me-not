@@ -46,7 +46,9 @@ test('cross-list search reveals collapsed descendants, retains query and local h
     .getByRole('button', { name: 'Original source', exact: true })
     .click();
   await page.route('**/api/lists/*', (route) =>
-    route.request().method() === 'PUT' ? route.abort() : route.continue(),
+    ['PUT', 'PATCH'].includes(route.request().method())
+      ? route.abort()
+      : route.continue(),
   );
   await text.fill(`Local ${needle}`);
   await page.getByRole('button', { name: 'Search lists', exact: true }).click();

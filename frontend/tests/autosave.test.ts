@@ -301,3 +301,107 @@ test('lost-response reconciliation distinguishes due dates even when other conte
     queue.dispose();
   }
 });
+
+test('incremental retry reuses frozen bytes and old acknowledgement before conflicting newer edits', async () => {
+  const document: Document = { id: 'list', title: 'Baseline', nodes: [] };
+  const baseline = structuredClone(document);
+  const sent: import('../src/lib/save-request.ts').PreparedSave[] = [];
+  const bases: string[] = [];
+  let gets = 0;
+  const queue = new Autosave(
+    0,
+    () => document,
+    {
+      save: async () => {
+        throw new Error('Unexpected snapshot');
+      },
+      get: async () => {
+        gets++;
+        return { ...document, revision: 2 };
+      },
+      prepareSave: async (doc, revision, base, operationId) => {
+        bases.push(base!.title);
+        return {
+          id: doc.id,
+          method: 'PATCH',
+          body: JSON.stringify(doc),
+          baseRevision: revision,
+          operationId,
+          scope: { epoch: 0, owner: 'owner', installation: 'server' },
+        };
+      },
+      sendSave: async (prepared) => {
+        sent.push(prepared);
+        if (sent.length === 1) throw new Error('Response lost after commit');
+        if (sent.length === 2) return { revision: 1 };
+        throw new ApiError(
+          409,
+          'Another device changed the list',
+          'revision_conflict',
+        );
+      },
+    },
+    () => {},
+    100000,
+    baseline,
+  );
+  try {
+    document.title = 'First';
+    queue.markDirty();
+    assert.equal(await queue.flush(), false);
+    document.title = 'Newer local edit';
+    queue.markDirty();
+    assert.equal(await queue.retry(), false);
+    assert.equal(sent[0], sent[1]);
+    assert.notEqual(sent[1].operationId, sent[2].operationId);
+    assert.equal(sent[2].baseRevision, 1);
+    assert.deepEqual(bases, ['Baseline', 'First']);
+    assert.equal(gets, 0);
+    assert.equal(queue.status, 'conflict');
+    assert.equal(queue.dirty, true);
+    assert.equal(document.title, 'Newer local edit');
+  } finally {
+    queue.dispose();
+  }
+});
+
+test('expired incremental receipt reconciles the committed snapshot without issuing a new write', async () => {
+  const document: Document = { id: 'list', title: 'Baseline', nodes: [] };
+  let sends = 0;
+  const queue = new Autosave(
+    0,
+    () => document,
+    {
+      save: async () => {
+        throw new Error('Unexpected snapshot');
+      },
+      get: async () => ({ ...structuredClone(document), revision: 1 }),
+      prepareSave: async (doc, revision, _base, operationId) => ({
+        id: doc.id,
+        method: 'PATCH',
+        body: JSON.stringify(doc),
+        baseRevision: revision,
+        operationId,
+        scope: { epoch: 0, owner: 'owner', installation: 'server' },
+      }),
+      sendSave: async () => {
+        if (++sends === 1) throw new Error('Lost response');
+        throw new ApiError(409, 'Expired receipt', 'revision_conflict');
+      },
+    },
+    () => {},
+    100000,
+    document,
+  );
+  try {
+    document.title = 'Changed';
+    queue.markDirty();
+    await queue.flush();
+    assert.equal(await queue.retry(), true);
+    assert.equal(sends, 2);
+    assert.equal(queue.revision, 1);
+    assert.equal(queue.dirty, false);
+  } finally {
+    queue.dispose();
+  }
+});

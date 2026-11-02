@@ -88,3 +88,7 @@ deploy-logs:
 .PHONY: measure-transfer
 measure-transfer:
 	node scripts/measure-transfer.mjs
+
+.PHONY: measure-incremental
+measure-incremental:
+	node --experimental-strip-types scripts/measure-incremental.mjs

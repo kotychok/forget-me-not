@@ -23,3 +23,5 @@ pub mod server_config;
 pub use http::authenticated_app_with_access;
 
 pub mod telegram;
+
+pub mod incremental;

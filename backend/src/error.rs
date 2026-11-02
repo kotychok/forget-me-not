@@ -1,6 +1,7 @@
 /// Application failures; HTTP status mapping lives in the HTTP adapter.
 #[derive(Debug)]
 pub enum AppError {
+    Protocol(&'static str, &'static str),
     NotFound,
     Conflict,
     Invalid(&'static str),

@@ -155,3 +155,7 @@ Maintenance opens source files read-only without Store::open. Verified VACUUM IN
 ## M14 transport encoding
 
 The snapshot contract and database transaction remain unchanged. Large worthwhile PUT bodies can use negotiated gzip; decoded JSON retains the existing 1-MiB limit. Gzip is transient transport data, not stored content or a new migration/schema. See [transfer optimization](transfer-optimization.md).
+
+## Incremental save receipts — M14b
+
+`20261102001000_incremental_save_receipts.sql` adds installation/owner/list/operation-scoped digest and acknowledgement receipts. Item row diffs, list CAS and receipts commit together through Store. Expiry is 24 hours with a latest-10,000 cap per owner; successful writes and hourly maintenance remove expired entries. List deletion cascades receipts. Restore clears them while rotating installation identity. No item content or file-format schema changes are introduced.

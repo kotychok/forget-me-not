@@ -39,9 +39,16 @@ export class Workspace {
   private sessions = new Map<string, Session>();
   private transport: Omit<
     typeof api,
-    'decodeFile' | 'encodeFile' | 'getView' | 'patchView'
+    | 'decodeFile'
+    | 'encodeFile'
+    | 'getView'
+    | 'patchView'
+    | 'prepareSave'
+    | 'sendSave'
   > &
-    Partial<Pick<typeof api, 'getView' | 'patchView'>>;
+    Partial<
+      Pick<typeof api, 'getView' | 'patchView' | 'prepareSave' | 'sendSave'>
+    >;
   private notify: () => void;
   readonly drafts: Drafts | undefined;
   private draftIdentityReady = false;
@@ -52,9 +59,16 @@ export class Workspace {
     notify: () => void,
     transport: Omit<
       typeof api,
-      'decodeFile' | 'encodeFile' | 'getView' | 'patchView'
+      | 'decodeFile'
+      | 'encodeFile'
+      | 'getView'
+      | 'patchView'
+      | 'prepareSave'
+      | 'sendSave'
     > &
-      Partial<Pick<typeof api, 'getView' | 'patchView'>> = api,
+      Partial<
+        Pick<typeof api, 'getView' | 'patchView' | 'prepareSave' | 'sendSave'>
+      > = api,
     storage?: DraftStorage,
   ) {
     this.notify = notify;
@@ -160,6 +174,8 @@ export class Workspace {
         }),
         this.transport,
         () => this.sessionChanged(document.id),
+        500,
+        document,
       ),
     };
     const previous = this.sessions.get(document.id);

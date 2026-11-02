@@ -173,6 +173,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     };
     let listener = tokio::net::TcpListener::bind((bind, port)).await?;
     println!("Server: http://{bind}:{port} (environment: {environment}, access mode: {mode})");
+    let receipt_store = store.clone();
+    let receipt_housekeeping = tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(3600));
+        loop {
+            interval.tick().await;
+            if receipt_store.expire_save_receipts().await.is_err() {
+                eprintln!("Save receipt cleanup failed; will retry later.");
+            }
+        }
+    });
     let telegram_worker = telegram.as_ref().map(|service| service.start());
     let serving = axum::serve(listener, router)
         .with_graceful_shutdown(async {
@@ -194,6 +204,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     if let Some(service) = telegram {
         service.release().await;
     }
+    receipt_housekeeping.abort();
+    let _ = receipt_housekeeping.await;
     store.pool.close().await;
     serving?;
     Ok(())

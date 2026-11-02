@@ -66,6 +66,7 @@ pub struct DeleteList {
 #[serde(rename_all = "camelCase")]
 pub struct ClientIdentity {
     pub save_encoding: String,
+    pub incremental_save_version: u8,
     pub server_id: String,
     pub owner_id: String,
 }

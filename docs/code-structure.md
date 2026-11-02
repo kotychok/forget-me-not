@@ -110,3 +110,7 @@ telegram/ separates sanitized HTTP transport, polling/replies, setting routes an
 ## Transfer encoding — M14
 
 save-encoding.ts prepares optional gzip bytes without HTTP/model state. api.ts negotiates support through identity and retains request scope across encoding. Autosave continues holding full semantic snapshots. The HTTP snapshot PUT route bounds wire bytes outside decompression and decoded bytes at JSON extraction; Store and SQL transactions remain unchanged.
+
+## Incremental saves — M14b
+
+`lib/incremental.ts` is a pure baseline-to-target planner. `api.ts` selects and freezes the cheaper encoded transport; `save-request.ts` describes that attempt. Autosave retains the acknowledged baseline and retries the same attempt before reconciliation. Editor history and drafts still contain full snapshots. Rust `incremental.rs` owns strict packet decoding, hashing and pure ordered tree application; `store/incremental.rs` owns the atomic receipt/CAS transaction and reuses ordinary document row diffs. HTTP handlers contain no SQL.

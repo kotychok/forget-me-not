@@ -1,6 +1,6 @@
-# Incremental saves — M14b protocol proposal
+# Incremental saves — M14b
 
-Draft for discussion, 2026-11-02. The user authorized agreeing the design, not implementing this protocol. M14 gzip snapshots remain the implemented behavior. Only the explicitly agreed rules below are accepted; the remaining protocol choices are proposals.
+Implemented for review on 2026-11-02 after user authorization. Full local snapshots, history and recovery remain authoritative locally; the transport can now send incremental batches.
 
 ## Agreed rules — 2026-11-02
 
@@ -14,7 +14,11 @@ Draft for discussion, 2026-11-02. The user authorized agreeing the design, not i
 - Compute each batch against the last acknowledged baseline. Edits made while a request is in flight remain pending for the next batch.
 - Select snapshot transport before sending when a batch would be larger. An uncertain PATCH response never triggers a blind snapshot fallback; reconcile first.
 
-The core behavioral rules are agreed. The exact versioned endpoint/envelope, canonical hash representation, validation/error table and limits below still need a technical specification; implementation has not been requested yet.
+The core behavioral rules are agreed. The versioned endpoint/envelope, canonical hash representation, validation/error table and limits are now specified as technical defaults in the linked contract; implementation has not been requested yet.
+
+## Technical specification
+
+The [version-1 technical contract](incremental-save-protocol.md) now defines the exact endpoint/envelope, creation defaults, ordered validation, canonical hashing, bounded receipt storage, errors and transport selection. Core behavior above is agreed; these technical defaults are documented for implementation review. Implementation now follows this contract; user acceptance is pending.
 
 ## Proposed contract
 
@@ -53,7 +57,7 @@ Use sibling IDs on the wire, keeping the existing integer positions in SQLite. T
 
 ## Atomicity and conflicts
 
-Keep one list-wide content revision. Authorize the current owner/installation, check for an existing receipt, then compare the base revision and apply/validate all operations in one write transaction. The item row diff, title/revision change and receipt must commit together. Failed validation or storage rolls everything back; stale revisions apply nothing. There is no automatic merging of concurrent browser/Telegram changes in this proposal.
+Keep one list-wide content revision. Authorize the current owner/installation, check for an existing receipt, then compare the base revision and apply/validate all operations in one write transaction. The item row diff, title/revision change and receipt must commit together. Failed validation or storage rolls everything back; stale revisions apply nothing. There is no automatic merging of concurrent browser/Telegram changes in this protocol.
 
 A semantic no-op detected locally sends nothing. A non-empty valid submitted batch advances the revision once, preserving the existing write/acknowledgement contract.
 
@@ -77,10 +81,10 @@ Propose advertising incrementalSaveVersion:1 through /api/session. Without that 
 
 Choose between a batch and a snapshot before sending either request, using measured encoded sizes and bounded planning cost. Use a snapshot when the change set is unsupported or not smaller; if the target itself exceeds existing limits, report an error and preserve drafts. Never send a blind snapshot fallback after an uncertain PATCH result. Capability/rollback changes require reload or reconciliation, not a second write with guessed state.
 
-Proposed limits: at most 10,000 item operations, the existing 1-MiB wire/decoded save envelope budget, and the existing complete resulting-document limits (5,000 items, depth 32, field bounds and snapshot save-size budget). Temporary planner/server structures must also have explicit bounds for create-before-delete batches. Empty/unknown/duplicate/conflicting operation cases need a normative validation table before coding.
+Proposed limits: at most 10,000 item operations, the existing 1-MiB wire/decoded save envelope budget, and the existing complete resulting-document limits (5,000 items, depth 32, field bounds and snapshot save-size budget). Temporary planner/server structures must also have explicit bounds for create-before-delete batches. The linked technical contract defines empty/unknown/duplicate/conflicting operation cases, temporary bounds and the validation table.
 
 ## Measurement target and remaining agreement
 
 Propose at least 90% fewer request-body bytes than M14 gzip snapshots for a short isolated text edit (up to 200 characters) or a single branch move in a 1,000+ item list. Large note replacements, bulk insertions and sorting should select the cheaper valid transport rather than promise that target for every operation. Measure client planning/encoding, server validation/transaction latency and receipt storage alongside bytes.
 
-Before implementation, agree the operation/clearing/deletion rules, receipt bounds, conflict policy and fallback. Then specify the exact create fields/defaults, canonical hashing representation, error codes, temporary-state bounds and additive receipt migration. Add tests for concurrent edits, own edits during a flight, retry after another device writes, receipt eviction/expiry, ID reuse, foreign item/anchor IDs, cycle attempts, branch deletion with rescued children, undo/redo, account changes and restore isolation.
+The operation/clearing/deletion rules, receipt bounds, conflict policy and fallback are agreed. The linked technical contract supplies creation defaults, canonical hashing, error codes, temporary-state bounds and the additive receipt-table sketch. Add tests for concurrent edits, own edits during a flight, retry after another device writes, receipt eviction/expiry, ID reuse, foreign item/anchor IDs, cycle attempts, branch deletion with rescued children, undo/redo, account changes and restore isolation.

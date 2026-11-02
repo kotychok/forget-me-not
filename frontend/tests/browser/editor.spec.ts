@@ -402,7 +402,7 @@ test('editing during a slow save remains unsaved until the latest snapshot is ac
   });
   let intercepted = false;
   await page.route('**/api/lists/*', async (route) => {
-    if (route.request().method() === 'PUT' && !intercepted) {
+    if (['PUT', 'PATCH'].includes(route.request().method()) && !intercepted) {
       intercepted = true;
       await gate;
     }

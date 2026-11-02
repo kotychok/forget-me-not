@@ -58,3 +58,5 @@ Sources: [SQLite VACUUM INTO](https://www.sqlite.org/lang_vacuum.html#vacuum_wit
 ## Telegram integrations
 
 M12 installation backups include bot-scoped connections, pending link digests, durable offsets and reply receipts. Restore removes connections, pending links and replies, resets leases and rotates authentication versions; users must reconnect. The bot secret remains outside the database in the private deployment environment. Never enable a production bot token on a temporary restore/test instance: separate SQLite copies cannot coordinate poller leases. See [Telegram Inbox](telegram.md).
+
+M14b backups also contain save receipts. Restore deletes them before publishing the candidate and rotates installation identity; cached packets from the old installation cannot be replayed against restored content.

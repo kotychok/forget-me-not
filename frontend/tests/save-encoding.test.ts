@@ -114,3 +114,61 @@ test('account changes during asynchronous compression cancel the write even afte
     suspendApi(false);
   }
 });
+
+test('incremental transport is negotiated, chooses smaller bytes and pins prepared attempts', async () => {
+  const original = globalThis.fetch;
+  let capable = false;
+  let writes = 0;
+  globalThis.fetch = async (path, init) => {
+    if (String(path).endsWith('/session'))
+      return Response.json({
+        serverId: 'server',
+        ownerId: 'owner',
+        saveEncoding: 'gzip',
+        ...(capable ? { incrementalSaveVersion: 1 } : {}),
+      });
+    writes++;
+    const packet = JSON.parse(init!.body as string);
+    return Response.json({
+      protocolVersion: 1,
+      operationId: packet.operationId,
+      revision: 1,
+    });
+  };
+  try {
+    setApiOwner('owner');
+    suspendApi(false);
+    await api.session();
+    const baseline = {
+      id: crypto.randomUUID(),
+      title: 'Large',
+      nodes: Array.from({ length: 1000 }, (_, i) => ({
+        id: crypto.randomUUID(),
+        kind: 'item' as const,
+        text: `Synthetic ${i}`,
+        completed: false,
+        children: [],
+      })),
+    };
+    const target = structuredClone(baseline);
+    target.nodes[0].text = 'Changed';
+    assert.equal((await api.prepareSave(target, 0, baseline)).method, 'PUT');
+    capable = true;
+    await api.session();
+    const prepared = await api.prepareSave(target, 0, baseline);
+    assert.equal(prepared.method, 'PATCH');
+    assert.ok(new TextEncoder().encode(prepared.body as string).length < 500);
+    await api.sendSave(prepared);
+    setApiOwner(null);
+    setApiOwner('owner');
+    await assert.rejects(
+      api.sendSave(prepared),
+      (error) => error instanceof ApiError && error.status === 401,
+    );
+    assert.equal(writes, 1);
+  } finally {
+    globalThis.fetch = original;
+    setApiOwner(null);
+    suspendApi(false);
+  }
+});

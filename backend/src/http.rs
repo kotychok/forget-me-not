@@ -17,6 +17,19 @@ use tower_http::services::{ServeDir, ServeFile};
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
+        if let AppError::Protocol(code, message) = self {
+            let status = match code {
+                "revision_conflict" | "operation_id_reused" => StatusCode::CONFLICT,
+                "list_not_found" => StatusCode::NOT_FOUND,
+                "invalid_json" => StatusCode::BAD_REQUEST,
+                _ => StatusCode::UNPROCESSABLE_ENTITY,
+            };
+            return (
+                status,
+                Json(serde_json::json!({"error":message,"code":code})),
+            )
+                .into_response();
+        }
         let (status, message) = match self {
             Self::NotFound => (StatusCode::NOT_FOUND, "List not found".to_owned()),
             Self::Conflict => (
@@ -26,6 +39,7 @@ impl IntoResponse for AppError {
             Self::Invalid(message) => (StatusCode::UNPROCESSABLE_ENTITY, message.to_owned()),
             Self::InvalidImport(message) => (StatusCode::UNPROCESSABLE_ENTITY, message),
             Self::Corrupt(message) => (StatusCode::INTERNAL_SERVER_ERROR, message.to_owned()),
+            Self::Protocol(_, _) => unreachable!(),
             Self::Storage => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Storage operation failed".to_owned(),
@@ -180,6 +194,7 @@ fn build(
             get(get_list)
                 .merge(
                     axum::routing::put(save_list)
+                        .patch(save_delta)
                         .layer::<_, std::convert::Infallible>(
                             tower_http::decompression::RequestDecompressionLayer::new(),
                         )
@@ -336,4 +351,13 @@ async fn patch_outline_view(
     Json(request): Json<PatchView>,
 ) -> Result<Json<OutlineView>> {
     Ok(Json(store.patch_outline_view(&id, request).await?))
+}
+
+async fn save_delta(
+    Extension(store): Extension<Store>,
+    Path(id): Path<String>,
+    bytes: axum::body::Bytes,
+) -> Result<Json<crate::incremental::Acknowledgement>> {
+    let batch = crate::incremental::Batch::decode(&bytes)?;
+    Ok(Json(store.save_incremental(&id, &batch).await?))
 }

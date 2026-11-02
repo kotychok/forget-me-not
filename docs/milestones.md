@@ -31,7 +31,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M12 | Capture items through Telegram Inbox | M11c | Implemented and verified locally; awaiting real-bot user review |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
 | M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Implemented and verified locally; awaiting user review |
-| M14b | Save only changed item data and structural changes | M14; protocol design | Planned; implementation deferred |
+| M14b | Save only changed item data and structural changes | M14; protocol design | Implemented for review; user acceptance pending |
 | M15 | Active and archived lists | M6; portability/schema design | Deferred |
 
 M3 and M4 have no dependency on each other; the table does not require parallel implementation. Import/export fixtures can be designed before M2, but complete import persistence depends on it.
@@ -262,7 +262,7 @@ Acceptance: representative indent/outdent and text edits exchange measurably few
 
 Agreed 2026-11-02 as a separate follow-up to gzip snapshots. Protocol discussion is now requested; see the [draft contract](incremental-saves.md), whose core behavior is agreed while its exact technical specification remains open. Outcome: transmit changes relative to the last acknowledged server version while retaining a complete local tree and snapshot loading/recovery. Implementation is deferred until the packet contract and retry behavior are designed.
 
-Agreed behavior: removing an item removes its attached branch; concurrent edits retain list-wide revision conflicts without automatic merging. Operation IDs and receipt retention (24 hours, latest 10,000 per owner) are also agreed; field clearing, parent/sibling anchors, acknowledged-baseline batching and choosing a cheaper snapshot before sending are agreed. Exact envelope, validation and bounds remain to be specified.
+Agreed behavior: removing an item removes its attached branch; concurrent edits retain list-wide revision conflicts without automatic merging. Operation IDs and receipt retention (24 hours, latest 10,000 per owner) are also agreed; field clearing, parent/sibling anchors, acknowledged-baseline batching and choosing a cheaper snapshot before sending are agreed. The [technical contract](incremental-save-protocol.md) specifies the implemented envelope, validation and bounds. Implementation was subsequently authorized; see [verification](plans/m14b-incremental-saves.md).
 
 Scope: changed item fields (text, notes, tags, due date, kind/completion), additions/deletions, list title, and parent/sibling ordering changes. A branch move should describe its root and destination without retransmitting unchanged descendants. Use changed-field updates and ID-based parent/sibling placement; the exact versioned packet schema remains to be specified.
 
@@ -275,7 +275,7 @@ Acceptance:
 - Retain compatible snapshot reads/recovery and an explicit capability/version strategy for older clients/servers. Gzip remains available for worthwhile larger batches.
 - Measure text edits and branch moves against M14 gzip snapshots on representative large lists; establish a byte-reduction target and bounded packet/resulting-document limits before implementation.
 
-Open design: endpoint and packet schema, field clearing, subtree deletion/move semantics, receipt lifetime/storage limits, fallback policy, and database migration requirements. This roadmap entry does not authorize implementing the new protocol.
+Version 1 implements these details with an additive receipt migration. User acceptance remains pending; no deployment is included.
 
 ### M15 — Active and archived lists
 

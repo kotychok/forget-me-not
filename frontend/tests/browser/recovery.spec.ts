@@ -45,7 +45,7 @@ async function reloadUnsaved(page: Page) {
 }
 async function breakWrites(page: Page) {
   await page.route('**/api/lists/*', (route) =>
-    route.request().method() === 'PUT'
+    ['PUT', 'PATCH'].includes(route.request().method())
       ? route.abort('failed')
       : route.continue(),
   );
@@ -213,7 +213,7 @@ test('a lost save response is recognized on reload without duplicating the list'
   const id = new URL(page.url()).searchParams.get('list')!;
   const before = await (await request.get('/api/lists')).json();
   await page.route('**/api/lists/*', async (route) => {
-    if (route.request().method() === 'PUT') {
+    if (['PUT', 'PATCH'].includes(route.request().method())) {
       const response = await route.fetch();
       expect(response.status()).toBe(200);
       await route.abort('failed');

@@ -126,7 +126,9 @@ test('unacknowledged date survives recovery and different browser timezones do n
   const id = await seed(request);
   await page.goto(`/?list=${id}`);
   await page.route('**/api/lists/*', (route) =>
-    route.request().method() === 'PUT' ? route.abort() : route.continue(),
+    ['PUT', 'PATCH'].includes(route.request().method())
+      ? route.abort()
+      : route.continue(),
   );
   await page.locator('.item-text').focus();
   await page.keyboard.press('d');

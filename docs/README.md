@@ -27,6 +27,7 @@ Updated: 2026-10-30. The application is deployed on the user's DigitalOcean VPS 
 
 ## Guide
 
+- [Incremental save protocol](incremental-save-protocol.md): proposed exact M14b v1 schema, validation, replay and resource limits.
 - [Incremental saves proposal](incremental-saves.md): M14b packet/ordering, receipts, compatibility and decisions to agree before coding.
 
 - [Transfer optimization](transfer-optimization.md): M14 baseline, gzip negotiation, byte savings and unchanged save semantics.
@@ -102,3 +103,5 @@ M11c release preparation is authorized and implemented for local verification: p
 R3 was verified and accepted by the user on 2026-10-30; see [cross-device refresh](remote-refresh.md). No subsequent integration milestone is authorized by this acceptance.
 
 M14b tracks incremental item/structure saves separately from M14 gzip snapshots. Packet format, operation receipts and compatibility require design before implementation; see [M14b](milestones.md#m14b--incremental-saves).
+
+M14b incremental saves are implemented for review after explicit authorization. See the [wire contract](incremental-save-protocol.md) and [verification record](plans/m14b-incremental-saves.md). User acceptance and deployment remain separate.

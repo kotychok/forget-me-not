@@ -4,6 +4,12 @@ test('large autosaves send gzip snapshots and preserve Unicode, revision and rel
   page,
   request,
 }) => {
+  await page.route('**/api/session', async (route) => {
+    const response = await route.fetch();
+    const identity = await response.json();
+    delete identity.incrementalSaveVersion;
+    await route.fulfill({ response, json: identity });
+  });
   const list = await (
     await request.post('/api/lists', { data: { title: 'Compressed saves' } })
   ).json();

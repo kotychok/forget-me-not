@@ -104,4 +104,12 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D061 | 2026-11-02 | Authorized M14 / measured implementation default | Prioritize transfer optimization. Synthetic baseline shows ~70–73% gzip savings; target >=50% for 1,000+ item text/indent/outdent saves. Implement negotiated gzip for large worthwhile snapshot uploads, with plain JSON fallback before sending, dual wire/decoded limits and identity pinning across async encoding. Preserve existing CAS, lost-response reconciliation, drafts and formats. Patches/operation APIs and further AI work are not authorized by this change |
 
+| D062 | 2026-11-02 | Agreed roadmap / deferred implementation | Track incremental item/structure saves separately as M14b after gzip M14. Retain full local snapshots and revision-checked atomic batches; design acknowledged-baseline diffs, operation IDs/retry receipts, branch-root moves and protocol compatibility before implementation. Gzip remains useful for larger packets. This records scope, not approval of a packet format or implementation |
+
+| D063 | 2026-11-02 | Agreed M14b behavior | The user accepted whole-branch deletion and list-wide revision conflict checks, with no automatic merging of concurrent edits. Other packet/receipt details in incremental-saves.md remain proposals; implementation is not yet authorized |
+
+| D064 | 2026-11-02 | Agreed M14b retry/retention | Use unique operation IDs, replay the original acknowledgement for identical committed packets and reject known IDs reused with different content. Retain hash/result receipts for 24 hours and the latest 10,000 per owner, whichever bound evicts first; expired receipts fall back to base-revision checks and snapshot reconciliation. Packet/placement details and implementation remain separate |
+
+| D065 | 2026-11-02 | Agreed M14b field/placement/baseline rules | Omitted fields remain unchanged; empty notes/tags and null due dates clear their values. Use parentId/afterId anchors, with null for root/first position. Derive batches from the acknowledged baseline and queue edits made in flight. Choose snapshot transport before sending when cheaper; reconcile uncertain writes before any fallback. Core behavior is agreed; exact envelope/validation details and implementation remain separate |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

@@ -25,7 +25,7 @@ A real browser/proxy/disposable-backend check measured a separate random-UUID 1,
 | Gzip snapshot upload | Measured ~70–73% saving; same validated JSON and CAS writes | Implemented first |
 | Longer coalescing | Fewer requests when typing | Existing 500-ms queue retained; avoid adding editing delay |
 | Conditional reads | Helps unchanged downloads | Existing R3 summary polling already fetches full documents only when changed; separate future measurement |
-| Patches/operations | Potentially much smaller single-item writes | Deferred: needs a new validation, retry/idempotency and compatibility contract; no such protocol is approved |
+| Patches/operations | Potentially much smaller single-item writes | Tracked separately as M14b: needs a new validation, retry/idempotency and compatibility contract; no packet format or implementation is approved |
 
 This change does not compress every API body or optimize static assets/downloads. Those can be measured separately; no SSE, merging or collaborative editing is added.
 
@@ -50,3 +50,7 @@ Compression is asynchronous. The request captures owner/installation headers bef
 Coverage includes UTF-8 round trips, small/unsupported/failing encoder fallback, old-server capability fallback, account changes during compression, no automatic resend, compressed/plain CAS compatibility, malformed/unsupported/oversized bodies and auth/CSRF gates. Browser verification checks actual gzip upload bytes, saved Unicode content, reload, and a committed gzip write whose response is deliberately lost: retry acknowledges it without another PUT. Full regression and container results are recorded in [M14 implementation](plans/m14-transfer-optimization.md).
 
 Sources: [tower-http request decompression](https://docs.rs/tower-http/0.6.11/tower_http/decompression/struct.RequestDecompressionLayer.html) and [Axum body limits](https://docs.rs/axum/0.8.9/axum/extract/struct.DefaultBodyLimit.html) describe the middleware and decoded JSON extraction behavior; local tests verify the combined ordering and limits.
+
+## M14b follow-up
+
+On 2026-11-02 the user agreed to track changed-item and structural batches as [M14b](milestones.md#m14b--incremental-saves). Its [protocol proposal](incremental-saves.md) is now under discussion; M14 gzip snapshots keep their current behavior.

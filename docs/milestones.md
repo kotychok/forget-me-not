@@ -31,6 +31,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M12 | Capture items through Telegram Inbox | M11c | Implemented and verified locally; awaiting real-bot user review |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
 | M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Implemented and verified locally; awaiting user review |
+| M14b | Save only changed item data and structural changes | M14; protocol design | Planned; implementation deferred |
 | M15 | Active and archived lists | M6; portability/schema design | Deferred |
 
 M3 and M4 have no dependency on each other; the table does not require parallel implementation. Import/export fixtures can be designed before M2, but complete import persistence depends on it.
@@ -256,6 +257,25 @@ Authorized 2026-11-02 ahead of further AI work. Initial measured scope: negotiat
 Outcome: reduce the data exchanged for edits after the reliable snapshot implementation exists. Measure payload sizes and latency for agreed list sizes first. Compare compression, coalescing, conditional reads, patches, or operation-based writes; no specific replacement protocol is agreed yet.
 
 Acceptance: representative indent/outdent and text edits exchange measurably fewer bytes against the recorded baseline; revision checks, retry/idempotency, draft recovery, and atomic writes remain correct. Document before/after measurements and protocol compatibility. Optimization must not turn partial failures into lost edits. Establish a quantitative target from the baseline before implementation.
+
+### M14b — Incremental saves
+
+Agreed 2026-11-02 as a separate follow-up to gzip snapshots. Protocol discussion is now requested; see the [draft contract](incremental-saves.md), whose core behavior is agreed while its exact technical specification remains open. Outcome: transmit changes relative to the last acknowledged server version while retaining a complete local tree and snapshot loading/recovery. Implementation is deferred until the packet contract and retry behavior are designed.
+
+Agreed behavior: removing an item removes its attached branch; concurrent edits retain list-wide revision conflicts without automatic merging. Operation IDs and receipt retention (24 hours, latest 10,000 per owner) are also agreed; field clearing, parent/sibling anchors, acknowledged-baseline batching and choosing a cheaper snapshot before sending are agreed. Exact envelope, validation and bounds remain to be specified.
+
+Scope: changed item fields (text, notes, tags, due date, kind/completion), additions/deletions, list title, and parent/sibling ordering changes. A branch move should describe its root and destination without retransmitting unchanged descendants. Use changed-field updates and ID-based parent/sibling placement; the exact versioned packet schema remains to be specified.
+
+Acceptance:
+
+- Each batch carries a base revision and is applied atomically with ownership and complete resulting-tree validation. Stale revisions never partially apply a batch.
+- Define a scoped operation ID and durable deduplication/receipt policy before implementation. Retrying a committed batch after a lost response must not apply it twice; define rejection of reused IDs with different payloads and receipt expiry behavior.
+- Compute changes against the acknowledged baseline, never against an in-flight or unacknowledged local version. Newer edits remain pending when an earlier batch is acknowledged.
+- Preserve drafts, undo/redo, account/installation boundaries and existing conflict recovery. Concurrent device or Telegram writes remain revision-checked; no automatic merge is implied.
+- Retain compatible snapshot reads/recovery and an explicit capability/version strategy for older clients/servers. Gzip remains available for worthwhile larger batches.
+- Measure text edits and branch moves against M14 gzip snapshots on representative large lists; establish a byte-reduction target and bounded packet/resulting-document limits before implementation.
+
+Open design: endpoint and packet schema, field clearing, subtree deletion/move semantics, receipt lifetime/storage limits, fallback policy, and database migration requirements. This roadmap entry does not authorize implementing the new protocol.
 
 ### M15 — Active and archived lists
 

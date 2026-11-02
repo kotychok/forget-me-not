@@ -1,3 +1,4 @@
+import { encodeSave } from './save-encoding.ts';
 import type { Portable } from './portable.ts';
 import type { Item } from './editor.ts';
 
@@ -18,30 +19,55 @@ export class ApiError extends Error {
   }
 }
 let expectedOwner: string | null = null;
+let identityEpoch = 0;
+let gzipSaves = false;
 let expectedInstallation: string | null = null;
 let suspended = false;
 export function setApiOwner(owner: string | null) {
-  if (owner !== expectedOwner || owner === null) expectedInstallation = null;
+  if (owner !== expectedOwner || owner === null) {
+    expectedInstallation = null;
+    gzipSaves = false;
+    identityEpoch++;
+  }
   expectedOwner = owner;
 }
 export function suspendApi(value: boolean) {
   suspended = value;
 }
-export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(
+  path: string,
+  init?: RequestInit,
+  compressSave = false,
+): Promise<T> {
   const administrative = path.startsWith('/auth/admin/');
   if (suspended && (!path.startsWith('/auth/') || administrative))
     throw new ApiError(401, 'Sign in to continue; local changes are kept');
+  const epoch = identityEpoch;
+  const owner = expectedOwner;
+  const installation = expectedInstallation;
+  let body = init?.body;
+  let encoding: string | undefined;
+  if (compressSave && gzipSaves && typeof body === 'string') {
+    const encoded = await encodeSave(body);
+    if (epoch !== identityEpoch || suspended)
+      throw new ApiError(
+        401,
+        'Account changed while preparing the save; local edits were kept',
+      );
+    body = gzipSaves ? encoded.body : body;
+    encoding = gzipSaves ? encoded.encoding : undefined;
+  }
   let response: Response;
   try {
     response = await fetch(`/api${path}`, {
       ...init,
+      body,
       headers: {
         'Content-Type': 'application/json',
         'X-FMN-Request': '1',
-        ...(expectedInstallation
-          ? { 'X-FMN-Installation': expectedInstallation }
-          : {}),
-        ...(expectedOwner ? { 'X-FMN-Owner': expectedOwner } : {}),
+        ...(installation ? { 'X-FMN-Installation': installation } : {}),
+        ...(owner ? { 'X-FMN-Owner': owner } : {}),
+        ...(encoding ? { 'Content-Encoding': encoding } : {}),
         ...init?.headers,
       },
       signal: AbortSignal.timeout(15_000),
@@ -105,9 +131,15 @@ export const api = {
       body: JSON.stringify({ format, document }),
     }),
   session: async () => {
-    const identity = await request<{ serverId: string; ownerId: string }>(
-      '/session',
-    );
+    const epoch = identityEpoch;
+    const identity = await request<{
+      serverId: string;
+      ownerId: string;
+      saveEncoding?: string;
+    }>('/session');
+    if (epoch !== identityEpoch)
+      throw new ApiError(401, 'Account changed while loading the session');
+    gzipSaves = identity.saveEncoding === 'gzip';
     // Pin this workspace's installation; reauthentication must never retag old payloads.
     expectedInstallation ??= identity.serverId;
     return identity;
@@ -127,10 +159,14 @@ export const api = {
       body: JSON.stringify({ title }),
     }),
   save: (document: Document, baseRevision: number) =>
-    request<{ revision: number }>(`/lists/${encodeURIComponent(document.id)}`, {
-      method: 'PUT',
-      body: JSON.stringify({ document, baseRevision }),
-    }),
+    request<{ revision: number }>(
+      `/lists/${encodeURIComponent(document.id)}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ document, baseRevision }),
+      },
+      true,
+    ),
   delete: (id: string, baseRevision: number) =>
     request<void>(
       `/lists/${encodeURIComponent(id)}?baseRevision=${baseRevision}`,

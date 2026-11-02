@@ -151,3 +151,7 @@ Owned GET returns current branch IDs with stale IDs filtered, defaulting to an e
 ## Native backup and restoration — R1
 
 Maintenance opens source files read-only without Store::open. Verified VACUUM INTO candidates are published exclusively to fresh paths; restore applies supported migrations only to its candidate and rotates installation/authentication state before publication. No new schema migration is required. Existing applied SQL remains unchanged. See [Backup and restore](backup-restore.md).
+
+## M14 transport encoding
+
+The snapshot contract and database transaction remain unchanged. Large worthwhile PUT bodies can use negotiated gzip; decoded JSON retains the existing 1-MiB limit. Gzip is transient transport data, not stored content or a new migration/schema. See [transfer optimization](transfer-optimization.md).

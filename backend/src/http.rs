@@ -177,7 +177,15 @@ fn build(
         .route("/lists", get(list_all).post(create_list))
         .route(
             "/lists/{id}",
-            get(get_list).put(save_list).delete(delete_list),
+            get(get_list)
+                .merge(
+                    axum::routing::put(save_list)
+                        .layer::<_, std::convert::Infallible>(
+                            tower_http::decompression::RequestDecompressionLayer::new(),
+                        )
+                        .layer(tower_http::limit::RequestBodyLimitLayer::new(1024 * 1024)),
+                )
+                .delete(delete_list),
         )
         .fallback(|| async { http_error(StatusCode::NOT_FOUND, "API route not found") });
     if auth.is_some() {

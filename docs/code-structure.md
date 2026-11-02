@@ -106,3 +106,7 @@ Implemented flow: read-only decode/preview → explicit confirmation → existin
 ## Telegram — M12
 
 telegram/ separates sanitized HTTP transport, polling/replies, setting routes and transactional integration storage. store/capture.rs owns the validated root append within an existing transaction; dedup/cursor changes commit with it. Main opts in through a private environment token, initializes bot identity and stops/releases the worker before closing SQLite. TelegramSettings is a lazy Account child; item URL reveal is consumed once by WorkspaceApp. The editor and portable format modules have no Telegram dependency.
+
+## Transfer encoding — M14
+
+save-encoding.ts prepares optional gzip bytes without HTTP/model state. api.ts negotiates support through identity and retains request scope across encoding. Autosave continues holding full semantic snapshots. The HTTP snapshot PUT route bounds wire bytes outside decompression and decoded bytes at JSON extraction; Store and SQL transactions remain unchanged.

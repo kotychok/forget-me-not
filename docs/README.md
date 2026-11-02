@@ -27,6 +27,8 @@ Updated: 2026-10-30. The application is deployed on the user's DigitalOcean VPS 
 
 ## Guide
 
+- [Transfer optimization](transfer-optimization.md): M14 baseline, gzip negotiation, byte savings and unchanged save semantics.
+
 - [Telegram Inbox](telegram.md): optional bot setup, account linking, capture, delivery and restore behavior.
 
 - [Cross-device refresh](remote-refresh.md): revision polling, safe snapshots, undo baseline and mobile list selection.

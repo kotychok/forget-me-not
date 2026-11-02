@@ -139,6 +139,7 @@ impl Store {
             .fetch_one(&self.pool)
             .await?;
         Ok(crate::model::ClientIdentity {
+            save_encoding: "gzip".into(),
             server_id,
             owner_id: self.owner_id.clone(),
         })

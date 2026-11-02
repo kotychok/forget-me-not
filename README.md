@@ -154,3 +154,5 @@ Deployment planning: [DigitalOcean, GHCR and Caddy guide](docs/deployment.md). T
 Visible tabs check for other-device list changes every 15 seconds and on return/online. Clean navigation sessions refresh with a new undo baseline; editing and modal drafts are kept for explicit conflict recovery. Mobile list navigation uses a vertical chooser. See [cross-device refresh](docs/remote-refresh.md).
 
 Optional Telegram capture: configure a dedicated bot on the server, then use **Account → Telegram Inbox** to select a list and connect. No AI or public API token is required. See [setup and delivery behavior](docs/telegram.md).
+
+Large autosave snapshots use negotiated gzip when worthwhile; plain JSON clients and existing revision/draft recovery remain supported. Synthetic 1,000–5,000-item edits used about 72% fewer body bytes. See [M14 measurements and compatibility](docs/transfer-optimization.md); run `make measure-transfer` to reproduce.

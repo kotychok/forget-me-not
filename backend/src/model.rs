@@ -65,6 +65,7 @@ pub struct DeleteList {
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ClientIdentity {
+    pub save_encoding: String,
     pub server_id: String,
     pub owner_id: String,
 }

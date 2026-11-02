@@ -30,7 +30,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | R3 | Cross-device refresh and mobile list selection | M4, M11c | Complete (verified and accepted by user, 2026-10-30) |
 | M12 | Capture items through Telegram Inbox | M11c | Implemented and verified locally; awaiting real-bot user review |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
-| M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Deferred |
+| M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Implemented and verified locally; awaiting user review |
 | M15 | Active and archived lists | M6; portability/schema design | Deferred |
 
 M3 and M4 have no dependency on each other; the table does not require parallel implementation. Import/export fixtures can be designed before M2, but complete import persistence depends on it.
@@ -250,6 +250,8 @@ Acceptance:
 Open design: provider and model, pricing/accounting policy, command UI and preview, and provider data handling. Do not assume a specific monthly cost until representative requests are measured. Whole-workspace chat, retrieval/vector search, autonomous background agents, and voice processing are outside this milestone.
 
 ### M14 — Transfer-size optimization
+
+Authorized 2026-11-02 ahead of further AI work. Initial measured scope: negotiated gzip snapshot uploads, >=50% byte reduction target on 1,000+ item edits/moves, unchanged JSON/CAS/recovery. See [protocol and measurements](transfer-optimization.md) and [implementation record](plans/m14-transfer-optimization.md). Patches/operation writes remain deferred.
 
 Outcome: reduce the data exchanged for edits after the reliable snapshot implementation exists. Measure payload sizes and latency for agreed list sizes first. Compare compression, coalescing, conditional reads, patches, or operation-based writes; no specific replacement protocol is agreed yet.
 

@@ -7,6 +7,7 @@ help:
 	@echo "dev             Run frontend and backend locally (no Docker)"
 	@echo "build           Build frontend and backend"
 	@echo "run             Serve the built application on localhost:3001"
+	@echo "measure-transfer Measure synthetic JSON/gzip edit payloads (no database)"
 	@echo "image-build     Build the runtime image locally (Docker required)"
 	@echo "test-container  Smoke-test IMAGE with disposable container data"
 	@echo "deploy-config / deploy-pull / deploy-up / deploy-logs   Use deploy/.env on this machine"
@@ -83,3 +84,7 @@ deploy-up:
 	$(COMPOSE) up -d --wait
 deploy-logs:
 	$(COMPOSE) logs --tail=100 app
+
+.PHONY: measure-transfer
+measure-transfer:
+	node scripts/measure-transfer.mjs

@@ -28,7 +28,7 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M11b | Scoped personal API tokens | M11; integration requirements | Planned; independent of deployment |
 | M11c | Deploy and recover a protected installation | M11, M11a; hosting decision | Deployment and backup/restore verified by user; backup operations policy open |
 | R3 | Cross-device refresh and mobile list selection | M4, M11c | Complete (verified and accepted by user, 2026-10-30) |
-| M12 | Capture items through Telegram Inbox | M11c | Deferred |
+| M12 | Capture items through Telegram Inbox | M11c | Implemented and verified locally; awaiting real-bot user review |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
 | M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Deferred |
 | M15 | Active and archived lists | M6; portability/schema design | Deferred |
@@ -218,7 +218,7 @@ Scope: Docker image/Compose if selected, native/container Makefile commands, per
 
 ### M12 — Telegram Inbox
 
-Outcome: link a Telegram account to the authenticated application user and capture text or links into a chosen Inbox list. No LLM is needed. Production identity is supplied by M11 and protected deployment by M11c. Implement before considering AI-assisted Telegram capture; implementation is deferred.
+Outcome: link a Telegram account to the authenticated application user and capture text or links into a chosen Inbox list. No LLM is needed. Production identity is supplied by M11 and protected deployment by M11c. Implement before considering AI-assisted Telegram capture. Authorized 2026-10-30; long polling, Account linking and an explicitly selected existing Inbox are implemented for verification. See [Telegram behavior](telegram.md) and [implementation record](plans/m12-telegram-inbox.md).
 
 Acceptance:
 

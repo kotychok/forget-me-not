@@ -102,3 +102,7 @@ Implemented flow: read-only decode/preview → explicit confirmation → existin
 ## Deployment — M11c
 
 `server_config.rs` constructs explicit local/production HTTP access policy; `http.rs` applies Host/Origin/CSRF checks and cookie settings without trusting forwarded identity headers. Main validates production requirements, chooses container versus loopback binding and handles termination signals. Store owns readiness SQL. Dockerfile builds a non-root runtime with maintenance commands; deploy/ supplies independent application/edge Compose projects. CI checks and smoke-tests disposable container data before publishing the exact image on a version-tag push. Deployment mechanisms do not enter editor or content modules.
+
+## Telegram — M12
+
+telegram/ separates sanitized HTTP transport, polling/replies, setting routes and transactional integration storage. store/capture.rs owns the validated root append within an existing transaction; dedup/cursor changes commit with it. Main opts in through a private environment token, initializes bot identity and stops/releases the worker before closing SQLite. TelegramSettings is a lazy Account child; item URL reveal is consumed once by WorkspaceApp. The editor and portable format modules have no Telegram dependency.

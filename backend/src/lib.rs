@@ -21,3 +21,5 @@ pub mod maintenance;
 
 pub mod server_config;
 pub use http::authenticated_app_with_access;
+
+pub mod telegram;

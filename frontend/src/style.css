@@ -1666,3 +1666,29 @@ dialog.list-picker {
     width: 100%;
   }
 }
+
+.telegram-settings {
+  padding-bottom: 22px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid #dfe5d8;
+}
+.telegram-settings select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #cbd6c3;
+  border-radius: 6px;
+  background: #fcfcf8;
+  color: #303b35;
+  font: inherit;
+}
+.telegram-settings .transfer-actions {
+  flex-wrap: wrap;
+}
+.telegram-settings .telegram-link {
+  overflow-wrap: anywhere;
+}
+.telegram-settings a {
+  color: #45633e;
+}

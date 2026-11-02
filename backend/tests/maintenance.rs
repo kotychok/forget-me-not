@@ -260,15 +260,15 @@ async fn older_supported_snapshot_is_upgraded_only_in_the_restored_copy() {
     std::fs::create_dir(&old).unwrap();
     for file in std::fs::read_dir(concat!(env!("CARGO_MANIFEST_DIR"), "/migrations")).unwrap() {
         let file = file.unwrap();
-        if file
-            .file_name()
-            .to_string_lossy()
-            .starts_with("20261029000800")
-        {
+        if file.file_name().to_string_lossy().as_ref() >= "20261029000800" {
             continue;
         }
         std::fs::copy(file.path(), old.join(file.file_name())).unwrap();
     }
+    let pending = forget_me_not::MIGRATOR
+        .iter()
+        .filter(|migration| migration.version >= 20261029000800)
+        .count();
     let source = dir.path().join("old.sqlite");
     let copy = dir.path().join("restored.sqlite");
     let pool = SqlitePoolOptions::new()
@@ -317,7 +317,7 @@ async fn older_supported_snapshot_is_upgraded_only_in_the_restored_copy() {
             .await
             .unwrap()
             .pending_migrations,
-        1
+        pending
     );
     let report = maintenance::restore(&source, &copy).await.unwrap();
     assert_eq!(report.pending_migrations, 0);
@@ -326,7 +326,7 @@ async fn older_supported_snapshot_is_upgraded_only_in_the_restored_copy() {
             .await
             .unwrap()
             .pending_migrations,
-        1
+        pending
     );
     let restored = Store::open(&copy).await.unwrap();
     assert_eq!(restored.owner_id, owner);

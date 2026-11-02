@@ -4,7 +4,7 @@ A personal, keyboard-driven web outliner with local SQLite persistence. Includes
 
 ## Run locally
 
-Requirements: Node.js 22.12+ and pnpm 11 on `PATH`, plus a current stable Rust toolchain with Cargo, rustfmt, and Clippy. Verification used Node 26.12.1, pnpm 11.25.0, and Rust 1.99.1. Docker and the SQLx CLI are not required. The development process runner currently targets macOS/Linux.
+Requirements: Node.js 22.13+ and pnpm 11 on `PATH`, plus a current stable Rust toolchain with Cargo, rustfmt, and Clippy. Verification used Node 26.12.1, pnpm 11.25.0, and Rust 1.99.1. Native builds also need a C compiler and CMake for the TLS dependency. Docker and the SQLx CLI are not required. The development process runner currently targets macOS/Linux.
 
 From the repository root:
 
@@ -119,6 +119,7 @@ Export variables in the shell; `.env` files are not loaded automatically.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
+| `FMN_TELEGRAM_BOT_TOKEN` | unset | Optional dedicated Telegram bot token, server-side only; requires password mode |
 | `FMN_ENV` | `local` | `production` requires HTTPS origin and password auth; enables container binding and Secure cookies |
 | `FMN_PUBLIC_ORIGIN` | unset | Exact production HTTPS origin without port/path/trailing slash |
 | `FMN_DB_PATH` | `data/forget-me-not.sqlite` | SQLite file path, relative to the working directory |
@@ -151,3 +152,5 @@ Account administration: open **Manage people** after administrator login. New fr
 Deployment planning: [DigitalOcean, GHCR and Caddy guide](docs/deployment.md). The user verified VPS HTTPS deployment and the backup scenario; recurring backup policy remains operational follow-up. Native development remains local-only.
 
 Visible tabs check for other-device list changes every 15 seconds and on return/online. Clean navigation sessions refresh with a new undo baseline; editing and modal drafts are kept for explicit conflict recovery. Mobile list navigation uses a vertical chooser. See [cross-device refresh](docs/remote-refresh.md).
+
+Optional Telegram capture: configure a dedicated bot on the server, then use **Account → Telegram Inbox** to select a list and connect. No AI or public API token is required. See [setup and delivery behavior](docs/telegram.md).

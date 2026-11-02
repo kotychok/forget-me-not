@@ -15,9 +15,10 @@ const env = {
   FMN_AUTH_MODE: testing ? (authTesting ? 'password' : 'local') : process.env.FMN_AUTH_MODE ?? 'password',
   FMN_PORT: backendPort,
   FMN_FRONTEND_PORT: frontendPort,
-  ...(temp ? { FMN_DB_PATH: join(temp, 'test.sqlite') } : {}),
+  ...(temp ? { FMN_DB_PATH: join(temp, 'test.sqlite'), FMN_TELEGRAM_BOT_TOKEN: '' } : {}),
   VITE_API_TARGET: `http://127.0.0.1:${backendPort}`,
 };
+if (testing) { env.FMN_ENV = 'local'; delete env.FMN_PUBLIC_ORIGIN; }
 const children = [];
 let stopping = false;
 function start(command, args) {

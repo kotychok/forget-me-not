@@ -6,6 +6,7 @@ services:
     environment:
       FMN_ENV: production
       FMN_AUTH_MODE: password
+      FMN_TELEGRAM_BOT_TOKEN: ${FMN_TELEGRAM_BOT_TOKEN:-}
       FMN_PUBLIC_ORIGIN: https://${FMN_HOST:?Set FMN_HOST to the public hostname}
       FMN_DB_PATH: /data/${FMN_DB_FILE:-forget-me-not.sqlite}
     volumes:

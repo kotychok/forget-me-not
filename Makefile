@@ -56,6 +56,7 @@ auth-reset:
 	$(CARGO) run --locked --manifest-path backend/Cargo.toml -- --reset-admin-password "$(LOGIN)"
 test-browser-auth:
 	$(PNPM) --dir frontend exec playwright test --config playwright.auth.config.ts
+	$(PNPM) --dir frontend exec playwright test --config playwright.telegram.config.ts
 
 # Pass filenames through the environment, not shell command interpolation.
 db-backup db-verify db-restore: export FMN_BACKUP_FILE = $(FILE)

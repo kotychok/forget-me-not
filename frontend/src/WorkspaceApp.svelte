@@ -11,6 +11,7 @@
   import { IndexedDbDrafts } from './lib/draft-storage';
   import type { Draft } from './lib/draft-storage';
   import RecoveryPanel from './components/RecoveryPanel.svelte';
+  import { locate } from './lib/editor';
   import { Workspace } from './lib/workspace';
   import type { Session, SidebarList } from './lib/workspace';
   import EditorPane from './components/EditorPane.svelte';
@@ -150,6 +151,7 @@
     const url = new URL(location.href);
     if (selectedId) url.searchParams.set('list', selectedId);
     else url.searchParams.delete('list');
+    url.searchParams.delete('item');
     window.history.replaceState(null, '', url);
   }
   async function openList(id: string) {
@@ -161,7 +163,24 @@
     }
   }
   async function loadLists() {
+    const linkedItem = new URL(location.href).searchParams.get('item');
     await workspace.load(new URL(location.href).searchParams.get('list'));
+    if (workspace.error) return;
+    if (
+      linkedItem &&
+      selectedId &&
+      current &&
+      locate(current.editor.state.nodes, linkedItem)
+    ) {
+      searchReveal = {
+        listId: selectedId,
+        id: linkedItem,
+        query: '',
+        token: ++searchSequence,
+        pending: true,
+        note: false,
+      };
+    }
     updateUrl();
   }
   async function newList() {

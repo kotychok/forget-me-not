@@ -143,6 +143,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         }
         _ => return Err("FMN_AUTH_MODE must be password or local".into()),
     };
+    let telegram = match std::env::var("FMN_TELEGRAM_BOT_TOKEN")
+        .ok()
+        .filter(|value| !value.is_empty())
+    {
+        Some(token) => {
+            if mode != "password" {
+                return Err("Telegram requires password authentication".into());
+            }
+            let origin = if production {
+                std::env::var("FMN_PUBLIC_ORIGIN")?
+            } else {
+                format!("http://127.0.0.1:{port}")
+            };
+            Some(forget_me_not::telegram::Telegram::connect(store.pool.clone(),token,origin).await
+                .map_err(|_| "Telegram initialization failed. Check the bot token, outbound HTTPS and existing webhook configuration.")?)
+        }
+        None => None,
+    };
+    let router = if let Some(service) = &telegram {
+        router.layer(axum::Extension(service.clone()))
+    } else {
+        router
+    };
     let bind = if production {
         std::net::Ipv4Addr::UNSPECIFIED
     } else {
@@ -150,7 +173,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     };
     let listener = tokio::net::TcpListener::bind((bind, port)).await?;
     println!("Server: http://{bind}:{port} (environment: {environment}, access mode: {mode})");
-    axum::serve(listener, router)
+    let telegram_worker = telegram.as_ref().map(|service| service.start());
+    let serving = axum::serve(listener, router)
         .with_graceful_shutdown(async {
             #[cfg(unix)]
             {
@@ -162,7 +186,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             #[cfg(not(unix))]
             let _ = tokio::signal::ctrl_c().await;
         })
-        .await?;
+        .await;
+    if let Some(worker) = telegram_worker {
+        worker.abort();
+        let _ = worker.await;
+    }
+    if let Some(service) = telegram {
+        service.release().await;
+    }
     store.pool.close().await;
+    serving?;
     Ok(())
 }

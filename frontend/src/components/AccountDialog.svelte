@@ -1,4 +1,5 @@
 <script lang="ts">
+  import TelegramSettings from './TelegramSettings.svelte';
   import { authApi } from '../lib/auth';
   import type { AuthUser, BrowserSession } from '../lib/auth';
   let {
@@ -13,6 +14,7 @@
     onresume: () => Promise<void>;
   } = $props();
   let dialog = $state<HTMLDialogElement>();
+  let opened = $state(false);
   let sessions = $state<BrowserSession[]>([]);
   let error = $state('');
   let busy = $state(false);
@@ -39,6 +41,7 @@
     currentPassword = '';
     newPassword = '';
     confirmation = '';
+    opened = false;
     dialog?.close();
   }
 </script>
@@ -46,6 +49,7 @@
 <button
   class="quiet"
   onclick={() => {
+    opened = true;
     dialog?.showModal();
     void run(load);
   }}>Account</button
@@ -69,6 +73,7 @@
     >
   </div>
   {#if error}<p class="error-message" role="alert">{error}</p>{/if}
+  {#if opened}<TelegramSettings />{/if}
   <h3>Browser sessions</h3>
   <button disabled={busy} onclick={() => void run(load)}
     >Refresh sessions</button

@@ -186,6 +186,11 @@ pub async fn restore(source: &Path, destination: &Path) -> Result<Report> {
     let store = Store::open(&candidate.path).await?;
     let result: Result<()> = async {
         let mut tx=store.pool.begin().await?;
+        sqlx::query("DELETE FROM telegram_connections").execute(&mut *tx).await?;
+        sqlx::query("DELETE FROM telegram_links").execute(&mut *tx).await?;
+        sqlx::query("DELETE FROM telegram_receipts").execute(&mut *tx).await?;
+        sqlx::query("DELETE FROM telegram_rates").execute(&mut *tx).await?;
+        sqlx::query("UPDATE telegram_pollers SET lease_owner='',lease_until=0").execute(&mut *tx).await?;
         sqlx::query("DELETE FROM auth_grants").execute(&mut *tx).await?;
         sqlx::query("DELETE FROM tower_sessions").execute(&mut *tx).await?;
         sqlx::query("DELETE FROM auth_attempts").execute(&mut *tx).await?;

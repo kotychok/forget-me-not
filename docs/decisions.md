@@ -100,4 +100,6 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 
 | D059 | 2026-10-30 | User verification / acceptance | The user confirmed that the backup scenario works as intended and accepted the latest cross-device refresh/mobile chooser fixes. Mark R3 complete and record user-verified manual deployment/recovery. Backup automation, operating retention/destination policy and measured VPS resource headroom are not implied by this report |
 
+| D060 | 2026-10-30 | Authorized M12 / implementation defaults | Proceed with Telegram Inbox after user selection: optional long polling in the Rust server, existing owned Inbox selection through Account, expiring digest-only single-use linking, private human messages as literal root items and post-commit item links. Durable cursor/lease and content append commit together; existing revisions protect browser drafts. Disabling/password changes invalidate capture authority; restores remove integration links/connections. No public API tokens, webhook, attachments, LLM or actual bot/server provisioning is included |
+
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.

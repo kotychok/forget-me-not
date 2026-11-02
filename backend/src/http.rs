@@ -181,7 +181,9 @@ fn build(
         )
         .fallback(|| async { http_error(StatusCode::NOT_FOUND, "API route not found") });
     if auth.is_some() {
-        api = api.route_layer(middleware::from_fn(crate::auth::require_user));
+        api = api
+            .nest("/telegram", crate::telegram::router())
+            .route_layer(middleware::from_fn(crate::auth::require_user));
     }
     let authenticated = auth.is_some();
     let health_store = state.store.clone();

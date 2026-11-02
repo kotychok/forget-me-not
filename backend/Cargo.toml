@@ -5,6 +5,7 @@ edition = "2024"
 license = "MIT"
 
 [dependencies]
+reqwest = { version = "=0.13.5", default-features = false, features = ["json", "rustls"] }
 argon2 = "=0.5.3"
 axum = "0.8.9"
 axum-login = "=0.18.0"

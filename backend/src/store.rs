@@ -1,3 +1,4 @@
+mod capture;
 mod transfer;
 mod view_state;
 use crate::{

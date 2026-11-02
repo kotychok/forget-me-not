@@ -8,6 +8,8 @@ COPY frontend/ ./
 RUN pnpm build
 
 FROM rust:1.99-bookworm@sha256:9181b56c2a21ab1d5e73cffe04fc762426d30aa7fac3c91141dd033f49a7fc8b AS backend
+RUN apt-get update && apt-get install --yes --no-install-recommends cmake \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /build/backend
 COPY backend/ ./
 RUN cargo build --release --locked

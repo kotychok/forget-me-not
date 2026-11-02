@@ -54,3 +54,7 @@ Binary equivalents: --backup PATH, --verify-backup PATH, --restore-backup PATH; 
 Disposable tests cover a live WAL database with concurrent atomic writes; notes/tags/dates/children and view metadata; restored login and invalid old cookies/links; changed installation scope; an older supported snapshot upgraded only in the candidate; invalid checksums/files, missing sources and existing targets/sidecars; and CLI verification without initializing FMN_DB_PATH. A separate CLI drill exercised all three Makefile targets with a quoted/space-containing filename. No user database was backed up or restored during implementation.
 
 Sources: [SQLite VACUUM INTO](https://www.sqlite.org/lang_vacuum.html#vacuum_with_an_into_clause) documents consistent live snapshots and output-file rules; [SQLite backup overview](https://www.sqlite.org/backup.html) explains alternatives to copying a live database file. Local verification results are recorded in [R1 readiness](plans/r1-release-readiness.md).
+
+## Telegram integrations
+
+M12 installation backups include bot-scoped connections, pending link digests, durable offsets and reply receipts. Restore removes connections, pending links and replies, resets leases and rotates authentication versions; users must reconnect. The bot secret remains outside the database in the private deployment environment. Never enable a production bot token on a temporary restore/test instance: separate SQLite copies cannot coordinate poller leases. See [Telegram Inbox](telegram.md).

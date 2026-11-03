@@ -27,7 +27,13 @@
   let selecting = $state(false);
   let error = $state('');
   let generation = 0;
-  const results = $derived(searchDocuments(source, query));
+  let includeArchived = $state(false);
+  const results = $derived(
+    searchDocuments(
+      source.filter((doc) => includeArchived || !doc.archived),
+      query,
+    ),
+  );
   async function refresh() {
     const run = ++generation;
     loading = true;
@@ -92,6 +98,9 @@
       onclick={() => dialog?.close()}>✕</button
     >
   </div>
+  <label
+    ><input type="checkbox" bind:checked={includeArchived} /> Include archived</label
+  >
   <label for="search-query">Search titles, items, notes and tags</label>
   <input
     id="search-query"
@@ -175,7 +184,11 @@
         }}
       >
         <span class="search-context"
-          ><MarkedText text={hit.title} {query} />{hit.itemId
+          ><MarkedText text={hit.title} {query} />{source.find(
+            (doc) => doc.id === hit.listId,
+          )?.archived
+            ? ' · Archived'
+            : ''}{hit.itemId
             ? hit.field === 'date'
               ? ' · Due date'
               : hit.field === 'note'

@@ -13,12 +13,13 @@ async fn actor(tx: &mut Transaction<'_, Sqlite>, user: &User) -> Result<()> {
     Ok(())
 }
 async fn owned_list(tx: &mut Transaction<'_, Sqlite>, owner: &str, list: &str) -> Result<()> {
-    let owned: bool =
-        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM lists WHERE id=? AND owner_id=?)")
-            .bind(list)
-            .bind(owner)
-            .fetch_one(&mut **tx)
-            .await?;
+    let owned: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM lists WHERE id=? AND owner_id=? AND archived=0)",
+    )
+    .bind(list)
+    .bind(owner)
+    .fetch_one(&mut **tx)
+    .await?;
     if !owned {
         return Err(Error::Invalid("Choose one of your own existing lists"));
     }

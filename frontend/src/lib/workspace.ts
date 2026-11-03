@@ -15,6 +15,7 @@ import type { SearchHit } from './search.ts';
 export type Session = {
   editor: Editor;
   title: string;
+  archived?: boolean;
   sync: Autosave;
   collapsed: Set<string>;
   outline?: OutlineState;
@@ -45,9 +46,13 @@ export class Workspace {
     | 'patchView'
     | 'prepareSave'
     | 'sendSave'
+    | 'setArchived'
   > &
     Partial<
-      Pick<typeof api, 'getView' | 'patchView' | 'prepareSave' | 'sendSave'>
+      Pick<
+        typeof api,
+        'getView' | 'patchView' | 'prepareSave' | 'sendSave' | 'setArchived'
+      >
     >;
   private notify: () => void;
   readonly drafts: Drafts | undefined;
@@ -65,9 +70,13 @@ export class Workspace {
       | 'patchView'
       | 'prepareSave'
       | 'sendSave'
+      | 'setArchived'
     > &
       Partial<
-        Pick<typeof api, 'getView' | 'patchView' | 'prepareSave' | 'sendSave'>
+        Pick<
+          typeof api,
+          'getView' | 'patchView' | 'prepareSave' | 'sendSave' | 'setArchived'
+        >
       > = api,
     storage?: DraftStorage,
   ) {
@@ -88,7 +97,12 @@ export class Workspace {
   }
 
   private document(id: string, session: Session) {
-    return { id, title: session.title, nodes: session.editor.state.nodes };
+    return {
+      id,
+      title: session.title,
+      nodes: session.editor.state.nodes,
+      ...(session.archived ? { archived: true } : {}),
+    };
   }
   private async initializeDrafts() {
     if (!this.drafts || this.draftIdentityReady) return;
@@ -164,6 +178,7 @@ export class Workspace {
     const session: Session = {
       editor: new Editor(document.nodes),
       title: document.title,
+      archived: !!document.archived,
       collapsed: new Set(),
       sync: new Autosave(
         document.revision,
@@ -220,6 +235,7 @@ export class Workspace {
       await this.reconcileDrafts();
       const id =
         this.lists.find((list) => list.id === preferred)?.id ??
+        this.lists.find((list) => !list.archived)?.id ??
         this.lists[0]?.id;
       if (id) await this.open(id);
     } catch (error) {
@@ -315,6 +331,9 @@ export class Workspace {
       const merged = [...summaries];
       for (const [id, session] of this.sessions) {
         const entry = {
+          archived:
+            summaries.find((list) => list.id === id)?.archived ??
+            session.archived,
           id,
           title: session.title,
           revision: session.sync.revision,
@@ -417,7 +436,13 @@ export class Workspace {
   }
   rename(title: string) {
     const next = title.trim();
-    if (!this.current || !next || [...next].length > 200 || next === this.title)
+    if (
+      !this.current ||
+      this.current.archived ||
+      !next ||
+      [...next].length > 200 ||
+      next === this.title
+    )
       return;
     this.current.title = next;
     this.current.sync.markDirty();
@@ -447,7 +472,8 @@ export class Workspace {
       this.sessions.delete(id);
       this.lists = this.lists.filter((list) => list.id !== id);
       this.selectedId = null;
-      if (this.lists[0]) await this.activate(this.lists[0].id);
+      const next = this.lists.find((list) => !list.archived) ?? this.lists[0];
+      if (next) await this.activate(next.id);
       return true;
     } catch (error) {
       this.error =
@@ -458,14 +484,53 @@ export class Workspace {
       this.notify();
     }
   }
+  async setArchived(archived: boolean) {
+    const session = this.current;
+    const id = this.selectedId;
+    if (!id || !session || this.busy || !this.transport.setArchived)
+      return false;
+    if (session.titleEditing || session.interactionBlocked) {
+      this.error = 'Close editing dialogs and filters before archiving.';
+      this.notify();
+      return false;
+    }
+    this.busy = true;
+    this.activity++;
+    this.notify();
+    try {
+      if (session.sync.dirty && !(await session.sync.flush()))
+        throw new Error('Resolve unsaved changes before archiving.');
+      const document = await this.transport.setArchived(
+        id,
+        session.sync.revision,
+        archived,
+      );
+      session.sync.dispose();
+      this.makeSession(document);
+      await this.drafts?.prune(document);
+      this.lists = await this.transport.lists();
+      this.error = '';
+      return true;
+    } catch (error) {
+      this.error =
+        error instanceof Error
+          ? error.message
+          : 'Could not change archive state. Refresh the list index before retrying.';
+      return false;
+    } finally {
+      this.busy = false;
+      this.notify();
+    }
+  }
   exportCurrent(): Portable {
     const session = this.current;
     if (!session || !this.selectedId) throw new Error('Choose a list first');
     return validatePortable({
-      schemaVersion: 4,
+      schemaVersion: 5,
       lists: [
         {
           id: this.selectedId,
+          ...(session.archived ? { archived: true } : {}),
           title: session.title,
           nodes: session.editor.state.nodes,
         },
@@ -478,10 +543,13 @@ export class Workspace {
     const documents = new Map(source.lists.map((doc) => [doc.id, doc]));
     for (const [id, session] of this.sessions) {
       if (this.lists.some((list) => list.id === id))
-        documents.set(id, structuredClone(this.document(id, session)));
+        documents.set(id, {
+          ...structuredClone(this.document(id, session)),
+          archived: documents.get(id)?.archived ?? session.archived,
+        });
     }
     return validatePortable({
-      schemaVersion: 4,
+      schemaVersion: 5,
       lists: [...documents.values()],
     }).lists;
   }
@@ -524,6 +592,7 @@ export class Workspace {
         this.lists = [
           ...this.lists,
           {
+            archived: target.archived,
             id: hit.listId,
             title: target.title,
             revision: target.sync.revision,
@@ -676,7 +745,7 @@ export class Workspace {
     this.notify();
     try {
       const source = validatePortable({
-        schemaVersion: 4,
+        schemaVersion: 5,
         lists: [record.document],
       });
       source.lists[0].title =
@@ -761,7 +830,7 @@ export class Workspace {
         ? [[this.selectedId, this.current] as const]
         : [];
     return validatePortable({
-      schemaVersion: 4,
+      schemaVersion: 5,
       lists: source.map(([id, session]) => this.document(id, session)),
     });
   }

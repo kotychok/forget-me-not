@@ -4,7 +4,12 @@ import { encodeSave } from './save-encoding.ts';
 import type { Portable } from './portable.ts';
 import type { Item } from './editor.ts';
 
-export type Document = { id: string; title: string; nodes: Item[] };
+export type Document = {
+  id: string;
+  title: string;
+  nodes: Item[];
+  archived?: boolean;
+};
 export type ListDocument = Document & { revision: number };
 export type ListSummary = {
   id: string;
@@ -12,6 +17,7 @@ export type ListSummary = {
   revision: number;
   position: number;
   itemCount: number;
+  archived?: boolean;
 };
 export class ApiError extends Error {
   status: number;
@@ -258,6 +264,11 @@ export const api = {
       },
       true,
     ),
+  setArchived: (id: string, baseRevision: number, archived: boolean) =>
+    request<ListDocument>(`/lists/${encodeURIComponent(id)}/archive`, {
+      method: 'PATCH',
+      body: JSON.stringify({ baseRevision, archived }),
+    }),
   delete: (id: string, baseRevision: number) =>
     request<void>(
       `/lists/${encodeURIComponent(id)}?baseRevision=${baseRevision}`,

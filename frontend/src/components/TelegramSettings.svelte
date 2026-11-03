@@ -19,8 +19,13 @@
     if (next.enabled) {
       const available = await telegramApi.lists();
       if (disposed) return;
-      lists = available;
-      listId = next.listId ?? lists[0]?.id ?? '';
+      lists = available.filter((list) => !list.archived);
+      const archivedInbox = available.some(
+        (list) => list.id === next.listId && list.archived,
+      );
+      listId = archivedInbox ? '' : (next.listId ?? lists[0]?.id ?? '');
+      if (archivedInbox)
+        notice = 'Your Inbox is archived. Restore it or choose an active list.';
     }
   }
   async function run(action: () => Promise<void>) {

@@ -31,8 +31,8 @@ Use this file for outcomes, dependencies, and progress. Use `docs/plans/` only f
 | M12 | Capture items through Telegram Inbox | M11c | Implemented and verified locally; awaiting real-bot user review |
 | M13 | Optional, budget-controlled AI commands | M4; external API configuration | Deferred |
 | M14 | Reduce data transfer and optimize the save protocol | M4; measured baseline | Implemented and verified locally; awaiting user review |
-| M14b | Save only changed item data and structural changes | M14; protocol design | Implemented for review; user acceptance pending |
-| M15 | Active and archived lists | M6; portability/schema design | Deferred |
+| M14b | Save only changed item data and structural changes | M14; protocol design | Locally verified by user, 2026-11-03 |
+| M15 | Active and archived lists | M6; portability/schema design | Implemented for review; user acceptance pending |
 
 M3 and M4 have no dependency on each other; the table does not require parallel implementation. Import/export fixtures can be designed before M2, but complete import persistence depends on it.
 
@@ -279,7 +279,7 @@ Version 1 implements these details with an additive receipt migration. User acce
 
 ### M15 — Active and archived lists
 
-Outcome: distinguish active lists from archived lists, archive without losing content, restore to active, and allow explicit deletion. Requested as a future feature; implementation is deferred.
+Outcome: distinguish active lists from archived lists, archive without losing content, restore to active, and allow explicit deletion. Prioritized next by the user on 2026-11-03, ahead of AI. The user accepted separate Archive navigation, read-only content until Restore, active-only default search with Include archived, and JSON-preserved state. Implementation is for review; see [archives](archives.md).
 
 Acceptance:
 
@@ -289,7 +289,7 @@ Acceptance:
 - Deletion remains available with explicit confirmation. Current deletion is permanent; archive is not a trash bin, and recoverable deletion requires separate scope.
 - Use an additive migration and update API validation, ownership checks, search, and JSON portability under an explicit backward-compatible format policy. Do not silently drop archive state from a full portable export.
 
-Open design: archive placement/order, read-only versus editable archives, default search scope and inclusion control, deleted-list recovery, and conversion warnings for formats that cannot represent archive state.
+Version 1 retains original list position on restore, requires restoration before content edits, labels opt-in archive search results, and uses JSON v5 for archive state. Archived Markdown export fails explicitly. Trash/recoverable deletion remains outside scope.
 
 ## Remaining product details
 

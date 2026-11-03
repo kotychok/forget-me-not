@@ -7,16 +7,23 @@ impl Store {
         list: &str,
         text: &str,
     ) -> Result<String> {
-        let row: Option<ListRow> =
-            sqlx::query_as("SELECT id,title,revision FROM lists WHERE id=? AND owner_id=?")
-                .bind(list)
-                .bind(owner)
-                .fetch_optional(&mut **tx)
-                .await?;
+        let row: Option<ListRow> = sqlx::query_as(
+            "SELECT id,title,revision,archived FROM lists WHERE id=? AND owner_id=?",
+        )
+        .bind(list)
+        .bind(owner)
+        .fetch_optional(&mut **tx)
+        .await?;
         let row = row.ok_or(AppError::NotFound)?;
+        if row.archived {
+            return Err(invalid(
+                "Inbox is archived. Restore it or choose another list.",
+            ));
+        }
         let rows = sqlx::query_as::<_, ItemRow>("SELECT id,parent_id,position,kind,text,note,tags,due_date,completed FROM items WHERE list_id=? ORDER BY position,id")
             .bind(list).fetch_all(&mut **tx).await?;
         let mut document = Document {
+            archived: false,
             id: list.into(),
             title: row.title,
             nodes: build_tree(rows)?,

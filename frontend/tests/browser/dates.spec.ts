@@ -103,7 +103,7 @@ test('date Apply/Cancel, clear, history, local status rollover, JSON and search 
   const downloaded = JSON.parse(
     await readFile((await (await downloadReady).path())!, 'utf8'),
   );
-  expect(downloaded.schemaVersion).toBe(4);
+  expect(downloaded.schemaVersion).toBe(5);
   expect(downloaded.lists[0].nodes[0].dueDate).toBe('2026-10-28');
   await transfer
     .getByRole('button', { name: 'Close import and export' })

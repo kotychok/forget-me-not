@@ -91,7 +91,7 @@ test('invalid JSON and unknown versions show errors and never enable import', as
     name: 'future.json',
     mimeType: 'application/json',
     buffer: Buffer.from(
-      fixture.replace('"schemaVersion": 1', '"schemaVersion": 5'),
+      fixture.replace('"schemaVersion": 1', '"schemaVersion": 6'),
     ),
   });
   await expect(dialog.getByRole('alert')).toContainText('$.schemaVersion');
@@ -256,5 +256,7 @@ test('lost import response is not retried and refreshing the index preserves loc
   await expect(
     page.getByRole('status', { name: 'Save status', exact: true }),
   ).toContainText('Conflict');
-  await expect(page.locator('nav .list-link')).toHaveCount(before.length + 2);
+  await expect(page.locator('nav .list-link')).toHaveCount(
+    before.filter((list: { archived?: boolean }) => !list.archived).length + 2,
+  );
 });

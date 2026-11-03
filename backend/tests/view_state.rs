@@ -38,6 +38,7 @@ async fn preferences_persist_without_changing_content_revision_and_are_pruned_af
             SaveList {
                 base_revision: 0,
                 document: Document {
+                    archived: false,
                     id: list.id.clone(),
                     title: list.title.clone(),
                     nodes: vec![root.clone()],
@@ -89,6 +90,7 @@ async fn preferences_persist_without_changing_content_revision_and_are_pruned_af
             SaveList {
                 base_revision: 1,
                 document: Document {
+                    archived: false,
                     id: list.id.clone(),
                     title: list.title.clone(),
                     nodes: vec![],

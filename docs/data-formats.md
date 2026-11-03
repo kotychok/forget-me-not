@@ -1,10 +1,10 @@
-# JSON data format — schema v4 with v1/v2/v3 import compatibility
+# JSON data format — schema v5 with v1–v4 import compatibility
 
 Implemented: JSON and constrained outline-Markdown file import/export through compiled Rust adapters (M6a). This supersedes the earlier exclusion of Markdown file transfer. M9 provides optional safe Markdown display; stored text remains original source.
 
 ## Portable model
 
-The envelope has exactly two fields: `schemaVersion: 4` and `lists`. V1/v2/v3 are accepted and normalized to v4; readers limited to older schemas cannot read a v4 export. Each list has `id`, `title`, and `nodes`. Each nested item has `id`, `kind` (`item` or `task`), `text`, `completed`, and `children`, plus optional `note` from v2 `tags` from v3, and `dueDate` from v4. Notes are literal UTF-8 text (up to 64 KiB); missing or empty means no note, and empty notes are omitted on export. V1 rejects note fields and v1/v2 reject tag fields rather than silently dropping them. Tags are case-sensitive string arrays of at most 12 distinct names, each 1–40 Unicode characters without boundary whitespace, commas, controls or malformed Unicode. Missing/empty arrays mean no tags; empty arrays are omitted on export. Arrays preserve list and sibling order. Plain items must have `completed: false`.
+The envelope has exactly two fields: `schemaVersion: 5` and `lists`. V1/v2/v3/v4 are accepted and normalized to v5; readers limited to older schemas cannot read a v5 export. Each list has `id`, `title`, and `nodes`, plus optional boolean `archived` in v5 (missing/false means active). Older schemas reject archive fields. JSON exports include active and archived lists; new-copy import preserves archive state. Each nested item has `id`, `kind` (`item` or `task`), `text`, `completed`, and `children`, plus optional `note` from v2 `tags` from v3, and `dueDate` from v4. Notes are literal UTF-8 text (up to 64 KiB); missing or empty means no note, and empty notes are omitted on export. V1 rejects note fields and v1/v2 reject tag fields rather than silently dropping them. Tags are case-sensitive string arrays of at most 12 distinct names, each 1–40 Unicode characters without boundary whitespace, commas, controls or malformed Unicode. Missing/empty arrays mean no tags; empty arrays are omitted on export. Arrays preserve list and sibling order. Plain items must have `completed: false`.
 
 IDs are canonical lowercase UUIDv4 strings. List IDs must be unique within a file; item IDs must be unique across all lists in the file. Database rows use parent references; portable files use nested arrays without duplicated parent IDs.
 
@@ -88,3 +88,7 @@ The user's largest current sample (about 284 KB, 2,976 list-marker lines plus pr
 The per-list limit is now 5,000 on both frontend and backend. A synthetic 5,000-item browser workflow passed import, render, indentation, undo, text edit, acknowledged save, search/reveal, JSON export, and reload, retaining one intact list under the 1 MiB save bound. The 5,001st item is rejected. File/list/depth/text/title limits otherwise remain unchanged. This verifies the tested local Chromium workflow, not a latency guarantee on all hardware or on every 5,000-item document. Large item text may reach the independent 1 MiB save limit first.
 
 Outline-Markdown export also refuses any list containing due dates, including descendants, and recommends JSON. Imports through that dialect have no dates; M10 does not add date syntax to item text.
+
+## Archive state — M15
+
+See [archives](archives.md). JSON v5 preserves optional boolean archived per list. Current-list local export includes that state. Markdown imports create active lists; export of an archived list fails explicitly with a JSON/Restore alternative. Archive status is separate from content-save packet fields and cannot be changed through a content snapshot.

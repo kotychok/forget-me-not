@@ -35,6 +35,7 @@ async fn setup() -> (tempfile::TempDir, Store, String, Item, Item, Item) {
             SaveList {
                 base_revision: 0,
                 document: Document {
+                    archived: false,
                     id: list.id.clone(),
                     title: list.title,
                     nodes: vec![a.clone(), c.clone()],
@@ -99,6 +100,7 @@ async fn branch_rescue_creation_clears_and_replay_after_another_writer_are_atomi
             SaveList {
                 base_revision: 2,
                 document: Document {
+                    archived: false,
                     id: id.clone(),
                     title: "Another device".into(),
                     nodes: doc.nodes,
@@ -176,6 +178,7 @@ async fn invalid_references_cycles_and_id_collisions_roll_back_the_whole_batch()
             SaveList {
                 base_revision: 0,
                 document: Document {
+                    archived: false,
                     id: other.id.clone(),
                     title: other.title,
                     nodes: vec![foreign.clone()],
@@ -422,6 +425,7 @@ async fn http_patch_keeps_gzip_auth_owner_and_installation_guards() {
 fn work_and_result_limits_reject_batches_before_persistence() {
     let root = item("Root");
     let document = Document {
+        archived: false,
         id: Uuid::new_v4().to_string(),
         title: "Limits".into(),
         nodes: (0..5000)
@@ -439,6 +443,7 @@ fn work_and_result_limits_reject_batches_before_persistence() {
     let mut root = root;
     root.note = "x".repeat(65536);
     let document = Document {
+        archived: false,
         id: Uuid::new_v4().to_string(),
         title: "Limits".into(),
         nodes: (0..20)

@@ -7,16 +7,18 @@ impl Store {
         let mut tx = self.pool.begin().await?;
         let rows: Vec<ListRow> = if let Some(id) = list_id {
             vec![
-                sqlx::query_as("SELECT id,title,revision FROM lists WHERE id=? AND owner_id=?")
-                    .bind(id)
-                    .bind(&self.owner_id)
-                    .fetch_optional(&mut *tx)
-                    .await?
-                    .ok_or(AppError::NotFound)?,
+                sqlx::query_as(
+                    "SELECT id,title,revision,archived FROM lists WHERE id=? AND owner_id=?",
+                )
+                .bind(id)
+                .bind(&self.owner_id)
+                .fetch_optional(&mut *tx)
+                .await?
+                .ok_or(AppError::NotFound)?,
             ]
         } else {
             sqlx::query_as(
-                "SELECT id,title,revision FROM lists WHERE owner_id=? ORDER BY position,id LIMIT ?",
+                "SELECT id,title,revision,archived FROM lists WHERE owner_id=? ORDER BY position,id LIMIT ?",
             )
             .bind(&self.owner_id)
             .bind((MAX_LISTS + 1) as i64)
@@ -40,6 +42,7 @@ impl Store {
                 ));
             }
             let document = Document {
+                archived: row.archived,
                 id: row.id,
                 title: row.title,
                 nodes: build_tree(items)?,
@@ -56,7 +59,7 @@ impl Store {
         }
         tx.commit().await?;
         let result = Portable {
-            schema_version: 4,
+            schema_version: 5,
             lists,
         };
         result.validate()?;
@@ -86,15 +89,15 @@ impl Store {
         let mut imported = Vec::new();
         let writes: Result<()> = async {
             for (offset,document) in source.lists.into_iter().enumerate() {
-                let document = Document {id:Uuid::new_v4().to_string(),title:document.title,nodes:document.nodes.into_iter().map(copy_item).collect()};
+                let document = Document { archived: document.archived,id:Uuid::new_v4().to_string(),title:document.title,nodes:document.nodes.into_iter().map(copy_item).collect()};
                 let nodes = flatten(&document)?;
                 let position = start + offset as i64;
-                sqlx::query("INSERT INTO lists(id,owner_id,title,position,revision,created_at,updated_at) VALUES (?,?,?,?,0,?,?)")
-                    .bind(&document.id).bind(&self.owner_id).bind(&document.title).bind(position).bind(time).bind(time).execute(&mut *tx).await?;
+                sqlx::query("INSERT INTO lists(id,owner_id,title,position,revision,created_at,updated_at,archived) VALUES (?,?,?,?,0,?,?,?)")
+                    .bind(&document.id).bind(&self.owner_id).bind(&document.title).bind(position).bind(time).bind(time).bind(document.archived).execute(&mut *tx).await?;
                 for row in &nodes {
                     insert_item(&mut tx, &document.id, row, time).await?;
                 }
-                imported.push(ListSummary {id:document.id,title:document.title,revision:0,position,item_count:nodes.len() as i64});
+                imported.push(ListSummary { archived: document.archived,id:document.id,title:document.title,revision:0,position,item_count:nodes.len() as i64});
             }
             Ok(())
         }.await;

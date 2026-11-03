@@ -184,6 +184,7 @@ fn build(
             "/import",
             axum::routing::post(import_json).layer(DefaultBodyLimit::max(MAX_FILE_BYTES)),
         )
+        .route("/lists/{id}/archive", axum::routing::patch(archive_list))
         .route(
             "/lists/{id}/view",
             get(get_outline_view).patch(patch_outline_view),
@@ -360,4 +361,22 @@ async fn save_delta(
 ) -> Result<Json<crate::incremental::Acknowledgement>> {
     let batch = crate::incremental::Batch::decode(&bytes)?;
     Ok(Json(store.save_incremental(&id, &batch).await?))
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ArchiveList {
+    base_revision: i64,
+    archived: bool,
+}
+async fn archive_list(
+    Extension(store): Extension<Store>,
+    Path(id): Path<String>,
+    Json(body): Json<ArchiveList>,
+) -> Result<Json<ListDocument>> {
+    Ok(Json(
+        store
+            .set_archived(&id, body.base_revision, body.archived)
+            .await?,
+    ))
 }

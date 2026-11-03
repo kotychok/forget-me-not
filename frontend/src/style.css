@@ -1692,3 +1692,23 @@ dialog.list-picker {
 .telegram-settings a {
   color: #45633e;
 }
+
+.archive-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 10px;
+}
+.archive-tabs button {
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.archive-tabs button[aria-pressed='true'] {
+  background: var(--selected, #dfe8d7);
+  color: #355b36;
+  font-weight: 600;
+}
+.sidebar-empty {
+  padding: 4px 12px;
+  color: var(--muted, #71816e);
+  font-size: 12px;
+}

@@ -27,8 +27,8 @@ Updated: 2026-10-30. The application is deployed on the user's DigitalOcean VPS 
 
 ## Guide
 
-- [Incremental save protocol](incremental-save-protocol.md): proposed exact M14b v1 schema, validation, replay and resource limits.
-- [Incremental saves proposal](incremental-saves.md): M14b packet/ordering, receipts, compatibility and decisions to agree before coding.
+- [Incremental save protocol](incremental-save-protocol.md): implemented M14b v1 schema, validation, replay and resource limits.
+- [Incremental saves](incremental-saves.md): M14b packet/ordering, receipts and compatibility.
 
 - [Transfer optimization](transfer-optimization.md): M14 baseline, gzip negotiation, byte savings and unchanged save semantics.
 
@@ -78,7 +78,7 @@ M5 tracks clickable links, compact URL display, and full, content-sized text edi
 
 M12 adds a future Telegram Inbox for capturing text and links; M13 adds optional AI commands on selected content with preview, undo, and spending controls. Telegram depends on protected deployment in M11; AI can be designed independently of hosting. Detailed design and provider selection remain open. See [Milestones](milestones.md).
 
-M6a adds compiled Rust format adapters, outline-Markdown transfer, and a 5,000-item limit verified with synthetic workflows. M15 tracks active/archived lists, restore, and deletion; search scope and archived editing remain design questions. M6a was accepted after user export verification; M15 is not implemented.
+M6a adds compiled Rust format adapters, outline-Markdown transfer, and a 5,000-item limit verified with synthetic workflows. M6a was accepted after user export verification. M15 now implements active/archived lists; see [archive behavior](archives.md).
 
 M6b was verified and accepted by the user: per-user/list database collapse preferences separately from import/export, with independent revisions, retry, and refresh on list opening/window return. See [M6b implementation](plans/m6b-outline-state.md).
 
@@ -102,6 +102,10 @@ M11c release preparation is authorized and implemented for local verification: p
 
 R3 was verified and accepted by the user on 2026-10-30; see [cross-device refresh](remote-refresh.md). No subsequent integration milestone is authorized by this acceptance.
 
-M14b tracks incremental item/structure saves separately from M14 gzip snapshots. Packet format, operation receipts and compatibility require design before implementation; see [M14b](milestones.md#m14b--incremental-saves).
+M14b implements incremental item/structure saves separately from M14 gzip snapshots; see [M14b](milestones.md#m14b--incremental-saves).
 
-M14b incremental saves are implemented for review after explicit authorization. See the [wire contract](incremental-save-protocol.md) and [verification record](plans/m14b-incremental-saves.md). User acceptance and deployment remain separate.
+M14b incremental saves are implemented for review after explicit authorization. See the [wire contract](incremental-save-protocol.md) and [verification record](plans/m14b-incremental-saves.md). The user locally verified it on 2026-11-03; deployment remains separate.
+
+Next priority (2026-11-03): M15 active/archived lists, ahead of AI, with agreed behavior in [archives](archives.md).
+
+M15 is implemented for review: separate Active/Archive sections, read-only archived content, explicit restoration, opt-in archive search and JSON v5 preservation. See [archive behavior](archives.md) and [verification](plans/m15-archives.md). M14b was locally verified by the user on 2026-11-03.

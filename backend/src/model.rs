@@ -24,6 +24,8 @@ pub struct Item {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Document {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub archived: bool,
     pub id: String,
     pub title: String,
     pub nodes: Vec<Item>,
@@ -31,6 +33,8 @@ pub struct Document {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ListDocument {
+    #[serde(default)]
+    pub archived: bool,
     pub id: String,
     pub title: String,
     pub revision: i64,
@@ -39,6 +43,8 @@ pub struct ListDocument {
 #[derive(Serialize, FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct ListSummary {
+    #[serde(default)]
+    pub archived: bool,
     pub id: String,
     pub title: String,
     pub revision: i64,

@@ -96,6 +96,7 @@ async fn capture_is_literal_atomic_deduplicated_and_restarts_at_a_durable_offset
             SaveList {
                 base_revision: 0,
                 document: Document {
+                    archived: false,
                     id: list.clone(),
                     title: "Inbox".into(),
                     nodes: vec![],
@@ -290,6 +291,7 @@ async fn full_list_is_rejected_without_advancing_content_revision() {
             SaveList {
                 base_revision: 0,
                 document: Document {
+                    archived: false,
                     id: list.clone(),
                     title: doc.title,
                     nodes: doc.nodes,
@@ -505,4 +507,28 @@ async fn labelled_link_destinations_are_preserved_as_literal_text() {
         "A labelled link\nhttps://example.org/full?x=1"
     );
     store.pool.close().await;
+}
+
+#[tokio::test]
+async fn archived_inbox_rejects_capture_and_new_links_until_restored() {
+    let (_dir, store, user, service, list) = setup().await;
+    link(&service, &user, &list, 99, 1).await;
+    store.set_archived(&list, 0, true).await.unwrap();
+    assert!(service.issue_link(&user, &list).await.is_err());
+    assert!(service.set_inbox(&user, &list).await.is_err());
+    service
+        .process(update(2, 99, Some("Must not be captured")))
+        .await
+        .unwrap();
+    let current = store.get(&list).await.unwrap();
+    assert!(current.nodes.is_empty());
+    assert_eq!(current.revision, 1);
+    store.set_archived(&list, 1, false).await.unwrap();
+    service
+        .process(update(3, 99, Some("Captured after restore")))
+        .await
+        .unwrap();
+    let current = store.get(&list).await.unwrap();
+    assert_eq!(current.revision, 3);
+    assert_eq!(current.nodes[0].text, "Captured after restore");
 }

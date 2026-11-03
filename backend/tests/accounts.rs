@@ -298,11 +298,7 @@ async fn migration_from_m11_preserves_admin_credentials_content_and_existing_gra
     std::fs::create_dir(&old).unwrap();
     for file in std::fs::read_dir(concat!(env!("CARGO_MANIFEST_DIR"), "/migrations")).unwrap() {
         let file = file.unwrap();
-        if file
-            .file_name()
-            .to_string_lossy()
-            .starts_with("20261029000800")
-        {
+        if file.file_name().to_string_lossy().as_ref() >= "20261029000800" {
             continue;
         }
         std::fs::copy(file.path(), old.join(file.file_name())).unwrap();

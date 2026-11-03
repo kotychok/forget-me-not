@@ -58,7 +58,7 @@ async fn import_creates_new_ids_and_preserves_content_without_overwriting_existi
     assert_eq!(store.lists().await.unwrap().len(), 3);
     let exported = store.export_json(Some(&copy.id)).await.unwrap();
     let again = serde_json::to_value(&exported).unwrap();
-    assert_eq!(again["schemaVersion"], 4);
+    assert_eq!(again["schemaVersion"], 5);
     assert!(again["lists"][0].get("revision").is_none());
     assert!(again["lists"][0].get("ownerId").is_none());
     assert_eq!(again["lists"][0]["nodes"][0]["id"], copy.nodes[0].id);

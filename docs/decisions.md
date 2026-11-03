@@ -117,3 +117,7 @@ Statuses: **Agreed** — explicitly specified by the user; **Proposed** — need
 Record material changes to agreed decisions as new decisions referencing those they replace. Do not mark a proposal as agreed without the user's response.
 
 | D067 | 2026-11-02 | Authorized M14b implementation | The user explicitly requested implementation after the technical specification. Implement version-1 PATCH batches, acknowledged-baseline planning, frozen retries, atomic scoped receipts with bounded retention, cheaper-wire transport selection and an additive migration. Keep full local drafts, list-wide conflicts and safe snapshot reconciliation; no automatic merge or deployment |
+
+| D068 | 2026-11-03 | Agreed roadmap priority | The user selected M15 active/archived lists as the next stage ahead of AI. Resolve archived editing, search inclusion and portable state before implementation; this priority does not settle those open behavior choices |
+
+| D069 | 2026-11-03 | Agreed M15 behavior / authorized implementation | The user accepted separate Archive navigation, read-only archived content until Restore, active-only search by default with Include archived, and archive-state preservation through JSON/import. Implement owner-scoped revision-checked transitions and an additive migration. Preserve content/IDs/order/collapse metadata; use JSON v5 with v1–v4 compatibility. Markdown archive export fails explicitly rather than dropping state. Existing permanent deletion remains separately confirmed; no trash or deployment is included |

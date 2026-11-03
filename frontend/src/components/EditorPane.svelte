@@ -15,6 +15,7 @@
   let {
     session,
     disabled = false,
+    readOnly = false,
     ondirty,
     oninteraction = () => {},
     reveal = null,
@@ -31,6 +32,7 @@
       interactionBlocked?: boolean;
     };
     disabled?: boolean;
+    readOnly?: boolean;
     ondirty: () => void;
     oninteraction?: (blocked: boolean) => void;
     preferences?: {
@@ -76,6 +78,7 @@
     null,
   );
   async function openDate(id: string) {
+    if (readOnly) return;
     const item = locate(editor.state.nodes, id)?.item;
     if (!item) return;
     oninteraction(true);
@@ -89,6 +92,7 @@
     null,
   );
   async function openTags(id: string) {
+    if (readOnly) return;
     const item = locate(editor.state.nodes, id)?.item;
     if (!item) return;
     oninteraction(true);
@@ -97,6 +101,7 @@
     tagItem = { id, text: item.text, tags: [...(item.tags ?? [])] };
   }
   function setFilter(tag: string, preferredId?: string, restoreFocus = false) {
+    if (readOnly) return;
     capture();
     tagFilter = tag;
     if (tag) oninteraction(true);
@@ -130,6 +135,7 @@
     null,
   );
   async function openNote(id: string) {
+    if (readOnly) return;
     const item = locate(editor.state.nodes, id)?.item;
     if (!item) return;
     oninteraction(true);
@@ -261,12 +267,17 @@
   }
 
   function focusItem(id: string, edit = false) {
-    editor.setFocus({ id, mode: edit ? 'edit' : 'navigate', start: 0, end: 0 });
+    editor.setFocus({
+      id,
+      mode: edit && !readOnly ? 'edit' : 'navigate',
+      start: 0,
+      end: 0,
+    });
     void render();
   }
 
   function command(action: Command) {
-    if (composing || disabled) return;
+    if (composing || disabled || readOnly) return;
     if (tagFilter && !['convert', 'complete'].includes(action)) {
       announcement = 'Clear the tag filter before changing structure.';
       return;
@@ -291,7 +302,7 @@
   }
 
   function history(redo = false) {
-    if (composing || disabled) return;
+    if (composing || disabled || readOnly) return;
     capture();
     tagFilter = '';
     if (redo ? editor.redo() : editor.undo()) {
@@ -320,7 +331,7 @@
 
   function input(event: Event) {
     const element = event.currentTarget as HTMLTextAreaElement;
-    if (disabled) return;
+    if (disabled || readOnly) return;
     if (
       editor.edit(element.value, element.selectionStart, element.selectionEnd)
     )
@@ -447,9 +458,22 @@
   }
 </script>
 
-<div inert={disabled} style:--outline-toolbar-height={`${toolbarHeight}px`}>
+<div
+  class:read-only={readOnly}
+  inert={disabled}
+  style:--outline-toolbar-height={`${toolbarHeight}px`}
+>
+  {#if readOnly && searchQuery}<div class="search-context-bar">
+      <span>Search result: <strong>{searchQuery}</strong></span><button
+        onclick={() => {
+          onclearsearch();
+          void render();
+        }}>Clear search</button
+      >
+    </div>{/if}
   <div
     class="toolbar"
+    inert={readOnly}
     aria-label="Item actions"
     bind:clientHeight={toolbarHeight}
   >
@@ -583,6 +607,7 @@
         {#if item.kind === 'task'}
           <input
             type="checkbox"
+            disabled={readOnly}
             aria-label={`Complete ${item.text || 'empty task'}`}
             checked={item.completed}
             onchange={() => {
@@ -650,11 +675,16 @@
                         query={reveal?.id === item.id ? reveal.query : ''}
                       />{/if}{/each}{/if}{:else}Empty item{/if}</button
             >
+            {#if readOnly && item.note}<details class="archived-note" open>
+                <summary>Note</summary>
+                <p style="white-space:pre-wrap">{item.note}</p>
+              </details>{/if}
             {#if item.tags?.length}<div
                 class="item-tags"
                 aria-label={`Tags for ${item.text || 'empty item'}`}
               >
                 {#each item.tags as tag}<button
+                    disabled={readOnly}
                     class:tag-selected={tagFilter === tag}
                     aria-label={`Filter by tag ${tag}`}
                     onclick={() => setFilter(tag, item.id, true)}
@@ -692,6 +722,7 @@
         {#if item.dueDate}
           {@const status = dueStatus(item.dueDate, item.completed, today)}
           <button
+            disabled={readOnly}
             class="due-date"
             class:due-overdue={status === 'overdue'}
             class:due-today={status === 'today'}
@@ -713,11 +744,13 @@
           </button>
         {/if}
         {#if item.tags?.length}<button
+            disabled={readOnly}
             class="note-indicator"
             aria-label={`Edit tags for ${item.text || 'empty item'}`}
             onclick={() => void openTags(item.id)}>⌗</button
           >{/if}
         {#if item.note}<button
+            disabled={readOnly}
             class="note-indicator"
             aria-label={`Edit note for ${item.text || 'empty item'}`}
             title="Item has a note"
@@ -745,7 +778,7 @@
       {total === 1 ? 'item' : 'items'} <span class="footer-dot">·</span>
       {view.focus.mode === 'edit' ? 'Editing' : 'Navigation'}</span
     >
-    <div>
+    <div inert={readOnly}>
       <button
         class="quiet"
         disabled={!active}
@@ -761,7 +794,7 @@
     </div>
   </div>
 
-  <p class="hint">
+  <p class="hint" hidden={readOnly}>
     <kbd>Enter</kbd> to add <span>·</span> <kbd>Tab</kbd> / <kbd>Shift+Tab</kbd>
     to indent / outdent
     <span>·</span> <kbd>Esc</kbd> to navigate
@@ -772,7 +805,7 @@
 <NoteDialog
   item={noteItem}
   onapply={(id, note) => {
-    if (editor.setNote(id, note)) {
+    if (!readOnly && editor.setNote(id, note)) {
       ondirty();
       void render(false);
     }
@@ -787,7 +820,7 @@
   item={tagItem}
   suggestions={availableTags}
   onapply={(id, tags) => {
-    if (editor.setTags(id, tags)) {
+    if (!readOnly && editor.setTags(id, tags)) {
       if (tagFilter && !tags.includes(tagFilter)) tagFilter = '';
       ondirty();
       void render(false);
@@ -802,7 +835,7 @@
 <DateDialog
   item={dateItem}
   onapply={(id, date) => {
-    if (editor.setDueDate(id, date)) {
+    if (!readOnly && editor.setDueDate(id, date)) {
       ondirty();
       void render(false);
     }
@@ -812,3 +845,17 @@
     void render();
   }}
 />
+
+<style>
+  .read-only :global(.toolbar),
+  .read-only :global(.item-footer > div),
+  .read-only :global(.empty button),
+  .read-only :global(.hint) {
+    display: none;
+  }
+  .archived-note {
+    font-size: 0.85rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+</style>

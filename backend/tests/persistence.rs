@@ -31,6 +31,7 @@ fn save(id: &str, revision: i64, title: &str, nodes: Vec<Item>) -> SaveList {
     SaveList {
         base_revision: revision,
         document: Document {
+            archived: false,
             id: id.into(),
             title: title.into(),
             nodes,

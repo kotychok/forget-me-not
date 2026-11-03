@@ -63,8 +63,9 @@ fn nested_markers_tasks_and_additional_headings_are_explicit() {
 #[test]
 fn markdown_round_trip_preserves_literal_content_multiline_empty_items_and_structure() {
     let source = Portable {
-        schema_version: 4,
+        schema_version: 5,
         lists: vec![Document {
+            archived: false,
             id: Uuid::new_v4().to_string(),
             title: "Title #".into(),
             nodes: vec![

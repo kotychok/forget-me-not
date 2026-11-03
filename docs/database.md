@@ -159,3 +159,7 @@ The snapshot contract and database transaction remain unchanged. Large worthwhil
 ## Incremental save receipts — M14b
 
 `20261102001000_incremental_save_receipts.sql` adds installation/owner/list/operation-scoped digest and acknowledgement receipts. Item row diffs, list CAS and receipts commit together through Store. Expiry is 24 hours with a latest-10,000 cap per owner; successful writes and hourly maintenance remove expired entries. List deletion cascades receipts. Restore clears them while rotating installation identity. No item content or file-format schema changes are introduced.
+
+## List archives — M15
+
+`20261103001100_list_archives.sql` adds a checked boolean `lists.archived` defaulting to false. Archive/Restore is an owner-scoped CAS update that increments the existing content revision without changing item rows or list position. Content PUT/PATCH and Telegram append reject archived lists. Collapse metadata retains its separate queue/revision. Database backups preserve the state. See [archive behavior](archives.md).

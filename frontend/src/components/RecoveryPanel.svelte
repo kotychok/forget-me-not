@@ -51,7 +51,7 @@
   function download(record?: Draft) {
     try {
       downloadJson(
-        record ? { schemaVersion: 4, lists: [record.document] } : onexport(),
+        record ? { schemaVersion: 5, lists: [record.document] } : onexport(),
         record?.document.title ?? 'local-version',
       );
     } catch (reason) {

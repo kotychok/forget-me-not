@@ -59,17 +59,25 @@ impl Store {
                 revision,
             });
         }
-        let row: ListRow =
-            sqlx::query_as("SELECT id,title,revision FROM lists WHERE id=? AND owner_id=?")
-                .bind(id)
-                .bind(&self.owner_id)
-                .fetch_one(&mut **tx)
-                .await?;
+        let row: ListRow = sqlx::query_as(
+            "SELECT id,title,revision,archived FROM lists WHERE id=? AND owner_id=?",
+        )
+        .bind(id)
+        .bind(&self.owner_id)
+        .fetch_one(&mut **tx)
+        .await?;
+        if row.archived {
+            return Err(fail(
+                "revision_conflict",
+                "List is archived; restore it before editing",
+            ));
+        }
         if row.revision != batch.base_revision {
             return Err(fail("revision_conflict", "List changed on the server"));
         }
         let rows=sqlx::query_as::<_,ItemRow>("SELECT id,parent_id,position,kind,text,note,tags,due_date,completed FROM items WHERE list_id=? ORDER BY position,id").bind(id).fetch_all(&mut **tx).await?;
         let target = batch.apply(Document {
+            archived: false,
             id: id.into(),
             title: row.title,
             nodes: build_tree(rows)?,

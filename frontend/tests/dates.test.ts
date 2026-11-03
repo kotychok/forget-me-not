@@ -72,7 +72,7 @@ test('v4 portable dates preserve calendar strings; older schemas reject date fie
   fixture.schemaVersion = 4;
   fixture.lists[0].nodes[0].dueDate = '2028-02-29';
   const result = parsePortable(serializePortable(validatePortable(fixture)));
-  assert.equal(result.schemaVersion, 4);
+  assert.equal(result.schemaVersion, 5);
   assert.equal(result.lists[0].nodes[0].dueDate, '2028-02-29');
   assert.equal(searchDocuments(result.lists, '2028-02').hits[0].field, 'date');
   for (const date of [null, '', '2026-02-30', '2026-10-28T00:00Z']) {

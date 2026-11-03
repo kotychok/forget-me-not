@@ -98,7 +98,7 @@ test('tags Apply/Cancel, history, current JSON and global tag search preserve co
   const data = JSON.parse(
     await readFile((await (await ready).path())!, 'utf8'),
   );
-  expect(data.schemaVersion).toBe(4);
+  expect(data.schemaVersion).toBe(5);
   expect(data.lists[0].nodes[2].tags).toEqual(['work', 'Київ', 'next']);
   await transfer.getByLabel('Export format').selectOption('markdown');
   await transfer

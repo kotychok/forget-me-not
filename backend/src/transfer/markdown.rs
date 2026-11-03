@@ -209,8 +209,9 @@ pub(super) fn decode(text: &str) -> Result<Decoded> {
     }
     Ok(Decoded {
         document: Portable {
-            schema_version: 4,
+            schema_version: 5,
             lists: vec![Document {
+                archived: false,
                 id: Uuid::new_v4().to_string(),
                 title: title.unwrap_or_else(|| "Imported outline".into()),
                 nodes: roots.iter().map(|i| build(*i, &rows, &children)).collect(),
@@ -220,6 +221,12 @@ pub(super) fn decode(text: &str) -> Result<Decoded> {
     })
 }
 pub(super) fn encode(document: &Portable) -> Result<Encoded> {
+    if document.lists.iter().any(|list| list.archived) {
+        return Err(AppError::InvalidImport(
+            "Markdown cannot preserve archive state. Export JSON, or restore the list first."
+                .into(),
+        ));
+    }
     if document.lists.len() != 1 {
         return Err(AppError::InvalidImport("Markdown exports one list at a time; choose the current list or use JSON for all lists".into()));
     }

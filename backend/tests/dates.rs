@@ -50,7 +50,7 @@ async fn dates_persist_copy_clear_and_enforce_revisions_without_lossy_markdown()
     let original = store.get(&imported[0].id).await.unwrap();
     assert_eq!(original.nodes[0].due_date.as_deref(), Some("2028-02-29"));
     let exported = store.export_json(Some(&original.id)).await.unwrap();
-    assert_eq!(exported.schema_version, 4);
+    assert_eq!(exported.schema_version, 5);
     // Isolate the date export guard from the pre-existing note/tag guards.
     let mut only_date = Portable::from_value(fixture()).unwrap();
     only_date.lists.truncate(1);

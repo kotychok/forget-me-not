@@ -3,7 +3,7 @@ import { validateTags } from './tags.ts';
 import type { Document } from './api.ts';
 import type { Item } from './editor.ts';
 
-export type Portable = { schemaVersion: 1 | 2 | 3 | 4; lists: Document[] };
+export type Portable = { schemaVersion: 1 | 2 | 3 | 4 | 5; lists: Document[] };
 export const MAX_FILE_BYTES = 8 * 1024 * 1024;
 export const MAX_LISTS = 100;
 export const MAX_TOTAL_ITEMS = 10_000;
@@ -60,9 +60,13 @@ export function validatePortable(value: unknown): Portable {
     root.schemaVersion !== 1 &&
     root.schemaVersion !== 2 &&
     root.schemaVersion !== 3 &&
-    root.schemaVersion !== 4
+    root.schemaVersion !== 4 &&
+    root.schemaVersion !== 5
   )
-    fail('$.schemaVersion', 'Only schema versions 1, 2, 3 and 4 are supported');
+    fail(
+      '$.schemaVersion',
+      'Only schema versions 1, 2, 3, 4 and 5 are supported',
+    );
   const source = array(root.lists, '$.lists');
   if (!source.length || source.length > MAX_LISTS)
     fail('$.lists', `Expected 1–${MAX_LISTS} lists`);
@@ -71,7 +75,14 @@ export function validatePortable(value: unknown): Portable {
   let total = 0;
   const lists = source.map((value, index): Document => {
     const path = `$.lists[${index}]`;
-    const list = object(value, ['id', 'title', 'nodes'], path);
+    const list = object(
+      value,
+      ['id', 'title', 'nodes'],
+      path,
+      root.schemaVersion === 5 ? ['archived'] : [],
+    );
+    if (Object.hasOwn(list, 'archived') && typeof list.archived !== 'boolean')
+      fail(`${path}.archived`, 'Expected boolean');
     const listId = id(list.id, `${path}.id`, listIds);
     if (
       typeof list.title !== 'string' ||
@@ -88,7 +99,7 @@ export function validatePortable(value: unknown): Portable {
           value,
           ['id', 'kind', 'text', 'completed', 'children'],
           at,
-          root.schemaVersion === 4
+          Number(root.schemaVersion) >= 4
             ? ['note', 'tags', 'dueDate']
             : root.schemaVersion === 3
               ? ['note', 'tags']
@@ -154,6 +165,7 @@ export function validatePortable(value: unknown): Portable {
       });
     }
     const document = {
+      ...(list.archived ? { archived: true } : {}),
       id: listId,
       title: list.title,
       nodes: nodes(list.nodes, `${path}.nodes`, 1),
@@ -166,7 +178,7 @@ export function validatePortable(value: unknown): Portable {
       fail(path, 'List exceeds the 1 MiB save limit');
     return document;
   });
-  const result: Portable = { schemaVersion: 4, lists };
+  const result: Portable = { schemaVersion: 5, lists };
   if (encoder.encode(JSON.stringify(result)).length > MAX_FILE_BYTES)
     fail('$', 'File exceeds 8 MiB');
   return result;

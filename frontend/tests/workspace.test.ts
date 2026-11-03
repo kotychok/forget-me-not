@@ -28,8 +28,9 @@ function fakeApi() {
   const transport = {
     session: async () => ({ serverId: 'server', ownerId: 'owner' }),
     exportJson: async () => ({
-      schemaVersion: 1 as const,
-      lists: [...documents.values()].map(({ id, title, nodes }) => ({
+      schemaVersion: 5 as const,
+      lists: [...documents.values()].map(({ id, title, nodes, archived }) => ({
+        ...(archived ? { archived: true } : {}),
         id,
         title,
         nodes,
@@ -61,6 +62,7 @@ function fakeApi() {
       }),
     lists: async () =>
       [...documents.values()].map((doc, position) => ({
+        ...(doc.archived ? { archived: true } : {}),
         id: doc.id,
         title: doc.title,
         revision: doc.revision,
@@ -82,6 +84,17 @@ function fakeApi() {
       const revision = baseRevision + 1;
       documents.set(doc.id, { ...structuredClone(doc), revision });
       return { revision };
+    },
+    setArchived: async (
+      id: string,
+      baseRevision: number,
+      archived: boolean,
+    ) => {
+      const doc = documents.get(id)!;
+      if (doc.revision !== baseRevision) throw new ApiError(409, 'Conflict');
+      const next = { ...doc, archived, revision: baseRevision + 1 };
+      documents.set(id, next);
+      return structuredClone(next);
     },
     delete: async (id: string, baseRevision: number) => {
       if (documents.get(id)?.revision !== baseRevision)
@@ -529,6 +542,58 @@ test('an index older than our latest acknowledgement never resets local history'
     assert.equal(w.current, session);
     assert.equal(session.editor.past.length, 1);
     assert.equal(f.gets.length, gets);
+  } finally {
+    w.dispose();
+  }
+});
+
+test('archive flushes pending edits, replaces history and preserves archive metadata through polling and export', async () => {
+  const fixture = fakeApi();
+  const w = new Workspace(() => {}, fixture.transport);
+  try {
+    await w.load(fixture.first.id);
+    w.rename('Pending archive title');
+    assert.equal(await w.setArchived(true), true);
+    assert.equal(w.current!.archived, true);
+    assert.equal(w.current!.sync.revision, 2);
+    assert.equal(w.current!.editor.past.length, 0);
+    assert.equal(w.exportCurrent().lists[0].archived, true);
+    w.rename('Must not edit');
+    assert.equal(w.title, 'Pending archive title');
+    await w.refreshRemote();
+    assert.equal(
+      w.lists.find((list) => list.id === fixture.first.id)!.archived,
+      true,
+    );
+    assert.equal(await w.setArchived(false), true);
+    assert.equal(w.current!.archived, false);
+    assert.equal(w.current!.sync.revision, 3);
+    assert.equal(w.title, 'Pending archive title');
+  } finally {
+    w.dispose();
+  }
+});
+
+test('remote archiving preserves dirty local content and requires explicit conflict recovery', async () => {
+  const fixture = fakeApi();
+  const w = new Workspace(() => {}, fixture.transport);
+  try {
+    await w.load(fixture.first.id);
+    w.rename('Local unsaved title');
+    await fixture.transport.setArchived(fixture.first.id, 0, true);
+    await w.refreshRemote();
+    assert.equal(w.title, 'Local unsaved title');
+    assert.equal(w.current!.archived, false);
+    assert.equal(w.current!.remoteChanged, true);
+    assert.equal(
+      (await w.searchSource()).find((list) => list.id === fixture.first.id)!
+        .archived,
+      true,
+    );
+    assert.equal(await w.setArchived(true), false);
+    assert.equal(w.current!.sync.status, 'conflict');
+    assert.equal(w.current!.sync.dirty, true);
+    assert.equal(fixture.documents.get(fixture.first.id)!.archived, true);
   } finally {
     w.dispose();
   }

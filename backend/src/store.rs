@@ -27,6 +27,7 @@ fn now() -> i64 {
 }
 #[derive(FromRow)]
 struct ListRow {
+    archived: bool,
     id: String,
     title: String,
     revision: i64,
@@ -147,7 +148,7 @@ impl Store {
         })
     }
     pub async fn lists(&self) -> Result<Vec<ListSummary>> {
-        Ok(sqlx::query_as("SELECT l.id,l.title,l.revision,l.position,(SELECT count(*) FROM items i WHERE i.list_id=l.id) AS item_count FROM lists l WHERE owner_id=? ORDER BY position,id").bind(&self.owner_id).fetch_all(&self.pool).await?)
+        Ok(sqlx::query_as("SELECT l.id,l.title,l.revision,l.position,l.archived,(SELECT count(*) FROM items i WHERE i.list_id=l.id) AS item_count FROM lists l WHERE owner_id=? ORDER BY position,id").bind(&self.owner_id).fetch_all(&self.pool).await?)
     }
     pub async fn create(&self, title: String) -> Result<ListDocument> {
         validate_title(&title)?;
@@ -156,6 +157,7 @@ impl Store {
         sqlx::query("INSERT INTO lists(id,owner_id,title,position,revision,created_at,updated_at) SELECT ?,?,?,COALESCE(MAX(position)+1,0),0,?,? FROM lists WHERE owner_id=?")
             .bind(&id).bind(&self.owner_id).bind(&title).bind(time).bind(time).bind(&self.owner_id).execute(&self.pool).await?;
         Ok(ListDocument {
+            archived: false,
             id,
             title,
             revision: 0,
@@ -164,16 +166,18 @@ impl Store {
     }
     pub async fn get(&self, id: &str) -> Result<ListDocument> {
         let mut tx = self.pool.begin().await?;
-        let row: ListRow =
-            sqlx::query_as("SELECT id,title,revision FROM lists WHERE id=? AND owner_id=?")
-                .bind(id)
-                .bind(&self.owner_id)
-                .fetch_optional(&mut *tx)
-                .await?
-                .ok_or(AppError::NotFound)?;
+        let row: ListRow = sqlx::query_as(
+            "SELECT id,title,revision,archived FROM lists WHERE id=? AND owner_id=?",
+        )
+        .bind(id)
+        .bind(&self.owner_id)
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or(AppError::NotFound)?;
         let items = sqlx::query_as::<_,ItemRow>("SELECT id,parent_id,position,kind,text,note,tags,due_date,completed FROM items WHERE list_id=? ORDER BY position,id").bind(id).fetch_all(&mut *tx).await?;
         tx.commit().await?;
         Ok(ListDocument {
+            archived: row.archived,
             id: row.id,
             title: row.title,
             revision: row.revision,
@@ -206,10 +210,13 @@ impl Store {
         document: &Document,
         base_revision: i64,
     ) -> Result<i64> {
+        if document.archived {
+            return Err(invalid("Restore the archived list before editing"));
+        }
         let flat = flatten(document)?;
         let time = now();
         // Acquire the write lock and check ownership/revision before reading item rows.
-        let updated = sqlx::query("UPDATE lists SET title=?,revision=revision+1,updated_at=? WHERE id=? AND owner_id=? AND revision=?")
+        let updated = sqlx::query("UPDATE lists SET title=?,revision=revision+1,updated_at=? WHERE id=? AND owner_id=? AND revision=? AND archived=0")
             .bind(&document.title).bind(time).bind(id).bind(&self.owner_id).bind(base_revision).execute(&mut **tx).await?.rows_affected();
         if updated == 0 {
             let exists: bool =
@@ -253,6 +260,23 @@ impl Store {
         }.await;
         writes?;
         Ok(base_revision + 1)
+    }
+    pub async fn set_archived(
+        &self,
+        id: &str,
+        revision: i64,
+        archived: bool,
+    ) -> Result<ListDocument> {
+        if revision < 0 {
+            return Err(invalid("Invalid revision"));
+        }
+        let changed = sqlx::query("UPDATE lists SET archived=?,revision=revision+1,updated_at=? WHERE id=? AND owner_id=? AND revision=?")
+            .bind(archived).bind(now()).bind(id).bind(&self.owner_id).bind(revision).execute(&self.pool).await?.rows_affected();
+        if changed == 0 {
+            self.get(id).await?;
+            return Err(AppError::Conflict);
+        }
+        self.get(id).await
     }
     pub async fn delete(&self, id: &str, revision: i64) -> Result<()> {
         let mut tx = self.pool.begin().await?;

@@ -29,7 +29,7 @@ test('unknown fields, unsupported versions, and duplicate IDs have actionable pa
   let source: unknown = fixture();
   (source as Record<string, unknown>).ownerId = 'untrusted';
   assert.throws(() => validatePortable(source), /\$\.ownerId: Unknown field/);
-  source = { ...fixture(), schemaVersion: 5 };
+  source = { ...fixture(), schemaVersion: 6 };
   assert.throws(() => validatePortable(source), /\$\.schemaVersion/);
   const duplicate = fixture();
   duplicate.lists[1].nodes = [structuredClone(duplicate.lists[0].nodes[0])];
@@ -105,7 +105,7 @@ test('legacy schemas upgrade to current; notes are supported from v2', () => {
       'utf8',
     ),
   );
-  assert.equal(validatePortable(old).schemaVersion, 4);
+  assert.equal(validatePortable(old).schemaVersion, 5);
   old.lists[0].nodes[0].note = 'A note';
   assert.throws(() => validatePortable(old), /Unknown field/);
   old.schemaVersion = 2;
@@ -123,7 +123,7 @@ test('shared v2 fixture carries notes through portable export', () => {
       'utf8',
     ),
   );
-  assert.equal(source.schemaVersion, 4);
+  assert.equal(source.schemaVersion, 5);
   assert.equal(
     parsePortable(serializePortable(source)).lists[0].nodes[0].note,
     '**Trip details**\nBring the itinerary. ✈️',
@@ -144,4 +144,29 @@ test('shared v3 fixture preserves tags and rejects tags in older versions', () =
   );
   source.schemaVersion = 2;
   assert.throws(() => validatePortable(source), /Unknown field/);
+});
+
+test('schema v5 preserves archive state and older versions cannot silently carry it', () => {
+  const source = fixture();
+  source.lists[0].archived = true;
+  const current = validatePortable({ ...source, schemaVersion: 5 });
+  assert.equal(current.lists[0].archived, true);
+  assert.equal(
+    parsePortable(serializePortable(current)).lists[0].archived,
+    true,
+  );
+  for (const schemaVersion of [1, 2, 3, 4])
+    assert.throws(
+      () => validatePortable({ ...source, schemaVersion }),
+      /archived/,
+    );
+  assert.throws(
+    () =>
+      validatePortable({
+        ...source,
+        schemaVersion: 5,
+        lists: [{ ...source.lists[0], archived: 'true' }],
+      }),
+    /archived/,
+  );
 });

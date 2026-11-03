@@ -54,6 +54,10 @@
   let current = $state.raw<Session>();
   let selectedId = $state<string | null>(null);
   let lists = $state<SidebarList[]>([]);
+  let archiveOpen = $state(false);
+  const navigationLists = $derived(
+    lists.filter((list) => !!list.archived === archiveOpen),
+  );
   let title = $state('No lists yet');
   let loading = $state(true);
   let busy = $state(false);
@@ -115,6 +119,8 @@
             dirty: outline.dirty,
           }
         : null;
+      if (selectedId !== workspace.selectedId)
+        archiveOpen = !!workspace.current?.archived;
       selectedId = workspace.selectedId;
       lists = workspace.lists;
       title = workspace.title;
@@ -287,8 +293,21 @@
         >▾</span
       >
     </button>
+    <div class="archive-tabs" role="group" aria-label="List section">
+      <button
+        class="quiet"
+        aria-pressed={!archiveOpen}
+        onclick={() => (archiveOpen = false)}>Active</button
+      >
+      <button
+        class="quiet"
+        aria-pressed={archiveOpen}
+        onclick={() => (archiveOpen = true)}
+        >Archive ({lists.filter((list) => list.archived).length})</button
+      >
+    </div>
     <nav class="desktop-lists" aria-label="Lists">
-      {#each lists as list (list.id)}
+      {#each navigationLists as list (list.id)}
         <button
           class="list-link"
           data-list-id={list.id}
@@ -307,6 +326,9 @@
             >{/if}<span class="count">{list.itemCount}</span>
         </button>
       {/each}
+      {#if !navigationLists.length}<p class="sidebar-empty">
+          {archiveOpen ? 'No archived lists.' : 'No active lists.'}
+        </p>{/if}
       <button class="new-list" disabled={busy || loading} onclick={newList}
         >＋ New list</button
       >
@@ -325,9 +347,21 @@
           onclick={() => picker?.close()}>✕</button
         >
       </div>
+      <div class="archive-tabs" role="group" aria-label="Choose list section">
+        <button
+          class="quiet"
+          aria-pressed={!archiveOpen}
+          onclick={() => (archiveOpen = false)}>Active</button
+        >
+        <button
+          class="quiet"
+          aria-pressed={archiveOpen}
+          onclick={() => (archiveOpen = true)}>Archive</button
+        >
+      </div>
       <nav aria-label="Choose a list">
         {#if pickerOpen}
-          {#each lists as list (list.id)}
+          {#each navigationLists as list (list.id)}
             <button
               class="list-link"
               class:selected={selectedId === list.id}
@@ -445,7 +479,7 @@
             class="title-button"
             bind:this={titleButton}
             aria-label="Rename list"
-            disabled={!selectedId || busy}
+            disabled={!selectedId || busy || !!current?.archived}
             onclick={beginRename}
             >{loadError && !selectedId ? 'Could not load lists' : title}</button
           ><span>.</span>
@@ -526,7 +560,21 @@
           {#if !selectedId}<button onclick={loadLists}>Retry</button>{/if}
         </p>{/if}
       {#if selectedId}
+        {#if current?.archived}<p class="session-note" role="status">
+            Archived · Read only. Restore this list to edit it.
+          </p>{/if}
         <div class="list-actions">
+          <button
+            class="quiet"
+            disabled={busy ||
+              !!current?.interactionBlocked ||
+              !!current?.titleEditing}
+            onclick={async () => {
+              finishRename();
+              if (await workspace.setArchived(!current?.archived))
+                archiveOpen = !!workspace.current?.archived;
+            }}>{current?.archived ? 'Restore list' : 'Archive list'}</button
+          >
           <button class="quiet danger" disabled={busy} onclick={deleteList}
             >Delete list</button
           >
@@ -536,6 +584,7 @@
             {@const session = current}
             <EditorPane
               {session}
+              readOnly={!!session.archived}
               oninteraction={(blocked) =>
                 workspace.setInteractionBlocked(session, blocked)}
               preferences={outlinePreferences}

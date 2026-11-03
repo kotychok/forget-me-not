@@ -44,16 +44,24 @@ impl Portable {
         if version < 4 && contains_field(&value, "dueDate") {
             return Err(invalid("Due dates require schemaVersion 4".into()));
         }
+        if version < 5
+            && value
+                .get("lists")
+                .and_then(|v| v.as_array())
+                .is_some_and(|lists| lists.iter().any(|list| list.get("archived").is_some()))
+        {
+            return Err(invalid("Archive state requires schemaVersion 5".into()));
+        }
         let mut document: Self = serde_path_to_error::deserialize(value)
             .map_err(|error| invalid(format!("$.{}: {}", error.path(), error.inner())))?;
         document.validate()?;
-        document.schema_version = 4;
+        document.schema_version = 5;
         Ok(document)
     }
     pub fn validate(&self) -> Result<()> {
-        if !matches!(self.schema_version, 1..=4) {
+        if !matches!(self.schema_version, 1..=5) {
             return Err(invalid(
-                "$.schemaVersion: only versions 1, 2, 3 and 4 are supported".into(),
+                "$.schemaVersion: only versions 1, 2, 3, 4 and 5 are supported".into(),
             ));
         }
         if self.lists.is_empty() || self.lists.len() > MAX_LISTS {
@@ -66,6 +74,9 @@ impl Portable {
             let path = format!("$.lists[{index}]");
             if !lists.insert(&document.id) {
                 return Err(invalid(format!("{path}.id: duplicate list ID")));
+            }
+            if self.schema_version < 5 && document.archived {
+                return Err(invalid("Archive state requires schemaVersion 5".into()));
             }
             let flat = flatten(document).map_err(|error| match error {
                 AppError::Invalid(message) => invalid(format!("{path}: {message}")),

@@ -75,7 +75,7 @@ Open **Import / export** in the sidebar.
 - Import creates fresh list/item IDs and keeps existing lists unchanged. All lists in a file are written in one transaction; failure rolls back the entire batch.
 - If an import response is lost, the operation may already have completed. It is never automatically retried; use **Refresh list index** to check your lists without discarding local edits before selecting the file again.
 
-JSON format: `schemaVersion: 4` (legacy v1/v2/v3 files are accepted) with a `lists` array. Limits are 8 MiB/file, 100 lists, and 10,000 total items, plus existing per-list limits. Unknown fields, newer versions, duplicate IDs, and invalid structures are rejected with explicit errors. See [JSON format](docs/data-formats.md) and the [example file](fixtures/portable-v1.json).
+JSON format: `schemaVersion: 5` (legacy v1–v4 files are accepted) with a `lists` array. Limits are 8 MiB/file, 100 lists, and 10,000 total items, plus existing per-list limits. Unknown fields, newer versions, duplicate IDs, and invalid structures are rejected with explicit errors. See [JSON format](docs/data-formats.md) and the [example file](fixtures/portable-v1.json).
 
 Outline Markdown import/export is available through the Import / export dialog. Import `.md` files with preview, or select Markdown for current-list export. Top-level paragraphs become root items, indentation defines nesting, and explicit task markers preserve checkboxes. JSON is the full portable format and supports all-list export. Markdown-looking text is preserved literally in JSON; safe display rendering inside items is deferred to M9.
 
@@ -156,3 +156,5 @@ Visible tabs check for other-device list changes every 15 seconds and on return/
 Optional Telegram capture: configure a dedicated bot on the server, then use **Account → Telegram Inbox** to select a list and connect. No AI or public API token is required. See [setup and delivery behavior](docs/telegram.md).
 
 Large autosave snapshots use negotiated gzip when worthwhile; plain JSON clients and existing revision/draft recovery remain supported. Synthetic 1,000–5,000-item edits used about 72% fewer body bytes. See [M14 measurements and compatibility](docs/transfer-optimization.md); run `make measure-transfer` to reproduce.
+
+Lists can be archived into a separate read-only section and restored before editing. Search includes archives only when requested; JSON preserves archive state. See [archives](docs/archives.md).
